@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ app_name }}</h1>
+<p>Prepare, fine-tune, and test language models with your own material.</p>
+<p>The application is taking shape. Dataset preparation and training are coming next.</p>
+<section x-data="{ open: false }">
+  <button type="button" @click="open = !open" :aria-expanded="open" aria-controls="workflow">
+    Explore the planned workflow
+  </button>
+  <div id="workflow" x-show="open" x-cloak>
+    <ol>
+      <li>Add documents or exported conversations.</li>
+      <li>Preview examples and choose a base model.</li>
+      <li>Train and compare the results.</li>
+    </ol>
+  </div>
+</section>
+<section aria-label="Application status">
+  <p><a href="{{ url_for('healthz') }}" hx-get="{{ url_for('healthz') }}"
+        hx-target="#health-result" hx-swap="innerHTML">Check application health</a></p>
+  <pre id="health-result" role="status" aria-live="polite"></pre>
+</section>
+{% endblock %}

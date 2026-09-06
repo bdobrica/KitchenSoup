@@ -1,0 +1,16 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #243328;
+  background: #faf9f5;
+  line-height: 1.6;
+}
+
+main {
+  max-width: 48rem;
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+}
+
+a { color: #285c40; }
+button { font: inherit; cursor: pointer; padding: 0.5rem 1rem; }
+[x-cloak] { display: none !important; }
