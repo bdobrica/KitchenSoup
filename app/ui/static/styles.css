@@ -20,3 +20,9 @@ button { font: inherit; cursor: pointer; padding: 0.5rem 1rem; }
 #model-browse label { display: block; margin: 0.75rem 0; }
 #model-browse input, #model-browse textarea { display: block; font: inherit; max-width: 100%; }
 #model-detail, #catalog-list { overflow-wrap: anywhere; }
+
+#dataset-browse label, #dataset-detail label { display: block; margin: 0.75rem 0; }
+#dataset-browse input, #dataset-browse textarea, #dataset-detail input { display: block; font: inherit; max-width: 100%; }
+#dataset-detail { overflow-wrap: anywhere; }
+#source-list article { padding: 1rem 0; border-bottom: 1px solid #ccd7cc; }
+#source-list button { margin-right: 0.5rem; }

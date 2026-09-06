@@ -4,11 +4,10 @@ KitchenSoup is a lightweight, self-hosted application for guided
 language-model fine-tuning. The planned workflow covers preparing datasets,
 training through Soup, comparing results, and serving temporary vLLM playgrounds.
 
-**Status:** model catalog and registry. Choose a curated Qwen model, register an
-ungated Hugging Face revision, or upload a compatible model ZIP. Sources and
-licenses are retained alongside verified artifacts in PostgreSQL and RustFS.
-Worker/reconciler processes remain idle placeholders. Ingestion and training
-workflows remain in [TODO.md](TODO.md).
+**Status:** raw source ingestion. Create datasets, upload and retrieve original
+source files, and browse source hashes and metadata. Model catalog/registration
+and verified artifact storage are also available. Canonical importers, document
+processing and training remain in [TODO.md](TODO.md).
 
 ## Quick start
 
@@ -23,7 +22,7 @@ make migrate
 make up
 ```
 
-Open <http://127.0.0.1:8000> and choose **Models** to browse or import a model.
+Open <http://127.0.0.1:8000> and choose **Datasets** to create a dataset and upload sources.
 Stop the stack with `make down`; data volumes are retained. `make restart` recreates the stack with its existing data.
 If your Python 3.13 executable has a different name, use
 `make setup PYTHON=python3` and `make up PYTHON=python3`.
@@ -64,6 +63,7 @@ S3-compatible adapter. Model versions and artifact representations have separate
 lineages.
 
 - [Development, local infrastructure, and HTTP contract](docs/development.md)
+- [Datasets, raw sources, and archive limits](docs/datasets.md)
 - [Model catalog, registration, and archive requirements](docs/models.md)
 - [Artifact storage and upload API](docs/storage.md)
 - [Database schema and migration workflow](docs/database.md)

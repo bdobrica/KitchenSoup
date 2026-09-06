@@ -101,6 +101,8 @@ Valkey persistence does not make queue/cache contents authoritative. The one-sho
 `storage-init` service provisions the artifact bucket and CORS before web starts.
 The `catalog-init` service synchronizes the packaged model catalog into the migrated
 database. See [model registration](models.md); `make catalog-sync` repeats this sync.
+Dataset creation and original source uploads are available at `/datasets`; see
+[raw-source ingestion](datasets.md) for file types, archive limits, and removal.
 See [artifact storage](storage.md) for configuration and upload contracts. Queue
 dispatch, reconciliation, Docker socket mounts, and training executors remain future work.
 

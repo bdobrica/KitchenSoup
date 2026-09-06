@@ -1576,7 +1576,8 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 5: Raw source ingestion.
+The current implementation frontier is Milestone 6: Canonical ChatGPT importer.
+Dataset creation and raw-source admission are documented in [docs/datasets.md](docs/datasets.md).
 Model browsing and import are documented in [docs/models.md](docs/models.md).
 Artifact storage and its versioned upload API are documented in [docs/storage.md](docs/storage.md).
 The database foundation and migration workflow are documented in [docs/database.md](docs/database.md).

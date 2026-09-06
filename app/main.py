@@ -15,13 +15,16 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 
 from app.api.artifacts import router as artifact_router
+from app.api.datasets import router as dataset_router
 from app.api.models import router as model_router
 from app.config import Settings
 from app.db.session import create_database_engine
 from app.dependencies import check_dependencies
+from app.ingestion.sources import SourceError
 from app.registry.huggingface import HuggingFaceResolver
 from app.registry.inspection import RegistryError
 from app.services.artifacts import ArtifactService, UploadError
+from app.services.datasets import DatasetService
 from app.services.models import ModelService
 from app.storage.base import ObjectNotFound, ObjectTooLarge, StorageError
 from app.storage.s3 import S3ArtifactStore
@@ -37,6 +40,7 @@ def create_app(
     settings: Settings | None = None,
     artifact_service: ArtifactService | None = None,
     model_service: ModelService | None = None,
+    dataset_service: DatasetService | None = None,
 ) -> FastAPI:
     settings = settings if settings is not None else Settings()
 
@@ -63,6 +67,10 @@ def create_app(
                 app.state.model_service = ModelService(
                     artifacts.factory, artifacts, HuggingFaceResolver()
                 )
+            app.state.dataset_service = dataset_service
+            if dataset_service is None and app.state.artifact_service is not None:
+                artifacts = app.state.artifact_service
+                app.state.dataset_service = DatasetService(artifacts.factory, artifacts)
             yield
         finally:
             if store is not None:
@@ -75,6 +83,15 @@ def create_app(
     app.mount("/static", StaticFiles(directory=UI_DIR / "static"), name="static")
     app.include_router(artifact_router)
     app.include_router(model_router)
+    app.include_router(dataset_router)
+
+    @app.exception_handler(SourceError)
+    async def source_error(request: Request, error: SourceError) -> JSONResponse:
+        return JSONResponse(
+            status_code=error.status,
+            content={"detail": str(error)},
+            headers={"Cache-Control": "no-store"},
+        )
 
     @app.exception_handler(RegistryError)
     async def registry_error(request: Request, error: RegistryError) -> JSONResponse:
@@ -135,6 +152,13 @@ def create_app(
     async def model_page(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(
             request=request, name="models.html", context={"app_name": settings.app_name}
+        )
+
+    @app.get("/datasets", response_class=HTMLResponse, include_in_schema=False)
+    @app.get("/datasets/{dataset_id}", response_class=HTMLResponse, include_in_schema=False)
+    async def dataset_page(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request=request, name="datasets.html", context={"app_name": settings.app_name}
         )
 
     return app

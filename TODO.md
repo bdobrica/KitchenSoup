@@ -174,24 +174,24 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 5 — Raw source ingestion
 
-- [ ] Add dataset creation UI.
-- [ ] Add source upload UI.
-- [ ] Store original uploads unchanged.
-- [ ] Record upload SHA-256.
-- [ ] Add supported file type validation.
-- [ ] Add safe archive extraction utilities.
-- [ ] Prevent path traversal.
-- [ ] Add archive size/file-count limits.
-- [ ] Add source deletion flow.
-- [ ] Add source metadata UI.
-- [ ] Add initial document-source records.
-- [ ] Do not implement a general-purpose document parser.
+- [x] Add dataset creation UI.
+- [x] Add source upload UI.
+- [x] Store original uploads unchanged.
+- [x] Record upload SHA-256.
+- [x] Add supported file type validation.
+- [x] Add safe archive extraction utilities.
+- [x] Prevent path traversal.
+- [x] Add archive size/file-count limits.
+- [x] Add source deletion flow.
+- [x] Add source metadata UI.
+- [x] Add initial document-source records.
+- [x] Do not implement a general-purpose document parser.
 
 **Acceptance criteria**
 
-- [ ] User can create a dataset and upload raw source material.
-- [ ] Raw sources remain retrievable.
-- [ ] Malicious archive paths are rejected.
+- [x] User can create a dataset and upload raw source material.
+- [x] Raw sources remain retrievable.
+- [x] Malicious archive paths are rejected.
 
 ---
 

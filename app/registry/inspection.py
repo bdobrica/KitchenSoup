@@ -2,13 +2,14 @@
 
 import json
 import math
-import stat
 import struct
 import time
 import zipfile
 import zlib
 from pathlib import PurePosixPath
 from typing import Any, BinaryIO
+
+from app.storage.archives import ArchiveError, ArchiveLimits, validated_zip
 
 
 class RegistryError(Exception):
@@ -124,6 +125,8 @@ def validate_tensors(header: dict[str, Any], data_size: int) -> set[str]:
 def inspect_archive(source: BinaryIO) -> None:
     try:
         _inspect_zip(source)
+    except ArchiveError as error:
+        raise invalid(str(error)) from None
     except (
         zipfile.BadZipFile,
         EOFError,
@@ -139,61 +142,9 @@ def inspect_archive(source: BinaryIO) -> None:
 
 def _inspect_zip(source: BinaryIO) -> None:
     started = time.monotonic()
-    source.seek(0, 2)
-    length = source.tell()
-    source.seek(max(0, length - 65557))
-    tail = source.read(65557)
-    marker = tail.rfind(b"PK\x05\x06")
-    if marker < 0 or len(tail) - marker < 22:
-        raise invalid("Upload a ZIP archive; other archive formats are not supported yet")
-    _, disk, directory_disk, disk_count, count, directory_size, offset, comment = struct.unpack(
-        "<4s4H2LH", tail[marker : marker + 22]
-    )
-    if (
-        disk
-        or directory_disk
-        or disk_count != count
-        or count > 4096
-        or directory_size > 4 * 1024**2
-        or offset == 0xFFFFFFFF
-        or offset + directory_size > length
-        or marker + 22 + comment != len(tail)
-    ):
-        raise invalid(
-            "Archive directory exceeds limits or uses unsupported ZIP64/multi-volume metadata"
-        )
-    source.seek(0)
-    with zipfile.ZipFile(source) as archive:
-        entries = archive.infolist()
-        if len(entries) != count:
-            raise invalid("Inconsistent ZIP directory")
-        files = {}
-        seen = set()
-        total = 0
-        for entry in entries:
-            name = entry.filename
-            path = PurePosixPath(name)
-            mode = entry.external_attr >> 16
-            if (
-                not name
-                or name != entry.orig_filename
-                or "\\" in name
-                or ":" in name
-                or path.is_absolute()
-                or any(p in {"", ".", ".."} for p in name.rstrip("/").split("/"))
-                or any(ord(c) < 32 for c in name)
-                or len(name) > 512
-                or name.casefold().rstrip("/") in seen
-            ):
-                raise invalid("Archive contains unsafe or duplicate paths")
-            seen.add(name.casefold().rstrip("/"))
-            if stat.S_IFMT(mode) not in (0, stat.S_IFREG, stat.S_IFDIR) or entry.flag_bits & 1:
-                raise invalid("Archive links, special files, and encryption are unsupported")
-            if entry.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED):
-                raise invalid("Use ZIP stored or deflate compression")
-            if entry.is_dir():
-                continue
-            if path.suffix.lower() in {
+    with validated_zip(source, ArchiveLimits(max_expanded_bytes=8 * 1024**3)) as (archive, files):
+        for name in files:
+            if PurePosixPath(name).suffix.lower() in {
                 ".py",
                 ".bin",
                 ".pt",
@@ -206,10 +157,6 @@ def _inspect_zip(source: BinaryIO) -> None:
                 raise invalid(
                     "Use safetensors weights without executable code or pickle checkpoints"
                 )
-            total += entry.file_size
-            if total > 8 * 1024**3 or entry.file_size > max(1, entry.compress_size) * 100:
-                raise invalid("Archive exceeds the 8 GiB expanded size or 100:1 compression limit")
-            files[name] = entry
         configs = [name for name in files if PurePosixPath(name).name == "config.json"]
         if len(configs) != 1:
             raise invalid("Include exactly one model config.json")

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/">Home</a> · <a href="/datasets">All datasets</a></p>
+<h1 id="dataset-title">Datasets</h1>
+<p id="dataset-status" role="status" aria-live="polite"></p>
+<div id="dataset-browse">
+<h2>Create a dataset</h2>
+<form id="dataset-create">
+<label>Name <input name="name" required maxlength="200"></label>
+<label>Description (optional) <textarea name="description" maxlength="4000"></textarea></label>
+<label>Dataset license (optional) <input name="license" maxlength="200"></label>
+<button>Create dataset</button>
+</form>
+<h2>Your datasets</h2>
+<ul id="dataset-list"></ul>
+</div>
+<section id="dataset-detail" hidden>
+<p id="dataset-description"></p>
+<p id="dataset-license"></p>
+<h2>Add raw source material</h2>
+<p>Upload TXT, Markdown, PDF, DOCX, JSON, JSONL, CSV, or ZIP files. Originals are kept unchanged. Conversation import and document processing will follow.</p>
+<form id="source-upload">
+<label>Source file <input name="file" type="file" accept=".txt,.md,.pdf,.docx,.json,.jsonl,.csv,.zip" required></label>
+<label>Source license (optional) <input name="license" maxlength="200"></label>
+<button>Upload source</button>
+</form>
+<h2>Raw sources</h2>
+<div id="source-list"></div>
+<p>Removing an unprocessed source removes it from this dataset and retains the original file. Sources with derived data or dataset versions cannot be removed.</p>
+<div id="retained-source"></div>
+</section>
+<noscript>Dataset browsing and uploads require JavaScript.</noscript>
+<script defer src="{{ url_for('static', path='/datasets.js') }}"></script>
+{% endblock %}
