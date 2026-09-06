@@ -9,9 +9,9 @@ Dependency ranges are declared in `pyproject.toml`; installations are not locked
 to an identical transitive dependency set.
 
 FastAPI provides HTTP routing and OpenAPI; Uvicorn serves ASGI; Jinja2 renders
-HTML; Pydantic Settings loads validated operator configuration. Development
-uses pytest and HTTPX for in-process HTTP tests, Ruff for linting/formatting, and
-mypy for strict type checking. Hatchling builds the Python package, including
+HTML; Pydantic Settings loads validated operator configuration. HTTPX supplies
+bounded public Hugging Face metadata requests and in-process HTTP tests.
+Development uses pytest, Ruff for linting/formatting, and mypy for strict types. Hatchling builds the Python package, including
 its templates and static assets. Psycopg supplies the authenticated PostgreSQL
 startup query; redis-py supplies the Valkey PING probe. These small clients will
 also support database and future queue operations. SQLAlchemy owns ORM mappings
@@ -75,7 +75,7 @@ Browser JavaScript execution is not covered by the unit suite.
 
 ## Local infrastructure
 
-Run `make setup`, then `make up`. Docker Compose v2.20+ is required for `--wait`.
+Run `make setup`, `make migrate`, then `make up`. Docker Compose v2.20+ is required for `--wait`.
 `make up` generates missing credentials, builds the application image, and waits
 up to 180 seconds after build/pull for all six services to become healthy.
 The image installs the package, including templates/static assets, runs as a
@@ -99,6 +99,8 @@ PostgreSQL is authoritative for durable application metadata. Run `make migrate`
 to create or upgrade its schema; see [the database reference](database.md).
 Valkey persistence does not make queue/cache contents authoritative. The one-shot
 `storage-init` service provisions the artifact bucket and CORS before web starts.
+The `catalog-init` service synchronizes the packaged model catalog into the migrated
+database. See [model registration](models.md); `make catalog-sync` repeats this sync.
 See [artifact storage](storage.md) for configuration and upload contracts. Queue
 dispatch, reconciliation, Docker socket mounts, and training executors remain future work.
 

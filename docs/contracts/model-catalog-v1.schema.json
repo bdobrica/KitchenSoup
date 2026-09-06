@@ -1,0 +1,131 @@
+{
+  "$defs": {
+    "CatalogEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "architecture": {
+          "title": "Architecture",
+          "type": "string"
+        },
+        "context_length": {
+          "exclusiveMinimum": 0,
+          "title": "Context Length",
+          "type": "integer"
+        },
+        "gated": {
+          "const": false,
+          "title": "Gated",
+          "type": "boolean"
+        },
+        "key": {
+          "pattern": "^[a-z0-9][a-z0-9-]{0,199}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "license": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "License",
+          "type": "string"
+        },
+        "license_url": {
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "title": "License Url",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Name",
+          "type": "string"
+        },
+        "parameter_count": {
+          "exclusiveMinimum": 0,
+          "title": "Parameter Count",
+          "type": "integer"
+        },
+        "quantization_support": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Quantization Support",
+          "type": "array"
+        },
+        "repository": {
+          "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]{0,95}/[A-Za-z0-9_][A-Za-z0-9_.-]{0,95}$",
+          "title": "Repository",
+          "type": "string"
+        },
+        "revision": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "soup_compatibility": {
+          "title": "Soup Compatibility",
+          "type": "string"
+        },
+        "supported_recipes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Recipes",
+          "type": "array"
+        },
+        "vllm_compatibility": {
+          "title": "Vllm Compatibility",
+          "type": "string"
+        },
+        "vram_guidance": {
+          "title": "Vram Guidance",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "name",
+        "repository",
+        "revision",
+        "architecture",
+        "parameter_count",
+        "context_length",
+        "license",
+        "license_url",
+        "gated",
+        "soup_compatibility",
+        "vllm_compatibility",
+        "supported_recipes",
+        "quantization_support",
+        "vram_guidance"
+      ],
+      "title": "CatalogEntry",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "models": {
+      "items": {
+        "$ref": "#/$defs/CatalogEntry"
+      },
+      "minItems": 1,
+      "title": "Models",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "models"
+  ],
+  "title": "Catalog",
+  "type": "object"
+}

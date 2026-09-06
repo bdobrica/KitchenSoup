@@ -14,6 +14,7 @@ dependencies = [
     "alembic>=1.15,<2",
     "boto3>=1.36,<2",
     "fastapi>=0.115.6,<1",
+    "httpx>=0.28,<1",
     "jinja2>=3.1.6,<4",
     "pydantic>=2.9,<3",
     "pydantic-settings>=2.7,<3",
@@ -26,7 +27,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "boto3-stubs[s3]>=1.36,<2",
-    "httpx>=0.28,<1",
     "mypy>=1.15,<2",
     "pytest>=8.3,<10",
     "ruff>=0.11,<1",

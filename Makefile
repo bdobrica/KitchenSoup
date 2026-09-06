@@ -8,7 +8,7 @@ export MESSAGE
 .PHONY: help setup fmt lint test test-unit verify dev
 .PHONY: local-env up down restart logs ps clean shell db-shell compose-check check-dependencies
 .PHONY: migrate migration migration-check test-integration
-.PHONY: openapi storage-init
+.PHONY: openapi storage-init catalog-sync
 
 help: ## Show available developer commands
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z_-]+:.*## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -95,5 +95,10 @@ storage-init: local-env ## Configure the local artifact bucket and browser CORS
 	$(COMPOSE) build storage-init
 	$(COMPOSE) run --rm --no-deps storage-init
 
-openapi: ## Regenerate the versioned artifact API schema
+openapi: ## Regenerate versioned API and catalog schemas
 	$(VENV_PYTHON) scripts/export_openapi.py
+
+catalog-sync: local-env ## Synchronize the packaged catalog into the migrated database
+	$(COMPOSE) up --detach --wait postgres
+	$(COMPOSE) build catalog-init
+	$(COMPOSE) run --rm --no-deps catalog-init

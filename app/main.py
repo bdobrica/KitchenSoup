@@ -15,10 +15,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 
 from app.api.artifacts import router as artifact_router
+from app.api.models import router as model_router
 from app.config import Settings
 from app.db.session import create_database_engine
 from app.dependencies import check_dependencies
+from app.registry.huggingface import HuggingFaceResolver
+from app.registry.inspection import RegistryError
 from app.services.artifacts import ArtifactService, UploadError
+from app.services.models import ModelService
 from app.storage.base import ObjectNotFound, ObjectTooLarge, StorageError
 from app.storage.s3 import S3ArtifactStore
 
@@ -30,7 +34,9 @@ class HealthResponse(BaseModel):
 
 
 def create_app(
-    settings: Settings | None = None, artifact_service: ArtifactService | None = None
+    settings: Settings | None = None,
+    artifact_service: ArtifactService | None = None,
+    model_service: ModelService | None = None,
 ) -> FastAPI:
     settings = settings if settings is not None else Settings()
 
@@ -51,6 +57,12 @@ def create_app(
                     max_bytes=settings.upload_max_bytes,
                     url_ttl=settings.storage_url_ttl,
                 )
+            app.state.model_service = model_service
+            if model_service is None and app.state.artifact_service is not None:
+                artifacts = app.state.artifact_service
+                app.state.model_service = ModelService(
+                    artifacts.factory, artifacts, HuggingFaceResolver()
+                )
             yield
         finally:
             if store is not None:
@@ -62,6 +74,11 @@ def create_app(
     templates = Jinja2Templates(directory=UI_DIR / "templates")
     app.mount("/static", StaticFiles(directory=UI_DIR / "static"), name="static")
     app.include_router(artifact_router)
+    app.include_router(model_router)
+
+    @app.exception_handler(RegistryError)
+    async def registry_error(request: Request, error: RegistryError) -> JSONResponse:
+        return JSONResponse(status_code=error.status, content={"detail": str(error)})
 
     @app.exception_handler(UploadError)
     async def upload_error(request: Request, error: UploadError) -> JSONResponse:
@@ -111,6 +128,13 @@ def create_app(
     async def artifact_page(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(
             request=request, name="artifacts.html", context={"app_name": settings.app_name}
+        )
+
+    @app.get("/models", response_class=HTMLResponse, include_in_schema=False)
+    @app.get("/models/{model_id}", response_class=HTMLResponse, include_in_schema=False)
+    async def model_page(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request=request, name="models.html", context={"app_name": settings.app_name}
         )
 
     return app

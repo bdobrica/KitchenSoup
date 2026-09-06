@@ -97,6 +97,8 @@ services:
         condition: service_healthy
       storage-init:
         condition: service_completed_successfully
+      catalog-init:
+        condition: service_completed_successfully
     ports:
       - "127.0.0.1:${KITCHENSOUP_PORT:-8000}:8000"
     healthcheck:
@@ -105,6 +107,16 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+
+  catalog-init:
+    build: .
+    image: kitchensoup:local
+    environment: *app-env
+    command: ["python", "-m", "app.registry.catalog"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
 
   storage-init:
     build: .

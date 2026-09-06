@@ -137,38 +137,38 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 4 — Model catalog and model registry
 
-- [ ] Define version-controlled curated model catalog schema.
-- [ ] Add initial small Qwen models.
-- [ ] Store:
-  - [ ] repository
-  - [ ] revision
-  - [ ] parameter count
-  - [ ] context length
-  - [ ] license
-  - [ ] gated flag
-  - [ ] Soup compatibility
-  - [ ] vLLM compatibility
-  - [ ] quantization support
-  - [ ] approximate VRAM guidance
-- [ ] Add catalog loader/synchronizer.
-- [ ] Build model list UI.
-- [ ] Build model detail UI.
-- [ ] Add ungated Hugging Face model registration.
-- [ ] Record exact Hugging Face revision.
-- [ ] Add uploaded model source.
-- [ ] Support model archive upload through ArtifactStore.
-- [ ] Safely inspect uploaded archive.
-- [ ] Validate Hugging Face/Transformers-compatible structure.
-- [ ] Reject obvious unsupported model artifacts with a friendly error.
-- [ ] Display source license prominently.
-- [ ] Add API endpoints for model browsing/import.
+- [x] Define version-controlled curated model catalog schema.
+- [x] Add initial small Qwen models.
+- [x] Store:
+  - [x] repository
+  - [x] revision
+  - [x] parameter count
+  - [x] context length
+  - [x] license
+  - [x] gated flag
+  - [x] Soup compatibility
+  - [x] vLLM compatibility
+  - [x] quantization support
+  - [x] approximate VRAM guidance
+- [x] Add catalog loader/synchronizer.
+- [x] Build model list UI.
+- [x] Build model detail UI.
+- [x] Add ungated Hugging Face model registration.
+- [x] Record exact Hugging Face revision.
+- [x] Add uploaded model source.
+- [x] Support model archive upload through ArtifactStore.
+- [x] Safely inspect uploaded archive.
+- [x] Validate Hugging Face/Transformers-compatible structure.
+- [x] Reject obvious unsupported model artifacts with a friendly error.
+- [x] Display source license prominently.
+- [x] Add API endpoints for model browsing/import.
 
 **Acceptance criteria**
 
-- [ ] User can choose a curated Qwen model.
-- [ ] User can register an ungated Hugging Face model.
-- [ ] User can upload a compatible custom model artifact.
-- [ ] Model source and license metadata are visible.
+- [x] User can choose a curated Qwen model.
+- [x] User can register an ungated Hugging Face model.
+- [x] User can upload a compatible custom model artifact.
+- [x] Model source and license metadata are visible.
 
 ---
 

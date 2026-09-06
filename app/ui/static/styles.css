@@ -14,3 +14,9 @@ main {
 a { color: #285c40; }
 button { font: inherit; cursor: pointer; padding: 0.5rem 1rem; }
 [x-cloak] { display: none !important; }
+
+#model-browse article { padding: 1rem 0; border-bottom: 1px solid #ccd7cc; }
+#model-browse details { margin: 1.5rem 0; }
+#model-browse label { display: block; margin: 0.75rem 0; }
+#model-browse input, #model-browse textarea { display: block; font: inherit; max-width: 100%; }
+#model-detail, #catalog-list { overflow-wrap: anywhere; }

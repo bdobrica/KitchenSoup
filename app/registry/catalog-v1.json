@@ -1,0 +1,47 @@
+{
+  "schema_version": "1",
+  "models": [
+    {
+      "key": "qwen2-5-0-5b-instruct",
+      "name": "Qwen2.5 0.5B Instruct",
+      "repository": "Qwen/Qwen2.5-0.5B-Instruct",
+      "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+      "architecture": "Qwen2ForCausalLM",
+      "parameter_count": 494032768,
+      "context_length": 32768,
+      "license": "apache-2.0",
+      "license_url": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct/blob/7ae557604adf67be50417f59c2c2f167def9a775/LICENSE",
+      "gated": false,
+      "soup_compatibility": "Candidate for LoRA SFT; KitchenSoup runner validation pending",
+      "vllm_compatibility": "Upstream Qwen2 support; KitchenSoup deployment validation pending",
+      "supported_recipes": [
+        "lora-sft (planned)"
+      ],
+      "quantization_support": [
+        "AWQ (planned conversion; not this source representation)"
+      ],
+      "vram_guidance": "BF16 weights alone: approximately 1 GiB. Allow substantially more for activations, KV cache and training; no measured training minimum yet."
+    },
+    {
+      "key": "qwen2-5-1-5b-instruct",
+      "name": "Qwen2.5 1.5B Instruct",
+      "repository": "Qwen/Qwen2.5-1.5B-Instruct",
+      "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+      "architecture": "Qwen2ForCausalLM",
+      "parameter_count": 1543714304,
+      "context_length": 32768,
+      "license": "apache-2.0",
+      "license_url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/blob/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/LICENSE",
+      "gated": false,
+      "soup_compatibility": "Candidate for LoRA SFT; KitchenSoup runner validation pending",
+      "vllm_compatibility": "Upstream Qwen2 support; KitchenSoup deployment validation pending",
+      "supported_recipes": [
+        "lora-sft (planned)"
+      ],
+      "quantization_support": [
+        "AWQ (planned conversion; not this source representation)"
+      ],
+      "vram_guidance": "BF16 weights alone: approximately 3 GiB. Allow substantially more for activations, KV cache and training; no measured training minimum yet."
+    }
+  ]
+}

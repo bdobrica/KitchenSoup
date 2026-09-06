@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/">Home</a> · <a href="/models">All models</a></p>
+<h1>Models</h1>
+<p id="model-status" role="status" aria-live="polite"></p>
+<section id="model-detail" hidden></section>
+<div id="model-browse">
+<h2>Choose a curated model</h2>
+<p>Small Qwen models with pinned revisions. Training and serving validation will follow with the runners.</p>
+<div id="catalog-list"></div>
+<h2>Your models</h2>
+<ul id="model-list"></ul>
+<details><summary>Register a public Hugging Face model</summary>
+<form id="hf-import">
+<label>Name <input name="name" required maxlength="200"></label>
+<label>Repository <input name="repository" required placeholder="Qwen/Qwen2.5-0.5B-Instruct"></label>
+<label>Revision <input name="revision" value="main" required></label>
+<label>Notes <textarea name="notes" maxlength="4000"></textarea></label>
+<button>Register model</button>
+</form>
+</details>
+<details><summary>Upload a custom model</summary>
+<p>Choose a ZIP with config.json, tokenizer files and safetensors weights for a native Qwen2, Llama or Mistral model. Pickle checkpoints, adapters alone and custom code are unsupported.</p>
+<form id="archive-import">
+<label>Name <input name="name" required maxlength="200"></label>
+<label>Model ZIP <input name="file" type="file" accept=".zip" required></label>
+<label>Source license <input name="license" required maxlength="200" placeholder="Declared license or unknown"></label>
+<label>License URL (optional) <input name="license_url" type="url"></label>
+<label>Notes <textarea name="notes" maxlength="4000"></textarea></label>
+<button>Upload and register</button>
+</form>
+</details>
+</div>
+<noscript>Model browsing and registration require JavaScript.</noscript>
+<script defer src="{{ url_for('static', path='/models.js') }}"></script>
+{% endblock %}
