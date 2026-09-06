@@ -89,6 +89,10 @@ services:
     environment:
       <<: [*app-env, *storage-env]
       KITCHENSOUP_SOUP_INGESTION_URL: http://soup-ingest:8090
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LITELLM_API_KEY: ${LITELLM_API_KEY:-}
+      KITCHENSOUP_PROVIDER_ENV_NAMES: ${KITCHENSOUP_PROVIDER_ENV_NAMES:-OPENAI_API_KEY,LITELLM_API_KEY}
+      KITCHENSOUP_PROVIDER_SECRET_DIRECTORY: /run/secrets
     networks: [default, ingestion]
     depends_on:
       postgres:

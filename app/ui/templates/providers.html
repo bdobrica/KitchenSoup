@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/">Home</a></p>
+<h1>LLM provider settings</h1>
+<p>Configure an OpenAI-compatible service using a secret reference. Enter the model names enabled by your provider or gateway.</p>
+<p><strong>Data sharing:</strong> When an assisted workflow uses a provider, its prompt and selected source content leave KitchenSoup and are sent to the configured URL. An internal gateway may forward them to another service. Saving settings sends no requests; tests send only a fixed synthetic prompt and may incur a small provider charge.</p>
+<p id="provider-status" role="status" aria-live="polite"></p>
+<h2 id="provider-form-title">Add provider</h2>
+<form id="provider-form">
+<label>Name <input name="name" value="OpenAI" required maxlength="200"></label>
+<label>API base URL <input name="base_url" type="url" value="https://api.openai.com/v1" required></label>
+<label>Secret reference <input name="api_key_ref" value="env://OPENAI_API_KEY" placeholder="env://NAME or file:///run/secrets/name" autocomplete="off"></label>
+<p>Never paste the API key here. Configure it in the server environment or a mounted secret file. Leave the reference blank only for a service that requires no authentication.</p>
+<label>Model names (one per line) <textarea name="model_names" required placeholder="Configured model name or gateway alias"></textarea></label>
+<button type="submit">Save provider</button>
+<button id="provider-new" type="button">New provider</button>
+</form>
+<h2>Configured providers</h2>
+<div id="provider-list"></div>
+<script defer src="{{ url_for('static', path='/providers.js') }}"></script>
+{% endblock %}

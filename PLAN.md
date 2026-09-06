@@ -1575,7 +1575,8 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 9: LLM provider abstraction.
+The current implementation frontier is Milestone 10: intents, recipes and AppSpec.
+LLM provider configuration is documented in [docs/providers.md](docs/providers.md).
 Dataset snapshots and previews are documented in [docs/dataset-versions.md](docs/dataset-versions.md).
 Soup document extraction is documented in [docs/documents.md](docs/documents.md).
 Canonical ChatGPT import and draft conversation selection are documented in [docs/conversations.md](docs/conversations.md).

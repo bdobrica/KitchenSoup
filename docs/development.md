@@ -176,3 +176,9 @@ Upstream references: [Compose startup ordering](https://docs.docker.com/compose/
 real CLI fixtures without a GPU or data-service credentials.
 See [document ingestion](documents.md) for limits, provenance, dependency-lock
 regeneration and manual Compose image-ID setup.
+
+## Provider configuration
+
+Open `/settings/providers` after `make up`. Provider tests are explicitly invoked
+and send synthetic prompts only. See [providers](providers.md) for environment
+references, optional read-only secret-file mounts and gateway configuration.

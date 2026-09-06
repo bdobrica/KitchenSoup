@@ -4,11 +4,12 @@ KitchenSoup is a lightweight, self-hosted application for guided
 language-model fine-tuning. The planned workflow covers preparing datasets,
 training through Soup, comparing results, and serving temporary vLLM playgrounds.
 
-**Status:** immutable dataset versions and training-example previews.
+**Status:** provider configuration, immutable dataset versions and example previews.
 Import ChatGPT conversations or process documents with Soup, choose inputs,
 and inspect versioned examples with source hashes, licenses and warnings.
-Original uploads and previous versions remain available. Provider configuration
-and training follow in [TODO.md](TODO.md). See [dataset versions](docs/dataset-versions.md).
+Configure [LLM providers](docs/providers.md) with secret references and test their
+connections. Recipes and training follow in [TODO.md](TODO.md).
+See [dataset versions](docs/dataset-versions.md).
 
 ## Quick start
 

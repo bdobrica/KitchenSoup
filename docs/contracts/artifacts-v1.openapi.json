@@ -1214,6 +1214,180 @@
         "title": "ModelView",
         "type": "object"
       },
+      "ProviderConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "api_key_ref": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "env://OPENAI_API_KEY",
+            "title": "Api Key Ref"
+          },
+          "base_url": {
+            "default": "https://api.openai.com/v1",
+            "maxLength": 2048,
+            "title": "Base Url",
+            "type": "string"
+          },
+          "model_names": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Model Names",
+            "type": "array"
+          },
+          "name": {
+            "default": "OpenAI",
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_names"
+        ],
+        "title": "ProviderConfig",
+        "type": "object"
+      },
+      "ProviderTestRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "default": "chat",
+            "enum": [
+              "chat",
+              "structured"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "model": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model"
+        ],
+        "title": "ProviderTestRequest",
+        "type": "object"
+      },
+      "ProviderTestResult": {
+        "properties": {
+          "message": {
+            "default": "Synthetic provider test succeeded; no dataset content was sent",
+            "title": "Message",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "chat",
+              "structured"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "provider_id": {
+            "format": "uuid",
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_id",
+          "model",
+          "mode"
+        ],
+        "title": "ProviderTestResult",
+        "type": "object"
+      },
+      "ProviderView": {
+        "additionalProperties": false,
+        "properties": {
+          "api_key_ref": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "env://OPENAI_API_KEY",
+            "title": "Api Key Ref"
+          },
+          "base_url": {
+            "default": "https://api.openai.com/v1",
+            "maxLength": 2048,
+            "title": "Base Url",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "model_names": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Model Names",
+            "type": "array"
+          },
+          "name": {
+            "default": "OpenAI",
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_names",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ProviderView",
+        "type": "object"
+      },
       "SourceAttach": {
         "additionalProperties": false,
         "properties": {
@@ -2648,6 +2822,176 @@
         "summary": "Preview Examples",
         "tags": [
           "dataset versions"
+        ]
+      }
+    },
+    "/api/v1/llm-providers": {
+      "get": {
+        "operationId": "list_providers_api_v1_llm_providers_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProviderView"
+                  },
+                  "title": "Response List Providers Api V1 Llm Providers Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Providers",
+        "tags": [
+          "LLM providers"
+        ]
+      },
+      "post": {
+        "operationId": "create_provider_api_v1_llm_providers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Provider",
+        "tags": [
+          "LLM providers"
+        ]
+      }
+    },
+    "/api/v1/llm-providers/{provider_id}": {
+      "put": {
+        "operationId": "update_provider_api_v1_llm_providers__provider_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Provider Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Provider",
+        "tags": [
+          "LLM providers"
+        ]
+      }
+    },
+    "/api/v1/llm-providers/{provider_id}/test": {
+      "post": {
+        "operationId": "test_provider_api_v1_llm_providers__provider_id__test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Provider Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderTestResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Test Provider",
+        "tags": [
+          "LLM providers"
         ]
       }
     },

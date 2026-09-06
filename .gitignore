@@ -13,3 +13,7 @@ build/
 .env.*
 !.env.example
 .DS_Store
+
+# Optional operator-managed provider credentials and local Compose overrides
+local-secrets/
+docker-compose.override.yml

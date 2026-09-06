@@ -7,28 +7,36 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, Request
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
+from starlette.responses import Response
 
 from app.api.artifacts import router as artifact_router
 from app.api.conversations import router as conversation_router
 from app.api.datasets import router as dataset_router
 from app.api.documents import router as document_router
 from app.api.models import router as model_router
+from app.api.providers import router as provider_router
 from app.api.versions import router as version_router
 from app.config import Settings
 from app.db.session import create_database_engine
 from app.dependencies import check_dependencies
 from app.ingestion.sources import SourceError
+from app.providers.credentials import LocalCredentialResolver
+from app.providers.openai_compatible import OpenAICompatibleProvider
+from app.providers.schemas import ProviderError
 from app.registry.huggingface import HuggingFaceResolver
 from app.registry.inspection import RegistryError
 from app.services.artifacts import ArtifactService, UploadError
 from app.services.datasets import DatasetService
 from app.services.models import ModelService
+from app.services.providers import ProviderService
 from app.storage.base import ObjectNotFound, ObjectTooLarge, StorageError
 from app.storage.s3 import S3ArtifactStore
 
@@ -44,6 +52,7 @@ def create_app(
     artifact_service: ArtifactService | None = None,
     model_service: ModelService | None = None,
     dataset_service: DatasetService | None = None,
+    provider_service: ProviderService | None = None,
 ) -> FastAPI:
     settings = settings if settings is not None else Settings()
 
@@ -74,6 +83,29 @@ def create_app(
             if dataset_service is None and app.state.artifact_service is not None:
                 artifacts = app.state.artifact_service
                 app.state.dataset_service = DatasetService(artifacts.factory, artifacts)
+            app.state.provider_service = provider_service
+            if provider_service is None:
+                if engine is None and settings.check_dependencies:
+                    engine = create_database_engine(settings)
+                factory = (
+                    sessionmaker(engine, expire_on_commit=False)
+                    if engine is not None
+                    else app.state.artifact_service.factory
+                    if app.state.artifact_service is not None
+                    else None
+                )
+                if factory is not None:
+                    credentials = LocalCredentialResolver(
+                        {
+                            name.strip()
+                            for name in settings.provider_env_names.split(",")
+                            if name.strip()
+                        },
+                        Path(settings.provider_secret_directory),
+                    )
+                    app.state.provider_service = ProviderService(
+                        factory, lambda config: OpenAICompatibleProvider(config, credentials)
+                    )
             yield
         finally:
             if store is not None:
@@ -90,7 +122,31 @@ def create_app(
     app.include_router(conversation_router)
     app.include_router(document_router)
     app.include_router(version_router)
+    app.include_router(provider_router)
     app.state.soup_ingestion_url = settings.soup_ingestion_url
+
+    @app.exception_handler(ProviderError)
+    async def provider_error(request: Request, error: ProviderError) -> JSONResponse:
+        return JSONResponse(
+            status_code=error.status,
+            content={"detail": str(error)},
+            headers={"Cache-Control": "no-store"},
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request: Request, error: RequestValidationError) -> Response:
+        if request.url.path.startswith("/api/v1/llm-providers"):
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "detail": (
+                        "Invalid provider settings; use a secret reference, "
+                        "a plain HTTP(S) URL and explicit model names"
+                    )
+                },
+                headers={"Cache-Control": "no-store"},
+            )
+        return await request_validation_exception_handler(request, error)
 
     @app.exception_handler(SourceError)
     async def source_error(request: Request, error: SourceError) -> JSONResponse:
@@ -176,6 +232,12 @@ def create_app(
     async def version_page(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(
             request=request, name="dataset-version.html", context={"app_name": settings.app_name}
+        )
+
+    @app.get("/settings/providers", response_class=HTMLResponse, include_in_schema=False)
+    async def provider_page(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request=request, name="providers.html", context={"app_name": settings.app_name}
         )
 
     return app

@@ -273,28 +273,28 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 9 — LLM provider abstraction
 
-- [ ] Define OpenAI-compatible `LLMProvider` interface.
-- [ ] Add provider configuration model.
-- [ ] Add:
-  - [ ] `base_url`
-  - [ ] `api_key_ref`
-  - [ ] configured model names
-- [ ] Implement `env://` credential reference.
-- [ ] Implement `file://` credential reference.
-- [ ] Add OpenAI-compatible client implementation.
-- [ ] Add provider health/test action.
-- [ ] Add settings UI.
-- [ ] Add explicit warning when source content will be sent externally.
-- [ ] Add support for OpenAI defaults.
-- [ ] Verify compatibility with LiteLLM-style base URLs.
-- [ ] Add structured-output helper.
-- [ ] Add unit tests with mocked provider.
+- [x] Define OpenAI-compatible `LLMProvider` interface.
+- [x] Add provider configuration model.
+- [x] Add:
+  - [x] `base_url`
+  - [x] `api_key_ref`
+  - [x] configured model names
+- [x] Implement `env://` credential reference.
+- [x] Implement `file://` credential reference.
+- [x] Add OpenAI-compatible client implementation.
+- [x] Add provider health/test action.
+- [x] Add settings UI.
+- [x] Add explicit warning when source content will be sent externally.
+- [x] Add support for OpenAI defaults.
+- [x] Verify compatibility with LiteLLM-style base URLs.
+- [x] Add structured-output helper.
+- [x] Add unit tests with mocked provider.
 
 **Acceptance criteria**
 
-- [ ] User can configure OpenAI using a secret reference.
-- [ ] User can configure an internal LiteLLM-compatible gateway.
-- [ ] KitchenSoup never persists the resolved API key in normal configuration rows.
+- [x] User can configure OpenAI using a secret reference.
+- [x] User can configure an internal LiteLLM-compatible gateway.
+- [x] KitchenSoup never persists the resolved API key in normal configuration rows.
 
 ---
 
