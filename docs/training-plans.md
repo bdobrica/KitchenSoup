@@ -7,8 +7,8 @@ reviewed plan**. Saved plans survive reload and appear in the plan list. Dataset
 version pages also link directly to configuration with that version selected.
 
 Saving a plan does not submit training. The standalone [Soup runner](soup-training.md)
-now translates prepared bundles; executor selection and application-managed
-training submission remain later milestones.
+translates prepared bundles. The opt-in [local executor](local-training.md) adds
+an explicit **Start local training** action to a saved plan.
 
 ## Intents and initial recipes
 

@@ -120,3 +120,19 @@ test-soup: build-soup ## Validate the offline trainer bundle and real Soup CLI w
 
 test-soup-gpu: build-soup ## Optional native-BF16 GPU training smoke (synthetic tiny model)
 	$(VENV_PYTHON) scripts/test_soup_trainer.py --gpu
+
+.PHONY: gpu-check test-gpu test-local-training training-infra dev-training
+gpu-check: ## Check Docker GPU access and native BF16 (build-soup first)
+	$(VENV_PYTHON) scripts/gpu_check.py
+
+test-local-training: build-soup ## Exercise real Docker lifecycle with offline CPU validation
+	$(VENV_PYTHON) scripts/test_local_training.py
+
+test-gpu: build-soup gpu-check ## Tiny end-to-end local Docker BF16 training smoke
+	$(VENV_PYTHON) scripts/test_local_training.py --gpu
+
+training-infra: local-env ## Expose local PostgreSQL for the opt-in host training application
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.training.yml up --detach --wait postgres rustfs
+
+dev-training: ## Serve the host application with local Docker training enabled
+	$(VENV_PYTHON) scripts/dev_training.py

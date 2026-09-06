@@ -5,9 +5,9 @@ ingestion images. It pins Python 3.12 by base digest, Soup 0.74.0, PyTorch 2.8.0
 Transformers 5.16.1, PEFT 0.20.0, TRL 0.29.0 and all transitive packages. CUDA wheels
 make this a large download/build. No training dependency is added to the web app.
 
-This milestone provides a standalone runner. It does not submit a TrainingRun,
-choose hardware, download a model, register an adapter or add a Docker executor.
-Those operations remain separate from the immutable [review plan](training-plans.md).
+This document describes the standalone runner. The [local Docker executor](local-training.md)
+materializes registered inputs and submits TrainingRuns from an immutable
+[review plan](training-plans.md). Adapter registration remains later work.
 
 ## Runner input
 

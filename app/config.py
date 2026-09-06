@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     provider_env_names: str = "OPENAI_API_KEY,LITELLM_API_KEY"
     provider_secret_directory: str = "/run/secrets"
     soup_ingestion_url: str = ""
+    local_training_enabled: bool = False
+    training_workspace: str = ".local-training"
+    training_image: str = "kitchensoup-soup-trainer:local"
+    training_memory_gib: int = Field(default=16, ge=1, le=256)
+    training_cpus: int = Field(default=4, ge=1, le=128)
+    training_timeout: int = Field(default=86400, ge=1, le=604800)
     storage_enabled: bool = False
     s3_endpoint: str = "http://rustfs:9000"
     s3_public_endpoint: str = "http://127.0.0.1:9000"

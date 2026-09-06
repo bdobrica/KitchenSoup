@@ -2,7 +2,7 @@
 {% block content %}
 <p><a href="/">Home</a> · <a href="/training-plans">Training plans</a></p>
 <h1>Prepare a training plan</h1>
-<p>Choose what you want to teach, a registered model and a frozen dataset version. Review and save your plan before training becomes available.</p>
+<p>Choose what you want to teach, a registered model and a frozen dataset version. Review and save your plan, then submit it to the configured local GPU.</p>
 <p id="plan-status" role="status" aria-live="polite"></p>
 <form id="plan-form">
   <label>What would you like to do?
@@ -31,6 +31,8 @@
   <h2>Review training plan</h2>
   <div id="plan-summary"></div>
   <details><summary>Inspect AppSpec and resolved parameters</summary><pre id="plan-json"></pre></details>
+  <button id="plan-run" type="button" hidden>Start local training</button>
+  <p><a href="/training-runs">View training runs</a></p>
   <button id="plan-save" type="button">Save reviewed plan</button>
 </section>
 <section id="plan-history"><h2>Saved plans</h2><div id="plan-list"></div></section>

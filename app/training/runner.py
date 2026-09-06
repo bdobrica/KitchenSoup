@@ -132,9 +132,10 @@ def invoke_cli(output: Path, command: list[str], timeout: int) -> tuple[int, boo
             # Separate file descriptors avoid interleaving stdout/stderr diagnostics.
             written = 0
             with path.open("wb") as destination:
-                while chunk := stream.read(65536):  # type: ignore[attr-defined]
+                while chunk := stream.read1(65536):  # type: ignore[attr-defined]
                     keep = chunk[: max(0, LOG_LIMIT - written)]
                     destination.write(keep)
+                    destination.flush()
                     written += len(keep)
                     if len(keep) != len(chunk):
                         truncated[index] = True

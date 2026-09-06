@@ -1580,7 +1580,8 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 12: local Docker training executor.
+The current implementation frontier is Milestone 13: queue, worker, reconciler and job state.
+The opt-in local Docker executor is documented in [docs/local-training.md](docs/local-training.md).
 The standalone pinned Soup runner and translation contracts are documented in [docs/soup-training.md](docs/soup-training.md).
 Native-BF16 GPU smoke validation remains required on compatible hardware.
 Training intent, recipes and saved review plans are documented in [docs/training-plans.md](docs/training-plans.md).

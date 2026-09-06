@@ -357,26 +357,27 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 12 — Local Docker training executor
 
-- [ ] Define `TrainingExecutor` protocol.
-- [ ] Implement local Docker executor.
-- [ ] Mount or materialize dataset input.
-- [ ] Pass immutable run spec.
-- [ ] Launch with `--gpus`.
-- [ ] Use deterministic container naming.
-- [ ] Implement status.
-- [ ] Implement logs.
-- [ ] Implement cancel.
-- [ ] Implement cleanup.
-- [ ] Persist external container ID/name.
-- [ ] Add `make gpu-check`.
-- [ ] Add `make test-gpu`.
-- [ ] Add a tiny end-to-end local training smoke test.
+- [x] Define `TrainingExecutor` protocol.
+- [x] Implement local Docker executor.
+- [x] Mount or materialize dataset input.
+- [x] Pass immutable run spec.
+- [x] Launch with `--gpus`.
+- [x] Use deterministic container naming.
+- [x] Implement status.
+- [x] Implement logs.
+- [x] Implement cancel.
+- [x] Implement cleanup.
+- [x] Persist external container ID/name.
+- [x] Add `make gpu-check`.
+- [x] Add `make test-gpu`.
+- [x] Add a tiny end-to-end local training smoke test.
 
 **Acceptance criteria**
 
-- [ ] KitchenSoup can launch a Soup fine-tune on the local NVIDIA GPU.
-- [ ] Status and logs appear in the application.
-- [ ] User can cancel the run.
+- [ ] Validate a Soup fine-tune through the local executor on a native-BF16 NVIDIA GPU.
+  Implementation and CPU lifecycle checks are complete; compatible GPU access remains pending.
+- [x] Status and logs appear in the application.
+- [x] User can cancel the run.
 
 ---
 

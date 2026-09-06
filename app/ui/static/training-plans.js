@@ -49,6 +49,15 @@
       node('p', `Recipe: ${resolved.recipe.name} (v${resolved.recipe.version}). Output: LoRA adapter.`));
     const link = node('a', 'Review the exact dataset examples'); link.href = `/datasets/${resolved.dataset_id}/versions/${resolved.dataset_version_id}`; summary.append(link);
     for (const warning of resolved.warnings) summary.append(node('p', warning));
+    if (value.id) {
+      const button = $('#plan-run'); button.hidden = false;
+      button.onclick = async () => {
+        button.disabled = true; status.textContent = 'Preparing inputs and submitting training…';
+        try { const run = await request('/training-runs', 'POST', {plan_id: value.id}); location.assign(`/training-runs/${run.id}`); }
+        catch (error) { status.textContent = `${error.message}. Check Training runs for a retained attempt before retrying.`; }
+        finally { button.disabled = false; }
+      };
+    }
     if (value.id) summary.append(node('p', `Saved ${new Date(value.created_at).toLocaleString()}. No training run was submitted.`));
     $('#plan-json').textContent = JSON.stringify(value, null, 2);
     $('#plan-review').hidden = false;

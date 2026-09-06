@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/">Home</a> · <a href="/training-plans">Training plans</a> · <a href="/training-runs">Training runs</a></p>
+<h1>Training runs</h1>
+<p id="run-message" role="status" aria-live="polite"></p>
+<div id="run-list"></div>
+<section id="run-detail" hidden>
+  <p id="run-status"></p>
+  <p><a id="run-plan">Review saved plan</a></p>
+  <button id="run-refresh" type="button">Refresh status and logs</button>
+  <button id="run-cancel" type="button">Cancel run</button>
+  <button id="run-cleanup" type="button">Remove stopped container</button>
+  <p>Removing a stopped container retains its inputs, outputs and logs on this host.</p>
+  <details><summary>Run details</summary><pre id="run-json"></pre></details>
+  <h2>Standard output</h2><pre id="run-stdout"></pre>
+  <h2>Standard error</h2><pre id="run-stderr"></pre>
+</section>
+<script defer src="{{ url_for('static', path='/training-runs.js') }}"></script>
+{% endblock %}

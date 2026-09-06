@@ -1,0 +1,1 @@
+"""Replaceable training infrastructure adapters."""

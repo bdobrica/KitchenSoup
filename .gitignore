@@ -17,3 +17,6 @@ build/
 # Optional operator-managed provider credentials and local Compose overrides
 local-secrets/
 docker-compose.override.yml
+
+# Private local training inputs, outputs and logs
+.local-training/

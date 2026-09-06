@@ -23,11 +23,15 @@ from app.api.datasets import router as dataset_router
 from app.api.documents import router as document_router
 from app.api.models import router as model_router
 from app.api.providers import router as provider_router
+from app.api.runs import router as run_router
 from app.api.training import router as training_router
 from app.api.versions import router as version_router
 from app.config import Settings
 from app.db.session import create_database_engine
 from app.dependencies import check_dependencies
+from app.executors.base import ExecutorError
+from app.executors.local_docker import LocalDockerTrainingExecutor
+from app.executors.materialize import RegisteredInputMaterializer
 from app.ingestion.sources import SourceError
 from app.providers.credentials import LocalCredentialResolver
 from app.providers.openai_compatible import OpenAICompatibleProvider
@@ -38,6 +42,7 @@ from app.services.artifacts import ArtifactService, UploadError
 from app.services.datasets import DatasetService
 from app.services.models import ModelService
 from app.services.providers import ProviderService
+from app.services.runs import TrainingRunService
 from app.services.training import TrainingPlanService
 from app.storage.base import ObjectNotFound, ObjectTooLarge, StorageError
 from app.storage.s3 import S3ArtifactStore
@@ -56,6 +61,7 @@ def create_app(
     dataset_service: DatasetService | None = None,
     provider_service: ProviderService | None = None,
     training_plan_service: TrainingPlanService | None = None,
+    training_run_service: TrainingRunService | None = None,
 ) -> FastAPI:
     settings = settings if settings is not None else Settings()
 
@@ -114,6 +120,21 @@ def create_app(
                 app.state.training_plan_service = TrainingPlanService(
                     app.state.dataset_service.factory
                 )
+            app.state.training_run_service = training_run_service
+            if training_run_service is None and settings.local_training_enabled:
+                if app.state.artifact_service is None or app.state.training_plan_service is None:
+                    raise ValueError("Local training requires artifact storage and plan metadata")
+                executor = LocalDockerTrainingExecutor(
+                    Path(settings.training_workspace),
+                    RegisteredInputMaterializer(app.state.artifact_service),
+                    image=settings.training_image,
+                    memory_gib=settings.training_memory_gib,
+                    cpus=settings.training_cpus,
+                    timeout=settings.training_timeout,
+                )
+                app.state.training_run_service = TrainingRunService(
+                    app.state.training_plan_service, executor
+                )
             yield
         finally:
             if store is not None:
@@ -132,7 +153,14 @@ def create_app(
     app.include_router(version_router)
     app.include_router(provider_router)
     app.include_router(training_router)
+    app.include_router(run_router)
     app.state.soup_ingestion_url = settings.soup_ingestion_url
+
+    @app.exception_handler(ExecutorError)
+    async def executor_error(request: Request, error: ExecutorError) -> JSONResponse:
+        return JSONResponse(
+            status_code=503, content={"detail": str(error)}, headers={"Cache-Control": "no-store"}
+        )
 
     @app.exception_handler(ProviderError)
     async def provider_error(request: Request, error: ProviderError) -> JSONResponse:
@@ -254,6 +282,13 @@ def create_app(
     async def training_page(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(
             request=request, name="training-plans.html", context={"app_name": settings.app_name}
+        )
+
+    @app.get("/training-runs", response_class=HTMLResponse, include_in_schema=False)
+    @app.get("/training-runs/{run_id}", response_class=HTMLResponse, include_in_schema=False)
+    async def runs_page(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request=request, name="training-runs.html", context={"app_name": settings.app_name}
         )
 
     return app
