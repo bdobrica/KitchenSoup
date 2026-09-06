@@ -9,7 +9,8 @@ Import ChatGPT conversations or process documents with Soup, choose inputs,
 and inspect versioned examples with source hashes, licenses and warnings.
 Configure [LLM providers](docs/providers.md) with secret references and test their
 connections. Choose an intent and save a [reviewed training plan](docs/training-plans.md).
-Engine translation and training follow in [TODO.md](TODO.md).
+An offline [Soup runner](docs/soup-training.md) is available for prepared bundles.
+Application-managed execution follows in [TODO.md](TODO.md).
 See [dataset versions](docs/dataset-versions.md).
 
 ## Quick start

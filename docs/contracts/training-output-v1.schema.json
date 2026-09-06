@@ -1,0 +1,176 @@
+{
+  "$defs": {
+    "RunnerFile": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "size_bytes"
+      ],
+      "title": "RunnerFile",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "adapters": {
+      "items": {
+        "$ref": "#/$defs/RunnerFile"
+      },
+      "title": "Adapters",
+      "type": "array"
+    },
+    "command": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Command",
+      "type": "array"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Error"
+    },
+    "exit_code": {
+      "title": "Exit Code",
+      "type": "integer"
+    },
+    "files": {
+      "items": {
+        "$ref": "#/$defs/RunnerFile"
+      },
+      "title": "Files",
+      "type": "array"
+    },
+    "image_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Image Digest",
+      "type": "string"
+    },
+    "input_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Input Sha256"
+    },
+    "logs_truncated": {
+      "title": "Logs Truncated",
+      "type": "boolean"
+    },
+    "plan_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Plan Sha256"
+    },
+    "run_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Run Id"
+    },
+    "schema": {
+      "const": "kitchensoup.training-output/v1",
+      "default": "kitchensoup.training-output/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "soup_exit_code": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Soup Exit Code"
+    },
+    "soup_version": {
+      "default": "0.74.0",
+      "title": "Soup Version",
+      "type": "string"
+    },
+    "stage": {
+      "enum": [
+        "preflight",
+        "training",
+        "complete"
+      ],
+      "title": "Stage",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "succeeded",
+        "validated",
+        "failed"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "translator_version": {
+      "default": "kitchensoup.soup-translator/v1",
+      "title": "Translator Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_id",
+    "status",
+    "stage",
+    "exit_code",
+    "soup_exit_code",
+    "error",
+    "image_digest",
+    "input_sha256",
+    "plan_sha256",
+    "command",
+    "files",
+    "adapters",
+    "logs_truncated"
+  ],
+  "title": "RunnerManifest",
+  "type": "object"
+}

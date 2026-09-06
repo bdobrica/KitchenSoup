@@ -330,28 +330,28 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 11 — Soup trainer image and translation
 
-- [ ] Create `images/soup-trainer`.
-- [ ] Pin Soup version.
-- [ ] Pin container dependencies.
-- [ ] Implement runner entrypoint.
-- [ ] Accept immutable AppSpec/resolved run input.
-- [ ] Implement AppSpec → Soup config translator.
-- [ ] Write generated `soup.yaml`.
-- [ ] Invoke Soup through CLI only.
-- [ ] Capture stdout/stderr.
-- [ ] Capture exit status.
-- [ ] Produce output manifest.
-- [ ] Record image digest.
-- [ ] Add tiny smoke-test dataset fixture.
-- [ ] Implement `make build-soup`.
-- [ ] Add translator unit tests.
-- [ ] Add optional GPU smoke test.
+- [x] Create `images/soup-trainer`.
+- [x] Pin Soup version.
+- [x] Pin container dependencies.
+- [x] Implement runner entrypoint.
+- [x] Accept immutable AppSpec/resolved run input.
+- [x] Implement AppSpec → Soup config translator.
+- [x] Write generated `soup.yaml`.
+- [x] Invoke Soup through CLI only.
+- [x] Capture stdout/stderr.
+- [x] Capture exit status.
+- [x] Produce output manifest.
+- [x] Record image digest.
+- [x] Add tiny smoke-test dataset fixture.
+- [x] Implement `make build-soup`.
+- [x] Add translator unit tests.
+- [x] Add optional GPU smoke test.
 
 **Acceptance criteria**
 
-- [ ] A pinned container can train from a generated Soup config.
-- [ ] KitchenSoup does not import Soup Python modules.
-- [ ] Run output is deterministic enough to register and reproduce.
+- [x] A pinned container can train from a generated Soup config (validated by the separate synthetic CPU CLI probe).
+- [x] KitchenSoup does not import Soup Python modules.
+- [x] Run output is deterministic enough to register and reproduce.
 
 ---
 

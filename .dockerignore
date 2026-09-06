@@ -13,3 +13,5 @@
 !images/
 !images/soup-ingest/
 !images/soup-ingest/**
+!images/soup-trainer/
+!images/soup-trainer/**

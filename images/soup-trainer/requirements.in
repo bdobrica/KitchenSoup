@@ -1,0 +1,5 @@
+soup-cli[train]==0.74.0
+torch==2.8.0
+transformers==5.16.1
+peft==0.20.0
+trl==0.29.0

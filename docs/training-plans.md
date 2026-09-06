@@ -6,8 +6,9 @@ click **Review training plan**, inspect the examples and warnings, then **Save
 reviewed plan**. Saved plans survive reload and appear in the plan list. Dataset
 version pages also link directly to configuration with that version selected.
 
-Saving a plan does not submit training. Engine translation, executor selection,
-hardware preflight and training execution remain later milestones.
+Saving a plan does not submit training. The standalone [Soup runner](soup-training.md)
+now translates prepared bundles; executor selection and application-managed
+training submission remain later milestones.
 
 ## Intents and initial recipes
 
@@ -32,7 +33,7 @@ context. The model/template must support this masking. Documents use ordinary
 causal text loss, with no generated Q&A, added conversation roles or cross-example
 packing. The trainer must reject examples exceeding the sequence limit instead of
 silently losing targets through truncation. Tokenization and these engine-specific
-checks are deferred to the translator and preflight, not performed by plan review.
+checks run in the standalone trainer, not during plan review.
 Mixed conversation/document selections require separate dataset versions. A task
 recipe currently uses the same user/assistant example format as conversations.
 

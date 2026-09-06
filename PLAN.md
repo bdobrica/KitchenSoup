@@ -1580,7 +1580,9 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 11: Soup trainer image and translation.
+The current implementation frontier is Milestone 12: local Docker training executor.
+The standalone pinned Soup runner and translation contracts are documented in [docs/soup-training.md](docs/soup-training.md).
+Native-BF16 GPU smoke validation remains required on compatible hardware.
 Training intent, recipes and saved review plans are documented in [docs/training-plans.md](docs/training-plans.md).
 LLM provider configuration is documented in [docs/providers.md](docs/providers.md).
 Dataset snapshots and previews are documented in [docs/dataset-versions.md](docs/dataset-versions.md).

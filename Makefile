@@ -110,3 +110,13 @@ build-soup-ingest: ## Build the pinned Soup document CLI image
 
 test-soup-ingest: build-soup-ingest ## Exercise real Soup document fixtures in its isolated image
 	$(VENV_PYTHON) scripts/test_soup_ingest.py
+
+.PHONY: build-soup test-soup test-soup-gpu
+build-soup: ## Build the pinned Soup trainer image (large CUDA dependencies)
+	docker build --platform linux/amd64 -f images/soup-trainer/Dockerfile -t kitchensoup-soup-trainer:local .
+
+test-soup: build-soup ## Validate the offline trainer bundle and real Soup CLI without a GPU
+	$(VENV_PYTHON) scripts/test_soup_trainer.py
+
+test-soup-gpu: build-soup ## Optional native-BF16 GPU training smoke (synthetic tiny model)
+	$(VENV_PYTHON) scripts/test_soup_trainer.py --gpu
