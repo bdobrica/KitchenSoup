@@ -227,20 +227,20 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 7 — Soup-backed document ingestion
 
-- [ ] Define document-ingestion service boundary.
-- [ ] Add Soup ingestion runner mode.
-- [ ] Support initial Soup-supported document types.
-- [ ] Convert selected source documents into a versioned dataset artifact.
-- [ ] Capture Soup ingestion logs.
-- [ ] Record Soup version/image digest used.
-- [ ] Record warnings and ignored inputs.
-- [ ] Add ingestion integration fixtures.
-- [ ] Keep ingestion output separate from raw source objects.
+- [x] Define document-ingestion service boundary.
+- [x] Add Soup ingestion runner mode.
+- [x] Support initial Soup-supported document types.
+- [x] Convert selected source documents into a versioned dataset artifact.
+- [x] Capture Soup ingestion logs.
+- [x] Record Soup version/image digest used.
+- [x] Record warnings and ignored inputs.
+- [x] Add ingestion integration fixtures.
+- [x] Keep ingestion output separate from raw source objects.
 
 **Acceptance criteria**
 
-- [ ] Supported documents can be converted into a dataset without KitchenSoup implementing parsing itself.
-- [ ] The ingestion operation is reproducible from stored source artifacts.
+- [x] Supported documents can be converted into a dataset without KitchenSoup implementing parsing itself.
+- [x] The ingestion operation is reproducible from stored source artifacts.
 
 ---
 

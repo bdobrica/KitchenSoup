@@ -21,3 +21,4 @@ jobs:
       - run: make verify
       - run: make compose-check
       - run: make test-integration
+      - run: make test-soup-ingest

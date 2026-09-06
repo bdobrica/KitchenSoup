@@ -20,6 +20,7 @@ from app.db.models import (
     DatasetVersion,
     Deployment,
     Document,
+    DocumentIngestion,
     EvaluationPrompt,
     EvaluationResult,
     EvaluationSuite,
@@ -148,6 +149,15 @@ def seed_graph(session: Session) -> tuple[TrainingRun, DatasetVersion, JobEvent]
     session.add_all(
         [
             version,
+            DocumentIngestion(
+                dataset_id=dataset.id,
+                version=1,
+                status="succeeded",
+                output_artifact_id=output.id,
+                logs_artifact_id=raw.id,
+                manifest_artifact_id=raw.id,
+                manifest={"fixture": True},
+            ),
             source,
             ModelVersionParent(child_id=child.id, parent_id=base.id),
             ModelSource(

@@ -168,3 +168,11 @@ of the unit-test gate.
 Upstream references: [Compose startup ordering](https://docs.docker.com/compose/how-tos/startup-order/),
 [PostgreSQL image](https://hub.docker.com/_/postgres), and
 [RustFS release](https://github.com/rustfs/rustfs/releases/tag/1.0.0-beta.12).
+
+## Soup document runner
+
+`make up` builds and starts the isolated CPU-only Soup ingestion image.
+`make build-soup-ingest` builds it separately and `make test-soup-ingest` checks
+real CLI fixtures without a GPU or data-service credentials.
+See [document ingestion](documents.md) for limits, provenance, dependency-lock
+regeneration and manual Compose image-ID setup.

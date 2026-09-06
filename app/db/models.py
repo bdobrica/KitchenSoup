@@ -314,3 +314,19 @@ class Deployment(Entity):
     external_id: Mapped[str | None]
     endpoint: Mapped[str | None]
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class DocumentIngestion(Entity):
+    __tablename__ = "document_ingestions"
+    __table_args__ = (
+        UniqueConstraint("dataset_id", "version"),
+        CheckConstraint("version > 0", name="positive_version"),
+        CheckConstraint("status IN ('succeeded', 'failed')", name="valid_status"),
+    )
+    dataset_id: Mapped[UUID] = mapped_column(ForeignKey("datasets.id"), index=True)
+    version: Mapped[int]
+    status: Mapped[str]
+    output_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"))
+    logs_artifact_id: Mapped[UUID] = mapped_column(ForeignKey("artifacts.id"))
+    manifest_artifact_id: Mapped[UUID] = mapped_column(ForeignKey("artifacts.id"))
+    manifest: Mapped[dict[str, Any]] = mapped_column(JSONB)

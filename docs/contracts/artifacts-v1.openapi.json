@@ -492,6 +492,259 @@
         "title": "DatasetView",
         "type": "object"
       },
+      "DocumentIngestionManifest": {
+        "properties": {
+          "command": {
+            "default": [
+              "soup",
+              "data",
+              "ingest",
+              "source{extension}",
+              "--output",
+              "output.jsonl"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Command",
+            "type": "array"
+          },
+          "dataset_id": {
+            "format": "uuid",
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "example_count": {
+            "title": "Example Count",
+            "type": "integer"
+          },
+          "image_id": {
+            "title": "Image Id",
+            "type": "string"
+          },
+          "ingestion_id": {
+            "format": "uuid",
+            "title": "Ingestion Id",
+            "type": "string"
+          },
+          "logs_artifact_id": {
+            "format": "uuid",
+            "title": "Logs Artifact Id",
+            "type": "string"
+          },
+          "output_artifact_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Artifact Id"
+          },
+          "runner_mode": {
+            "const": "soup-data-ingest/v1",
+            "default": "soup-data-ingest/v1",
+            "title": "Runner Mode",
+            "type": "string"
+          },
+          "schema": {
+            "const": "kitchensoup.document-ingestion/v1",
+            "title": "Schema",
+            "type": "string"
+          },
+          "soup_version": {
+            "title": "Soup Version",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentInputSnapshot"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema",
+          "ingestion_id",
+          "dataset_id",
+          "version",
+          "status",
+          "soup_version",
+          "image_id",
+          "sources",
+          "output_artifact_id",
+          "logs_artifact_id",
+          "example_count"
+        ],
+        "title": "DocumentIngestionManifest",
+        "type": "object"
+      },
+      "DocumentIngestionView": {
+        "properties": {
+          "dataset_id": {
+            "format": "uuid",
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "logs_artifact_id": {
+            "format": "uuid",
+            "title": "Logs Artifact Id",
+            "type": "string"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/DocumentIngestionManifest"
+          },
+          "manifest_artifact_id": {
+            "format": "uuid",
+            "title": "Manifest Artifact Id",
+            "type": "string"
+          },
+          "output_artifact_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Artifact Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "dataset_id",
+          "version",
+          "status",
+          "output_artifact_id",
+          "logs_artifact_id",
+          "manifest_artifact_id",
+          "manifest"
+        ],
+        "title": "DocumentIngestionView",
+        "type": "object"
+      },
+      "DocumentInputSnapshot": {
+        "properties": {
+          "artifact_id": {
+            "format": "uuid",
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "disposition": {
+            "enum": [
+              "ingested",
+              "ignored",
+              "failed",
+              "not_attempted"
+            ],
+            "title": "Disposition",
+            "type": "string"
+          },
+          "example_count": {
+            "title": "Example Count",
+            "type": "integer"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "ignored_rows": {
+            "title": "Ignored Rows",
+            "type": "integer"
+          },
+          "license": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "source_id": {
+            "format": "uuid",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source_id",
+          "artifact_id",
+          "sha256",
+          "filename",
+          "license",
+          "disposition",
+          "warnings",
+          "example_count",
+          "ignored_rows"
+        ],
+        "title": "DocumentInputSnapshot",
+        "type": "object"
+      },
+      "DocumentSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "source_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 16,
+            "minItems": 1,
+            "title": "Source Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source_ids"
+        ],
+        "title": "DocumentSelection",
+        "type": "object"
+      },
       "DocumentView": {
         "properties": {
           "canonical_artifact_id": {
@@ -1326,6 +1579,104 @@
         "summary": "List Conversations",
         "tags": [
           "conversations"
+        ]
+      }
+    },
+    "/api/v1/datasets/{dataset_id}/document-ingestions": {
+      "get": {
+        "operationId": "list_ingestions_api_v1_datasets__dataset_id__document_ingestions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentIngestionView"
+                  },
+                  "title": "Response List Ingestions Api V1 Datasets  Dataset Id  Document Ingestions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Ingestions",
+        "tags": [
+          "document ingestion"
+        ]
+      },
+      "post": {
+        "operationId": "ingest_documents_api_v1_datasets__dataset_id__document_ingestions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentSelection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentIngestionView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ingest Documents",
+        "tags": [
+          "document ingestion"
         ]
       }
     },

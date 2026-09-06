@@ -28,7 +28,8 @@ Extensions are case-insensitive. The declared browser MIME type is not trusted
 as proof of format. Raw-source attachment does not parse JSON/JSONL/CSV syntax,
 conversation layouts, PDF internals or Word XML. It produces no canonical
 artifacts, extracted text, training examples or dataset versions. The separate [ChatGPT import action](conversations.md)
-can create canonical conversations from an attached export ZIP. Original line
+can create canonical conversations from an attached export ZIP.
+[Soup document ingestion](documents.md) processes selected PDF/DOCX/Markdown/TXT sources. Original line
 endings, encoding markers, filenames inside archives and all source bytes are retained.
 
 ## ZIP extraction utility
@@ -69,7 +70,8 @@ immediately after removal. The existing artifact metadata/download APIs remain
 available by UUID after reload. Permanent raw-object deletion is deferred.
 
 Removal returns 409 if conversation imports, canonical document artifacts, or
-any dataset version exist. This preserves provenance until version-specific
+any dataset version exist. Document-ingestion history also protects all sources
+in its dataset, including failed attempts and ignored inputs. This preserves provenance until version-specific
 source membership and retention rules are implemented. The API also checks that
 the source belongs to the requested dataset. See [ADR 0004](adr/0004-raw-source-ingestion.md).
 

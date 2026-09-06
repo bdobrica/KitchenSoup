@@ -556,13 +556,11 @@ Each importer converts only to the canonical schema.
 
 KitchenSoup relies on Soup for document ingestion wherever practical.
 
-Initial supported document types should track Soup capabilities, including:
-
-- PDF;
-- DOCX;
-- Markdown;
-- plain text;
-- supported structured files such as JSONL/CSV where appropriate.
+The initial Soup document CLI supports PDF, DOCX, Markdown and plain text.
+Structured JSONL/CSV remain raw sources until a suitable conversion mode is added.
+The [document-ingestion reference](docs/documents.md) defines the implemented
+limits, immutable extraction history and versioned intermediate artifacts.
+Dataset manifests and resolved training-example preview remain Milestone 8.
 
 KitchenSoup should retain:
 
@@ -1576,7 +1574,8 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 7: Soup-backed document ingestion.
+The current implementation frontier is Milestone 8: dataset manifests and preview.
+Soup document extraction is documented in [docs/documents.md](docs/documents.md).
 Canonical ChatGPT import and draft conversation selection are documented in [docs/conversations.md](docs/conversations.md).
 Dataset creation and raw-source admission are documented in [docs/datasets.md](docs/datasets.md).
 Model browsing and import are documented in [docs/models.md](docs/models.md).

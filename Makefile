@@ -41,8 +41,9 @@ dev: ## Serve the application at http://127.0.0.1:8000
 local-env: ## Generate missing development credentials in ignored .env
 	$(PYTHON) scripts/local_env.py
 
-up: local-env ## Build and start the stack, waiting for healthy services
-	$(COMPOSE) up --build --detach --wait --wait-timeout 180
+up: local-env build-soup-ingest ## Build and start the stack, waiting for healthy services
+	$(COMPOSE) build web worker reconciler catalog-init storage-init
+	SOUP_IMAGE_ID=$$(docker image inspect kitchensoup-soup-ingest:local --format '{{.Id}}') $(COMPOSE) up --no-build --detach --wait --wait-timeout 180
 
 down: ## Stop the stack, retaining local data volumes
 	$(COMPOSE) down --remove-orphans
@@ -102,3 +103,10 @@ catalog-sync: local-env ## Synchronize the packaged catalog into the migrated da
 	$(COMPOSE) up --detach --wait postgres
 	$(COMPOSE) build catalog-init
 	$(COMPOSE) run --rm --no-deps catalog-init
+
+.PHONY: build-soup-ingest test-soup-ingest
+build-soup-ingest: ## Build the pinned Soup document CLI image
+	$(COMPOSE) build soup-ingest
+
+test-soup-ingest: build-soup-ingest ## Exercise real Soup document fixtures in its isolated image
+	$(VENV_PYTHON) scripts/test_soup_ingest.py

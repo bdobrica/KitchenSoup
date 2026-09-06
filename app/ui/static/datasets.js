@@ -104,7 +104,7 @@ document.querySelector("#source-upload").addEventListener("submit", event => {
     delete fields.file; fields.artifact_id = artifact.id; fields.filename = file.name;
     await api(`/datasets/${datasetId}/sources`, fields);
     form.reset(); await refresh();
-    statusText.textContent = "Source stored unchanged and ready for future processing.";
+    statusText.textContent = "Source stored unchanged and ready for processing.";
   });
 });
 refresh().catch(error => { statusText.textContent = error.message; });

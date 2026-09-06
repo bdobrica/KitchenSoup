@@ -164,3 +164,8 @@ Conversation metadata now includes a mutable `selected` draft flag (false by def
 and an array of ignored-content warning codes. Migration `953d3fcf27d6` adds these
 fields to existing rows; the existing identity/timestamp guard still applies.
 See [canonical import and selection](conversations.md).
+
+Document ingestion adds immutable `document_ingestions` snapshots with numbered
+per-dataset attempts, output/log/manifest artifact references and provenance JSON.
+Its relational migration is generated; a separate trigger rejects updates.
+See [ADR 0006](adr/0006-soup-document-ingestion.md).

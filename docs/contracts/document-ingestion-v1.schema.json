@@ -1,0 +1,176 @@
+{
+  "$defs": {
+    "DocumentInputSnapshot": {
+      "properties": {
+        "artifact_id": {
+          "format": "uuid",
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "disposition": {
+          "enum": [
+            "ingested",
+            "ignored",
+            "failed",
+            "not_attempted"
+          ],
+          "title": "Disposition",
+          "type": "string"
+        },
+        "example_count": {
+          "title": "Example Count",
+          "type": "integer"
+        },
+        "filename": {
+          "title": "Filename",
+          "type": "string"
+        },
+        "ignored_rows": {
+          "title": "Ignored Rows",
+          "type": "integer"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "License"
+        },
+        "sha256": {
+          "title": "Sha256",
+          "type": "string"
+        },
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source_id",
+        "artifact_id",
+        "sha256",
+        "filename",
+        "license",
+        "disposition",
+        "warnings",
+        "example_count",
+        "ignored_rows"
+      ],
+      "title": "DocumentInputSnapshot",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "command": {
+      "default": [
+        "soup",
+        "data",
+        "ingest",
+        "source{extension}",
+        "--output",
+        "output.jsonl"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "title": "Command",
+      "type": "array"
+    },
+    "dataset_id": {
+      "format": "uuid",
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "example_count": {
+      "title": "Example Count",
+      "type": "integer"
+    },
+    "image_id": {
+      "title": "Image Id",
+      "type": "string"
+    },
+    "ingestion_id": {
+      "format": "uuid",
+      "title": "Ingestion Id",
+      "type": "string"
+    },
+    "logs_artifact_id": {
+      "format": "uuid",
+      "title": "Logs Artifact Id",
+      "type": "string"
+    },
+    "output_artifact_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Output Artifact Id"
+    },
+    "runner_mode": {
+      "const": "soup-data-ingest/v1",
+      "default": "soup-data-ingest/v1",
+      "title": "Runner Mode",
+      "type": "string"
+    },
+    "schema": {
+      "const": "kitchensoup.document-ingestion/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "soup_version": {
+      "title": "Soup Version",
+      "type": "string"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/DocumentInputSnapshot"
+      },
+      "title": "Sources",
+      "type": "array"
+    },
+    "status": {
+      "enum": [
+        "succeeded",
+        "failed"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema",
+    "ingestion_id",
+    "dataset_id",
+    "version",
+    "status",
+    "soup_version",
+    "image_id",
+    "sources",
+    "output_artifact_id",
+    "logs_artifact_id",
+    "example_count"
+  ],
+  "title": "DocumentIngestionManifest",
+  "type": "object"
+}

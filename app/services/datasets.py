@@ -12,6 +12,7 @@ from app.db.models import (
     DatasetSource,
     DatasetVersion,
     Document,
+    DocumentIngestion,
 )
 from app.db.session import unit_of_work
 from app.ingestion.schemas import (
@@ -169,6 +170,12 @@ class DatasetService:
         with unit_of_work(self.factory) as session:
             self._dataset(session, identifier, lock=True)
             source = self._source(session, identifier, source_id)
+            if session.scalar(
+                select(DocumentIngestion.id)
+                .where(DocumentIngestion.dataset_id == identifier)
+                .limit(1)
+            ):
+                raise SourceError(409, "Sources with document ingestion history cannot be removed")
             documents = list(
                 session.scalars(
                     select(Document).where(Document.source_id == source.id).with_for_update()

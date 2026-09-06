@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     postgres_password: SecretStr = SecretStr("")
     valkey_url: str = "redis://valkey:6379/0"
     rustfs_health_url: str = "http://rustfs:9000/health/ready"
+    soup_ingestion_url: str = ""
     storage_enabled: bool = False
     s3_endpoint: str = "http://rustfs:9000"
     s3_public_endpoint: str = "http://127.0.0.1:9000"

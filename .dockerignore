@@ -9,3 +9,7 @@
 !alembic/**
 **/__pycache__/
 **/*.pyc
+
+!images/
+!images/soup-ingest/
+!images/soup-ingest/**

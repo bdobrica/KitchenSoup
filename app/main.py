@@ -17,6 +17,7 @@ from sqlalchemy.orm import sessionmaker
 from app.api.artifacts import router as artifact_router
 from app.api.conversations import router as conversation_router
 from app.api.datasets import router as dataset_router
+from app.api.documents import router as document_router
 from app.api.models import router as model_router
 from app.config import Settings
 from app.db.session import create_database_engine
@@ -86,6 +87,8 @@ def create_app(
     app.include_router(model_router)
     app.include_router(dataset_router)
     app.include_router(conversation_router)
+    app.include_router(document_router)
+    app.state.soup_ingestion_url = settings.soup_ingestion_url
 
     @app.exception_handler(SourceError)
     async def source_error(request: Request, error: SourceError) -> JSONResponse:

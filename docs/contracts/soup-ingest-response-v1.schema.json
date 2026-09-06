@@ -1,0 +1,55 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "exit_code": {
+      "title": "Exit Code",
+      "type": "integer"
+    },
+    "image_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Image Id",
+      "type": "string"
+    },
+    "logs_truncated": {
+      "title": "Logs Truncated",
+      "type": "boolean"
+    },
+    "output": {
+      "maxLength": 33554432,
+      "title": "Output",
+      "type": "string"
+    },
+    "schema": {
+      "const": "kitchensoup.soup-ingest-response/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "soup_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Soup Version",
+      "type": "string"
+    },
+    "stderr": {
+      "maxLength": 262144,
+      "title": "Stderr",
+      "type": "string"
+    },
+    "stdout": {
+      "maxLength": 262144,
+      "title": "Stdout",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "soup_version",
+    "image_id",
+    "exit_code",
+    "output",
+    "stdout",
+    "stderr",
+    "logs_truncated"
+  ],
+  "title": "SoupResult",
+  "type": "object"
+}

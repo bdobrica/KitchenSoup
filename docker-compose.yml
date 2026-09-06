@@ -88,12 +88,16 @@ services:
     <<: *app
     environment:
       <<: [*app-env, *storage-env]
+      KITCHENSOUP_SOUP_INGESTION_URL: http://soup-ingest:8090
+    networks: [default, ingestion]
     depends_on:
       postgres:
         condition: service_healthy
       valkey:
         condition: service_healthy
       rustfs:
+        condition: service_healthy
+      soup-ingest:
         condition: service_healthy
       storage-init:
         condition: service_completed_successfully
@@ -107,6 +111,30 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+
+  soup-ingest:
+    build:
+      context: .
+      dockerfile: images/soup-ingest/Dockerfile
+    image: ${SOUP_IMAGE_ID:-kitchensoup-soup-ingest:local}
+    init: true
+    restart: unless-stopped
+    environment:
+      SOUP_IMAGE_ID: ${SOUP_IMAGE_ID:-}
+    networks: [ingestion]
+    read_only: true
+    tmpfs:
+      - /tmp:size=268435456,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1536m
+    cpus: 1.0
+    pids_limit: 64
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   catalog-init:
     build: .
@@ -143,3 +171,7 @@ volumes:
   valkey-data:
   rustfs-data:
   rustfs-logs:
+
+networks:
+  ingestion:
+    internal: true

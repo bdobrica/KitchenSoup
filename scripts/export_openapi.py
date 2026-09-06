@@ -5,6 +5,7 @@ from pathlib import Path
 
 from app.config import Settings
 from app.ingestion.conversations import CanonicalConversation
+from app.ingestion.documents import DocumentIngestionManifest, SoupResult
 from app.main import create_app
 from app.registry.schemas import Catalog
 
@@ -17,4 +18,12 @@ Path("docs/contracts/model-catalog-v1.schema.json").write_text(
 
 Path("docs/contracts/conversation-v1.schema.json").write_text(
     json.dumps(CanonicalConversation.model_json_schema(), indent=2, sort_keys=True) + "\n"
+)
+
+
+Path("docs/contracts/document-ingestion-v1.schema.json").write_text(
+    json.dumps(DocumentIngestionManifest.model_json_schema(), indent=2, sort_keys=True) + "\n"
+)
+Path("docs/contracts/soup-ingest-response-v1.schema.json").write_text(
+    json.dumps(SoupResult.model_json_schema(), indent=2, sort_keys=True) + "\n"
 )
