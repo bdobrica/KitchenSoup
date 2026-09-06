@@ -11,6 +11,7 @@ from alembic import command
 from app.db.models import (
     Artifact,
     ArtifactDerivation,
+    ArtifactUpload,
     Base,
     Conversation,
     ConversationImport,
@@ -124,6 +125,16 @@ def seed_graph(session: Session) -> tuple[TrainingRun, DatasetVersion, JobEvent]
     )
     session.add_all([raw, output])
     session.flush()
+    session.add(
+        ArtifactUpload(
+            object_key="uploads/fixture",
+            filename="fixture.zip",
+            content_type="application/zip",
+            size_bytes=10,
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
+            artifact_id=raw.id,
+        )
+    )
     version = DatasetVersion(
         dataset_id=dataset.id,
         version=1,

@@ -100,6 +100,17 @@ class Artifact(Entity):
     format: Mapped[str]
 
 
+class ArtifactUpload(Entity):
+    __tablename__ = "artifact_uploads"
+    __table_args__ = (CheckConstraint("size_bytes >= 0", name="nonnegative_size"),)
+    object_key: Mapped[str] = mapped_column(unique=True)
+    filename: Mapped[str]
+    content_type: Mapped[str]
+    size_bytes: Mapped[int] = mapped_column(BigInteger)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"), unique=True)
+
+
 class ModelSource(Entity):
     __tablename__ = "model_sources"
     model_version_id: Mapped[UUID] = mapped_column(ForeignKey("model_versions.id"), index=True)

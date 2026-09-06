@@ -1,0 +1,1 @@
+"""Versioned resource APIs."""

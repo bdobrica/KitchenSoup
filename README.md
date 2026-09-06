@@ -4,9 +4,9 @@ KitchenSoup is a lightweight, self-hosted application for guided
 language-model fine-tuning. The planned workflow covers preparing datasets,
 training through Soup, comparing results, and serving temporary vLLM playgrounds.
 
-**Status:** database foundation. The local stack includes PostgreSQL metadata
-tables, Alembic migrations, and transaction support alongside the web shell,
-Valkey, RustFS, and idle worker/reconciler placeholders. Ingestion and training
+**Status:** artifact storage. The local stack supports direct browser uploads to
+RustFS, verified SHA-256 registration in PostgreSQL, and presigned downloads.
+Worker/reconciler processes remain idle placeholders. Ingestion and training
 workflows remain in [TODO.md](TODO.md).
 
 ## Quick start
@@ -22,7 +22,7 @@ make migrate
 make up
 ```
 
-Open <http://127.0.0.1:8000>. Stop the stack with `make down`; data volumes
+Open <http://127.0.0.1:8000> and choose **Artifacts** to upload a file. Stop the stack with `make down`; data volumes
 are retained. `make restart` recreates the stack with its existing data.
 If your Python 3.13 executable has a different name, use
 `make setup PYTHON=python3` and `make up PYTHON=python3`.
@@ -43,7 +43,7 @@ separately from the Compose web service to avoid a port conflict.
 - `make check-dependencies` checks live service connections.
 - `make migrate` applies migrations; `make migration MESSAGE="..."` generates one.
 - `make migration-check` detects schema drift.
-- `make test-integration` tests persistence using a disposable PostgreSQL container.
+- `make test-integration` tests persistence and storage using disposable PostgreSQL/RustFS containers.
 - `make clean CONFIRM=1` deletes the stack and its data volumes.
 - `make fmt` formats Python and organizes imports.
 - `make lint` checks formatting, lint rules, and strict types.
@@ -63,6 +63,7 @@ S3-compatible adapter. Model versions and artifact representations have separate
 lineages.
 
 - [Development, local infrastructure, and HTTP contract](docs/development.md)
+- [Artifact storage and upload API](docs/storage.md)
 - [Database schema and migration workflow](docs/database.md)
 - [Project design and implementation intent](PLAN.md)
 - [Remaining milestones](TODO.md)

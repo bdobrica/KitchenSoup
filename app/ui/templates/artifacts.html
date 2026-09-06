@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/">Home</a></p>
+<h1>Store a file</h1>
+<p>Upload a file, verify its contents, and download the stored copy.</p>
+<form id="artifact-upload">
+  <label for="artifact-file">Choose a file</label>
+  <input id="artifact-file" type="file" required>
+  <button type="submit">Upload</button>
+</form>
+<p id="upload-status" role="status" aria-live="polite"></p>
+<p id="artifact-hash"></p>
+<button id="artifact-download" type="button" hidden>Download stored file</button>
+<noscript>This upload flow requires JavaScript.</noscript>
+<script defer src="{{ url_for('static', path='/artifacts.js') }}"></script>
+{% endblock %}

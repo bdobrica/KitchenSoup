@@ -16,7 +16,8 @@ its templates and static assets. Psycopg supplies the authenticated PostgreSQL
 startup query; redis-py supplies the Valkey PING probe. These small clients will
 also support database and future queue operations. SQLAlchemy owns ORM mappings
 and transactions; Alembic manages PostgreSQL schema changes. RustFS readiness uses
-Python’s standard HTTP client; S3 artifact operations remain in Milestone 3.
+Python’s standard HTTP client. Boto3 provides S3 signing and managed multipart
+transfers behind the ArtifactStore port; boto3-stubs supplies development types.
 
 Run `make dev` from the repository root. It binds to `127.0.0.1:8000` with reload.
 The ASGI entry point is `app.main:create_app` with Uvicorn's `--factory` option.
@@ -69,7 +70,7 @@ Run `make setup && make test`, then `make verify`. Tests cover health responses,
 templates/static files from a different working directory, HTML escaping,
 configuration defaults, dotenv/environment precedence, and invalid configuration.
 The unit-test gate requires no services or GPU. CI also runs the disposable
-PostgreSQL integration suite through `make test-integration`.
+PostgreSQL/RustFS integration suite through `make test-integration`.
 Browser JavaScript execution is not covered by the unit suite.
 
 ## Local infrastructure
@@ -96,9 +97,10 @@ dependency ranges are not digest/transitive lockfiles.
 
 PostgreSQL is authoritative for durable application metadata. Run `make migrate`
 to create or upgrade its schema; see [the database reference](database.md).
-Valkey persistence does not make queue/cache contents authoritative. ArtifactStore,
-bucket provisioning, queue dispatch, reconciliation, Docker socket mounts, and
-training executors remain future work.
+Valkey persistence does not make queue/cache contents authoritative. The one-shot
+`storage-init` service provisions the artifact bucket and CORS before web starts.
+See [artifact storage](storage.md) for configuration and upload contracts. Queue
+dispatch, reconciliation, Docker socket mounts, and training executors remain future work.
 
 `make local-env` creates `.env` from the example when absent and fills missing
 or blank `KITCHENSOUP_POSTGRES_PASSWORD`, `RUSTFS_ACCESS_KEY`, and
@@ -106,8 +108,9 @@ or blank `KITCHENSOUP_POSTGRES_PASSWORD`, `RUSTFS_ACCESS_KEY`, and
 never prints them. Keep `.env` with the volumes: changing the PostgreSQL password
 in `.env` does not change a database already initialized with another password.
 New `.env` files are created with mode 0600 where the filesystem supports it.
-The application receives only the database password; RustFS credentials are
-passed only to RustFS. Provider/executor secret references remain later work.
+RustFS credentials are passed to RustFS, web, and bucket provisioning. Worker
+and reconciler do not receive S3 credentials. Provider/executor secret references
+remain later work.
 
 PostgreSQL and Valkey have no published ports. All published web/RustFS ports
 bind to `127.0.0.1`. To resolve conflicts, change `KITCHENSOUP_PORT`,
@@ -153,7 +156,7 @@ stops them cleanly. They neither consume jobs nor mutate application state.
   confirmation flag it fails before running Docker; it never prunes other projects.
 
 Normal `make verify` remains service-free. CI additionally runs `make compose-check`
-and `make test-integration` against an isolated PostgreSQL container.
+and `make test-integration` against isolated PostgreSQL and RustFS containers.
 For live validation, run `make up`, `make check-dependencies`, visit `/` and
 `/healthz`, run `make restart`, then `make down`. The full stack is not part
 of the unit-test gate.

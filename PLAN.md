@@ -298,15 +298,11 @@ The queue library should remain small. A lightweight Redis/Valkey-compatible lib
 
 KitchenSoup uses an `ArtifactStore` interface.
 
-```python
-class ArtifactStore(Protocol):
-    async def put(self, key: str, source: BinaryIO) -> ArtifactRef: ...
-    async def get(self, key: str) -> BinaryIO: ...
-    async def stat(self, key: str) -> ArtifactStat: ...
-    async def delete(self, key: str) -> None: ...
-    async def presign_get(self, key: str, expires_in: int) -> str: ...
-    async def presign_put(self, key: str, expires_in: int) -> str: ...
-```
+The synchronous port is defined in [app/storage/base.py](app/storage/base.py).
+It provides `put`, bounded `get`, `stat`, `delete`, and presigned GET/PUT operations.
+Blocking calls run in synchronous handlers or worker threads, consistent with
+[ADR 0002](docs/adr/0002-artifact-storage.md). Upload registration verifies bytes
+and separates temporary upload keys from registered artifact keys.
 
 Default local implementation:
 
@@ -1579,7 +1575,8 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 3: ArtifactStore and RustFS.
+The current implementation frontier is Milestone 4: Model catalog and model registry.
+Artifact storage and its versioned upload API are documented in [docs/storage.md](docs/storage.md).
 The database foundation and migration workflow are documented in [docs/database.md](docs/database.md).
 The developer workflow and local infrastructure are documented in [docs/development.md](docs/development.md).
 

@@ -85,6 +85,7 @@ updates `updated_at` on mutable rows, including updates issued outside the ORM.
 | `model_versions` | Positive version number unique within a model |
 | `model_version_parents` | Unique child/parent version edges; direct self-parenting rejected |
 | `model_sources` | Version source, exact revision where applicable, license provenance, optional catalog/artifact links |
+| `artifact_uploads` | Temporary upload reservation, completion deadline, and registered artifact link |
 | `artifacts` | Bucket/key location, size, format, SHA-256, optional model-version owner |
 | `artifact_derivations` | Separate unique artifact child/parent edges and operation |
 | `datasets` | Logical dataset name, description, optional license |
@@ -151,7 +152,7 @@ a loopback-only ephemeral port, and tmpfs storage. The runner waits for TCP
 readiness, tests, and removes the container even after failure. It never uses
 the development stack's database or volumes. It requires a local Docker daemon.
 
-The PostgreSQL suite covers all 21 tables, foreign keys, uniqueness, hash/reference
+The PostgreSQL suite covers all 22 tables, foreign keys, uniqueness, hash/reference
 constraints, CRUD, explicit commit and rollback, timestamps, immutable IDs,
 snapshots, event history, and downgrade/upgrade/repeated upgrade. It also compares
 the migrated schema to ORM metadata. CI runs the same Make target.

@@ -111,28 +111,27 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 3 — ArtifactStore and RustFS
 
-- [ ] Define `ArtifactStore` protocol.
-- [ ] Implement S3-compatible `ArtifactStore`.
-- [ ] Configure it for RustFS in Docker Compose.
-- [ ] Add object key helper/versioning rules.
-- [ ] Add content hashing.
-- [ ] Implement `put`.
-- [ ] Implement `get`.
-- [ ] Implement `stat`.
-- [ ] Implement `delete`.
-- [ ] Implement presigned GET.
-- [ ] Implement presigned PUT.
-- [ ] Add multipart upload support if required by the selected S3 client workflow.
-- [ ] Add upload-completion API.
-- [ ] Ensure browser uploads can bypass FastAPI.
-- [ ] Add integration tests against RustFS.
-- [ ] Add a local/test storage implementation if useful.
+- [x] Define `ArtifactStore` protocol.
+- [x] Implement S3-compatible `ArtifactStore`.
+- [x] Configure it for RustFS in Docker Compose.
+- [x] Add object key helper/versioning rules.
+- [x] Add content hashing.
+- [x] Implement `put`.
+- [x] Implement `get`.
+- [x] Implement `stat`.
+- [x] Implement `delete`.
+- [x] Implement presigned GET.
+- [x] Implement presigned PUT.
+- [x] Add multipart upload support if required by the selected S3 client workflow.
+- [x] Add upload-completion API.
+- [x] Ensure browser uploads can bypass FastAPI.
+- [x] Add integration tests against RustFS.
 
 **Acceptance criteria**
 
-- [ ] Browser can upload an object using a presigned URL.
-- [ ] KitchenSoup records the object and its SHA-256 in PostgreSQL.
-- [ ] Browser can download the object through a presigned URL.
+- [x] Browser can upload an object using a presigned URL.
+- [x] KitchenSoup records the object and its SHA-256 in PostgreSQL.
+- [x] Browser can download the object through a presigned URL.
 
 ---
 

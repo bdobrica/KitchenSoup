@@ -1,0 +1,1 @@
+"""Replaceable artifact storage adapters."""

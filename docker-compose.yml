@@ -5,7 +5,7 @@ x-app: &app
   image: kitchensoup:local
   init: true
   restart: unless-stopped
-  environment:
+  environment: &app-env
     KITCHENSOUP_APP_NAME: ${KITCHENSOUP_APP_NAME:-KitchenSoup}
     KITCHENSOUP_CHECK_DEPENDENCIES: "true"
     KITCHENSOUP_POSTGRES_PASSWORD: ${KITCHENSOUP_POSTGRES_PASSWORD:?Run make local-env first}
@@ -16,6 +16,15 @@ x-app: &app
       condition: service_healthy
     rustfs:
       condition: service_healthy
+
+x-storage-env: &storage-env
+  KITCHENSOUP_STORAGE_ENABLED: "true"
+  KITCHENSOUP_S3_ENDPOINT: http://rustfs:9000
+  KITCHENSOUP_S3_PUBLIC_ENDPOINT: ${KITCHENSOUP_S3_PUBLIC_ENDPOINT:-http://127.0.0.1:9000}
+  KITCHENSOUP_S3_BUCKET: kitchensoup
+  KITCHENSOUP_S3_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?Run make local-env first}
+  KITCHENSOUP_S3_SECRET_KEY: ${RUSTFS_SECRET_KEY:?Run make local-env first}
+  KITCHENSOUP_S3_ALLOWED_ORIGINS: http://127.0.0.1:${KITCHENSOUP_PORT:-8000},http://localhost:${KITCHENSOUP_PORT:-8000}
 
 x-background-health: &background-health
   test: ["CMD", "python", "-c", "import pathlib,time; p=pathlib.Path('/tmp/kitchensoup-heartbeat'); assert p.exists() and time.time()-p.stat().st_mtime < 20"]
@@ -77,6 +86,17 @@ services:
 
   web:
     <<: *app
+    environment:
+      <<: [*app-env, *storage-env]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      rustfs:
+        condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
     ports:
       - "127.0.0.1:${KITCHENSOUP_PORT:-8000}:8000"
     healthcheck:
@@ -85,6 +105,16 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+
+  storage-init:
+    build: .
+    image: kitchensoup:local
+    environment: *storage-env
+    command: ["python", "-m", "app.storage.provision"]
+    depends_on:
+      rustfs:
+        condition: service_healthy
+    restart: "no"
 
   worker:
     <<: *app

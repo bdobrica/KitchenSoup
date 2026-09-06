@@ -8,6 +8,7 @@ export MESSAGE
 .PHONY: help setup fmt lint test test-unit verify dev
 .PHONY: local-env up down restart logs ps clean shell db-shell compose-check check-dependencies
 .PHONY: migrate migration migration-check test-integration
+.PHONY: openapi storage-init
 
 help: ## Show available developer commands
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z_-]+:.*## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -86,5 +87,13 @@ migration: local-env ## Generate a reviewed migration (MESSAGE="describe change"
 migration-check: ## Detect schema drift between the migrated database and ORM metadata
 	$(COMPOSE) run --rm --no-deps web python -m alembic check
 
-test-integration: ## Run database tests using a disposable PostgreSQL container
+test-integration: ## Run integration tests using disposable PostgreSQL and RustFS
 	$(VENV_PYTHON) scripts/test_database.py
+
+storage-init: local-env ## Configure the local artifact bucket and browser CORS
+	$(COMPOSE) up --detach --wait rustfs
+	$(COMPOSE) build storage-init
+	$(COMPOSE) run --rm --no-deps storage-init
+
+openapi: ## Regenerate the versioned artifact API schema
+	$(VENV_PYTHON) scripts/export_openapi.py
