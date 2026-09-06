@@ -98,6 +98,7 @@ updates `updated_at` on mutable rows, including updates issued outside the ORM.
 | `llm_providers` | Base URL, configured model names, API-key reference |
 | `evaluation_suites` | Named evaluation grouping |
 | `evaluation_prompts` | Ordered prompts, position unique within a suite |
+| `training_plans` | Immutable intent, recipe and resolved review snapshot; no execution state |
 | `training_runs` | Immutable base/dataset/target/input snapshot with mutable execution status/identifier |
 | `job_events` | Append-only, per-run sequenced event history |
 | `evaluation_results` | Run/prompt/model links, response artifact, optional preference |
@@ -152,7 +153,7 @@ a loopback-only ephemeral port, and tmpfs storage. The runner waits for TCP
 readiness, tests, and removes the container even after failure. It never uses
 the development stack's database or volumes. It requires a local Docker daemon.
 
-The PostgreSQL suite covers all 22 tables, foreign keys, uniqueness, hash/reference
+The PostgreSQL suite covers all 24 tables, foreign keys, uniqueness, hash/reference
 constraints, CRUD, explicit commit and rollback, timestamps, immutable IDs,
 snapshots, event history, and downgrade/upgrade/repeated upgrade. It also compares
 the migrated schema to ORM metadata. CI runs the same Make target.
@@ -169,3 +170,7 @@ Document ingestion adds immutable `document_ingestions` snapshots with numbered
 per-dataset attempts, output/log/manifest artifact references and provenance JSON.
 Its relational migration is generated; a separate trigger rejects updates.
 See [ADR 0006](adr/0006-soup-document-ingestion.md).
+
+Training-plan snapshots are stored separately from submitted runs. Their generated
+relational migration and immutable trigger preserve intent and resolved parameters
+without creating queue state. See [training plans](training-plans.md).

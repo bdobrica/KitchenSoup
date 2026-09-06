@@ -29,3 +29,8 @@ button { font: inherit; cursor: pointer; padding: 0.5rem 1rem; }
 
 #conversation-list article { padding: 0.75rem 0; border-bottom: 1px solid #ccd7cc; }
 #conversation-list input[type="checkbox"] { display: inline; }
+
+#plan-form label { display: block; margin: 0.75rem 0; }
+#plan-form input, #plan-form select { display: block; font: inherit; max-width: 100%; }
+#plan-form details, #plan-review { margin: 1.5rem 0; }
+#plan-json, #plan-defaults { white-space: pre-wrap; overflow-wrap: anywhere; }

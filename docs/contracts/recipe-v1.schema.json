@@ -1,0 +1,199 @@
+{
+  "$defs": {
+    "TrainingParameters": {
+      "additionalProperties": false,
+      "properties": {
+        "batch_size": {
+          "maximum": 64,
+          "minimum": 1,
+          "title": "Batch Size",
+          "type": "integer"
+        },
+        "epochs": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Epochs",
+          "type": "integer"
+        },
+        "gradient_accumulation_steps": {
+          "maximum": 256,
+          "minimum": 1,
+          "title": "Gradient Accumulation Steps",
+          "type": "integer"
+        },
+        "learning_rate": {
+          "exclusiveMinimum": 0,
+          "maximum": 0.01,
+          "title": "Learning Rate",
+          "type": "number"
+        },
+        "lora_alpha": {
+          "maximum": 512,
+          "minimum": 1,
+          "title": "Lora Alpha",
+          "type": "integer"
+        },
+        "lora_dropout": {
+          "exclusiveMaximum": 1,
+          "minimum": 0,
+          "title": "Lora Dropout",
+          "type": "number"
+        },
+        "lora_rank": {
+          "maximum": 256,
+          "minimum": 1,
+          "title": "Lora Rank",
+          "type": "integer"
+        },
+        "lora_target": {
+          "const": "all_linear",
+          "default": "all_linear",
+          "title": "Lora Target",
+          "type": "string"
+        },
+        "max_sequence_length": {
+          "maximum": 32768,
+          "minimum": 128,
+          "title": "Max Sequence Length",
+          "type": "integer"
+        },
+        "optimizer": {
+          "const": "adamw",
+          "default": "adamw",
+          "title": "Optimizer",
+          "type": "string"
+        },
+        "precision": {
+          "const": "bf16",
+          "default": "bf16",
+          "title": "Precision",
+          "type": "string"
+        },
+        "quantization": {
+          "const": "none",
+          "default": "none",
+          "title": "Quantization",
+          "type": "string"
+        },
+        "scheduler": {
+          "const": "linear",
+          "default": "linear",
+          "title": "Scheduler",
+          "type": "string"
+        },
+        "seed": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "warmup_ratio": {
+          "default": 0.0,
+          "maximum": 0,
+          "minimum": 0,
+          "title": "Warmup Ratio",
+          "type": "number"
+        },
+        "weight_decay": {
+          "default": 0.0,
+          "maximum": 0,
+          "minimum": 0,
+          "title": "Weight Decay",
+          "type": "number"
+        }
+      },
+      "required": [
+        "epochs",
+        "learning_rate",
+        "max_sequence_length",
+        "batch_size",
+        "gradient_accumulation_steps",
+        "lora_rank",
+        "lora_alpha",
+        "lora_dropout",
+        "seed"
+      ],
+      "title": "TrainingParameters",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "defaults": {
+      "$ref": "#/$defs/TrainingParameters"
+    },
+    "example_kind": {
+      "enum": [
+        "conversation",
+        "document"
+      ],
+      "title": "Example Kind",
+      "type": "string"
+    },
+    "formatting": {
+      "enum": [
+        "model_chat_template",
+        "plain_text"
+      ],
+      "title": "Formatting",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[a-z0-9][a-z0-9-]{0,99}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "intent": {
+      "enum": [
+        "conversation_imitation",
+        "task_from_examples",
+        "learn_from_documents"
+      ],
+      "title": "Intent",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "objective": {
+      "enum": [
+        "final_assistant",
+        "all_text_tokens"
+      ],
+      "title": "Objective",
+      "type": "string"
+    },
+    "overlength": {
+      "const": "reject",
+      "default": "reject",
+      "title": "Overlength",
+      "type": "string"
+    },
+    "schema": {
+      "const": "kitchensoup.recipe/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "version",
+    "name",
+    "intent",
+    "example_kind",
+    "objective",
+    "formatting",
+    "defaults"
+  ],
+  "title": "Recipe",
+  "type": "object"
+}

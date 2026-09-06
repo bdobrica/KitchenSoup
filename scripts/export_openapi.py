@@ -9,6 +9,7 @@ from app.ingestion.documents import DocumentIngestionManifest, SoupResult
 from app.ingestion.versions import DatasetManifest, TrainingExample
 from app.main import create_app
 from app.registry.schemas import Catalog
+from app.training.schemas import AppSpec, Recipe, ResolvedPlan
 
 schema = create_app(Settings(_env_file=None, app_name="KitchenSoup")).openapi()
 destination = Path("docs/contracts/artifacts-v1.openapi.json")
@@ -35,3 +36,12 @@ Path("docs/contracts/dataset-manifest-v1.schema.json").write_text(
 Path("docs/contracts/training-example-v1.schema.json").write_text(
     json.dumps(TrainingExample.model_json_schema(), indent=2, sort_keys=True) + "\n"
 )
+
+for filename, model in (
+    ("appspec-v1", AppSpec),
+    ("recipe-v1", Recipe),
+    ("resolved-plan-v1", ResolvedPlan),
+):
+    Path(f"docs/contracts/{filename}.schema.json").write_text(
+        json.dumps(model.model_json_schema(), indent=2, sort_keys=True) + "\n"
+    )

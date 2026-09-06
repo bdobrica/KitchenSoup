@@ -1,6 +1,7 @@
 (() => {
   const parts = window.location.pathname.split('/'), dataset = parts[2], version = parts[4];
   const base = `/api/v1/datasets/${dataset}/versions/${version}`;
+  document.querySelector('#configure-training').href = `/training-plans?dataset_version_id=${encodeURIComponent(version)}`;
   let offset = 0, total = 0, loading = false;
   const status = document.querySelector('#preview-status');
   function node(tag, text) { const n = document.createElement(tag); n.textContent = text; if (tag === 'pre') { n.style.whiteSpace = 'pre-wrap'; n.style.overflowWrap = 'anywhere'; } return n; }

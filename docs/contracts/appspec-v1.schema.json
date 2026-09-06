@@ -1,0 +1,208 @@
+{
+  "$defs": {
+    "RecipeRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9][a-z0-9-]{0,99}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "title": "RecipeRef",
+      "type": "object"
+    },
+    "TrainingOverrides": {
+      "additionalProperties": false,
+      "properties": {
+        "batch_size": {
+          "anyOf": [
+            {
+              "maximum": 64,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Batch Size"
+        },
+        "epochs": {
+          "anyOf": [
+            {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Epochs"
+        },
+        "gradient_accumulation_steps": {
+          "anyOf": [
+            {
+              "maximum": 256,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gradient Accumulation Steps"
+        },
+        "learning_rate": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 0.01,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Learning Rate"
+        },
+        "lora_alpha": {
+          "anyOf": [
+            {
+              "maximum": 512,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lora Alpha"
+        },
+        "lora_dropout": {
+          "anyOf": [
+            {
+              "exclusiveMaximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lora Dropout"
+        },
+        "lora_rank": {
+          "anyOf": [
+            {
+              "maximum": 256,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lora Rank"
+        },
+        "max_sequence_length": {
+          "anyOf": [
+            {
+              "maximum": 32768,
+              "minimum": 128,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Sequence Length"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Seed"
+        }
+      },
+      "title": "TrainingOverrides",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "base_model_version_id": {
+      "format": "uuid",
+      "title": "Base Model Version Id",
+      "type": "string"
+    },
+    "dataset_version_id": {
+      "format": "uuid",
+      "title": "Dataset Version Id",
+      "type": "string"
+    },
+    "intent": {
+      "enum": [
+        "conversation_imitation",
+        "task_from_examples",
+        "learn_from_documents",
+        "advanced"
+      ],
+      "title": "Intent",
+      "type": "string"
+    },
+    "overrides": {
+      "$ref": "#/$defs/TrainingOverrides"
+    },
+    "recipe": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RecipeRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schema": {
+      "const": "kitchensoup.appspec/v1",
+      "default": "kitchensoup.appspec/v1",
+      "title": "Schema",
+      "type": "string"
+    }
+  },
+  "required": [
+    "intent",
+    "base_model_version_id",
+    "dataset_version_id"
+  ],
+  "title": "AppSpec",
+  "type": "object"
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "kitchensoup.recipe/v1",
+  "id": "task-sft-default",
+  "version": 1,
+  "name": "Perform a task from examples",
+  "intent": "task_from_examples",
+  "example_kind": "conversation",
+  "objective": "final_assistant",
+  "formatting": "model_chat_template",
+  "overlength": "reject",
+  "defaults": {
+    "epochs": 3,
+    "learning_rate": 0.0001,
+    "max_sequence_length": 2048,
+    "batch_size": 1,
+    "gradient_accumulation_steps": 16,
+    "lora_rank": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "seed": 42,
+    "optimizer": "adamw",
+    "precision": "bf16",
+    "scheduler": "linear",
+    "warmup_ratio": 0.0,
+    "weight_decay": 0.0,
+    "quantization": "none",
+    "lora_target": "all_linear"
+  }
+}

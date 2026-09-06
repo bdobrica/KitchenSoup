@@ -23,6 +23,7 @@ from app.api.datasets import router as dataset_router
 from app.api.documents import router as document_router
 from app.api.models import router as model_router
 from app.api.providers import router as provider_router
+from app.api.training import router as training_router
 from app.api.versions import router as version_router
 from app.config import Settings
 from app.db.session import create_database_engine
@@ -37,6 +38,7 @@ from app.services.artifacts import ArtifactService, UploadError
 from app.services.datasets import DatasetService
 from app.services.models import ModelService
 from app.services.providers import ProviderService
+from app.services.training import TrainingPlanService
 from app.storage.base import ObjectNotFound, ObjectTooLarge, StorageError
 from app.storage.s3 import S3ArtifactStore
 
@@ -53,6 +55,7 @@ def create_app(
     model_service: ModelService | None = None,
     dataset_service: DatasetService | None = None,
     provider_service: ProviderService | None = None,
+    training_plan_service: TrainingPlanService | None = None,
 ) -> FastAPI:
     settings = settings if settings is not None else Settings()
 
@@ -106,6 +109,11 @@ def create_app(
                     app.state.provider_service = ProviderService(
                         factory, lambda config: OpenAICompatibleProvider(config, credentials)
                     )
+            app.state.training_plan_service = training_plan_service
+            if training_plan_service is None and app.state.dataset_service is not None:
+                app.state.training_plan_service = TrainingPlanService(
+                    app.state.dataset_service.factory
+                )
             yield
         finally:
             if store is not None:
@@ -123,6 +131,7 @@ def create_app(
     app.include_router(document_router)
     app.include_router(version_router)
     app.include_router(provider_router)
+    app.include_router(training_router)
     app.state.soup_ingestion_url = settings.soup_ingestion_url
 
     @app.exception_handler(ProviderError)
@@ -238,6 +247,13 @@ def create_app(
     async def provider_page(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(
             request=request, name="providers.html", context={"app_name": settings.app_name}
+        )
+
+    @app.get("/training-plans", response_class=HTMLResponse, include_in_schema=False)
+    @app.get("/training-plans/{plan_id}", response_class=HTMLResponse, include_in_schema=False)
+    async def training_page(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request=request, name="training-plans.html", context={"app_name": settings.app_name}
         )
 
     return app

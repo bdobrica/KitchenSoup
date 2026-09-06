@@ -669,6 +669,11 @@ KitchenSoup owns an authoritative, versioned AppSpec.
 
 The AppSpec records the user's request independently from Soup configuration.
 
+The implemented v1 review contract is documented in [docs/training-plans.md](docs/training-plans.md).
+Review plans are immutable metadata and do not submit a run. The following example
+illustrates the later submission flow, including executor/output selection; it is
+not the published v1 review request schema.
+
 Example:
 
 ```yaml
@@ -1575,7 +1580,8 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 10: intents, recipes and AppSpec.
+The current implementation frontier is Milestone 11: Soup trainer image and translation.
+Training intent, recipes and saved review plans are documented in [docs/training-plans.md](docs/training-plans.md).
 LLM provider configuration is documented in [docs/providers.md](docs/providers.md).
 Dataset snapshots and previews are documented in [docs/dataset-versions.md](docs/dataset-versions.md).
 Soup document extraction is documented in [docs/documents.md](docs/documents.md).

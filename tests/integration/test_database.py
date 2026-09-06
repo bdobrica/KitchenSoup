@@ -32,6 +32,7 @@ from app.db.models import (
     ModelSource,
     ModelVersion,
     ModelVersionParent,
+    TrainingPlan,
     TrainingRun,
 )
 from app.db.repositories import ModelRepository
@@ -194,6 +195,16 @@ def seed_graph(session: Session) -> tuple[TrainingRun, DatasetVersion, JobEvent]
     )
     session.flush()
     event = JobEvent(training_run_id=run.id, sequence=0, status="QUEUED")
+    session.add(
+        TrainingPlan(
+            base_model_version_id=base.id,
+            dataset_version_id=version.id,
+            appspec_version="fixture/v1",
+            appspec={"intent": "fixture"},
+            resolved_config={"fixture": True},
+            sha256="e" * 64,
+        )
+    )
     session.add_all(
         [
             event,

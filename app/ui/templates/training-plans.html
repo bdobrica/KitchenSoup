@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/">Home</a> · <a href="/training-plans">Training plans</a></p>
+<h1>Prepare a training plan</h1>
+<p>Choose what you want to teach, a registered model and a frozen dataset version. Review and save your plan before training becomes available.</p>
+<p id="plan-status" role="status" aria-live="polite"></p>
+<form id="plan-form">
+  <label>What would you like to do?
+    <select name="intent" id="plan-intent">
+      <option value="conversation_imitation">Respond like these conversations</option>
+      <option value="task_from_examples">Perform a task from examples</option>
+      <option value="learn_from_documents">Learn from these documents</option>
+      <option value="advanced">Advanced</option>
+    </select>
+  </label>
+  <p id="intent-help"></p>
+  <label>Base model <select name="base_model_version_id" id="plan-model" required></select></label>
+  <p><a href="/models">Browse and register a model</a></p>
+  <label>Dataset version <select name="dataset_version_id" id="plan-dataset" required></select></label>
+  <p><a id="plan-dataset-preview" href="/datasets">Preview dataset examples</a></p>
+  <details id="plan-advanced">
+    <summary>Advanced training parameters</summary>
+    <label>Versioned recipe <select id="plan-recipe"></select></label>
+    <p>Defaults are shown as placeholders. Leave fields blank to use them. Initial recipes produce a LoRA adapter; hardware and engine compatibility still need validation.</p>
+    <div id="plan-overrides"></div>
+    <h3>Resolved defaults</h3><pre id="plan-defaults"></pre>
+  </details>
+  <button type="submit">Review training plan</button>
+</form>
+<section id="plan-review" hidden>
+  <h2>Review training plan</h2>
+  <div id="plan-summary"></div>
+  <details><summary>Inspect AppSpec and resolved parameters</summary><pre id="plan-json"></pre></details>
+  <button id="plan-save" type="button">Save reviewed plan</button>
+</section>
+<section id="plan-history"><h2>Saved plans</h2><div id="plan-list"></div></section>
+<script defer src="{{ url_for('static', path='/training-plans.js') }}"></script>
+{% endblock %}

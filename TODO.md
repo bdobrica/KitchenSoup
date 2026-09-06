@@ -300,31 +300,31 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 10 — Intents, recipes, and AppSpec
 
-- [ ] Define `kitchensoup.appspec/v1`.
-- [ ] Define user intents:
-  - [ ] conversation imitation
-  - [ ] task from examples
-  - [ ] learn from documents
-  - [ ] advanced
-- [ ] Define versioned recipe format.
-- [ ] Add default conversation SFT recipe.
-- [ ] Add task-from-examples recipe.
-- [ ] Add initial document adaptation recipe.
-- [ ] Add recipe validation.
-- [ ] Add recipe resolver.
-- [ ] Resolve user intent into concrete training defaults.
-- [ ] Keep advanced ML fields hidden by default.
-- [ ] Add Advanced UI for resolved parameters.
-- [ ] Add "review training plan" screen.
-- [ ] Store both human intent and resolved config.
-- [ ] Add AppSpec serialization tests.
-- [ ] Add schema migration/versioning strategy.
+- [x] Define `kitchensoup.appspec/v1`.
+- [x] Define user intents:
+  - [x] conversation imitation
+  - [x] task from examples
+  - [x] learn from documents
+  - [x] advanced
+- [x] Define versioned recipe format.
+- [x] Add default conversation SFT recipe.
+- [x] Add task-from-examples recipe.
+- [x] Add initial document adaptation recipe.
+- [x] Add recipe validation.
+- [x] Add recipe resolver.
+- [x] Resolve user intent into concrete training defaults.
+- [x] Keep advanced ML fields hidden by default.
+- [x] Add Advanced UI for resolved parameters.
+- [x] Add "review training plan" screen.
+- [x] Store both human intent and resolved config.
+- [x] Add AppSpec serialization tests.
+- [x] Add schema migration/versioning strategy.
 
 **Acceptance criteria**
 
-- [ ] Non-technical user can configure training without entering ML parameters.
-- [ ] Advanced user can inspect the resolved settings.
-- [ ] The AppSpec remains independent of Soup configuration.
+- [x] Non-technical user can configure training without entering ML parameters.
+- [x] Advanced user can inspect the resolved settings.
+- [x] The AppSpec remains independent of Soup configuration.
 
 ---
 

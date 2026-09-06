@@ -1,6 +1,57 @@
 {
   "components": {
     "schemas": {
+      "AppSpec": {
+        "additionalProperties": false,
+        "properties": {
+          "base_model_version_id": {
+            "format": "uuid",
+            "title": "Base Model Version Id",
+            "type": "string"
+          },
+          "dataset_version_id": {
+            "format": "uuid",
+            "title": "Dataset Version Id",
+            "type": "string"
+          },
+          "intent": {
+            "enum": [
+              "conversation_imitation",
+              "task_from_examples",
+              "learn_from_documents",
+              "advanced"
+            ],
+            "title": "Intent",
+            "type": "string"
+          },
+          "overrides": {
+            "$ref": "#/components/schemas/TrainingOverrides"
+          },
+          "recipe": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecipeRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "schema": {
+            "const": "kitchensoup.appspec/v1",
+            "default": "kitchensoup.appspec/v1",
+            "title": "Schema",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intent",
+          "base_model_version_id",
+          "dataset_version_id"
+        ],
+        "title": "AppSpec",
+        "type": "object"
+      },
       "ArchiveImport": {
         "additionalProperties": false,
         "properties": {
@@ -1214,6 +1265,102 @@
         "title": "ModelView",
         "type": "object"
       },
+      "PlanModelSource": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Id"
+          },
+          "artifact_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Sha256"
+          },
+          "kind": {
+            "enum": [
+              "catalog",
+              "huggingface",
+              "upload"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "license": {
+            "title": "License",
+            "type": "string"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revision"
+          },
+          "source_id": {
+            "format": "uuid",
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "kind",
+          "location",
+          "revision",
+          "license",
+          "artifact_id",
+          "artifact_sha256"
+        ],
+        "title": "PlanModelSource",
+        "type": "object"
+      },
+      "PlanPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "appspec": {
+            "$ref": "#/components/schemas/AppSpec"
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/ResolvedPlan"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "appspec",
+          "resolved",
+          "sha256"
+        ],
+        "title": "PlanPreview",
+        "type": "object"
+      },
       "ProviderConfig": {
         "additionalProperties": false,
         "properties": {
@@ -1386,6 +1533,212 @@
           "updated_at"
         ],
         "title": "ProviderView",
+        "type": "object"
+      },
+      "Recipe": {
+        "additionalProperties": false,
+        "properties": {
+          "defaults": {
+            "$ref": "#/components/schemas/TrainingParameters"
+          },
+          "example_kind": {
+            "enum": [
+              "conversation",
+              "document"
+            ],
+            "title": "Example Kind",
+            "type": "string"
+          },
+          "formatting": {
+            "enum": [
+              "model_chat_template",
+              "plain_text"
+            ],
+            "title": "Formatting",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-z0-9][a-z0-9-]{0,99}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "intent": {
+            "enum": [
+              "conversation_imitation",
+              "task_from_examples",
+              "learn_from_documents"
+            ],
+            "title": "Intent",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "objective": {
+            "enum": [
+              "final_assistant",
+              "all_text_tokens"
+            ],
+            "title": "Objective",
+            "type": "string"
+          },
+          "overlength": {
+            "const": "reject",
+            "default": "reject",
+            "title": "Overlength",
+            "type": "string"
+          },
+          "schema": {
+            "const": "kitchensoup.recipe/v1",
+            "title": "Schema",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema",
+          "id",
+          "version",
+          "name",
+          "intent",
+          "example_kind",
+          "objective",
+          "formatting",
+          "defaults"
+        ],
+        "title": "Recipe",
+        "type": "object"
+      },
+      "RecipeRef": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "pattern": "^[a-z0-9][a-z0-9-]{0,99}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version"
+        ],
+        "title": "RecipeRef",
+        "type": "object"
+      },
+      "ResolvedPlan": {
+        "additionalProperties": false,
+        "properties": {
+          "base_model_name": {
+            "title": "Base Model Name",
+            "type": "string"
+          },
+          "base_model_source": {
+            "$ref": "#/components/schemas/PlanModelSource"
+          },
+          "base_model_version_id": {
+            "format": "uuid",
+            "title": "Base Model Version Id",
+            "type": "string"
+          },
+          "dataset_id": {
+            "format": "uuid",
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "dataset_manifest_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Dataset Manifest Sha256",
+            "type": "string"
+          },
+          "dataset_name": {
+            "title": "Dataset Name",
+            "type": "string"
+          },
+          "dataset_version": {
+            "title": "Dataset Version",
+            "type": "integer"
+          },
+          "dataset_version_id": {
+            "format": "uuid",
+            "title": "Dataset Version Id",
+            "type": "string"
+          },
+          "example_count": {
+            "exclusiveMinimum": 0.0,
+            "title": "Example Count",
+            "type": "integer"
+          },
+          "examples_artifact_id": {
+            "format": "uuid",
+            "title": "Examples Artifact Id",
+            "type": "string"
+          },
+          "examples_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Examples Sha256",
+            "type": "string"
+          },
+          "output": {
+            "const": "lora_adapter",
+            "default": "lora_adapter",
+            "title": "Output",
+            "type": "string"
+          },
+          "recipe": {
+            "$ref": "#/components/schemas/Recipe"
+          },
+          "recipe_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Recipe Sha256",
+            "type": "string"
+          },
+          "schema": {
+            "const": "kitchensoup.resolved-plan/v1",
+            "default": "kitchensoup.resolved-plan/v1",
+            "title": "Schema",
+            "type": "string"
+          },
+          "training": {
+            "$ref": "#/components/schemas/TrainingParameters"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_model_version_id",
+          "base_model_name",
+          "base_model_source",
+          "dataset_version_id",
+          "dataset_id",
+          "dataset_name",
+          "dataset_version",
+          "dataset_manifest_sha256",
+          "examples_artifact_id",
+          "examples_sha256",
+          "example_count",
+          "recipe",
+          "recipe_sha256",
+          "training",
+          "warnings"
+        ],
+        "title": "ResolvedPlan",
         "type": "object"
       },
       "SourceAttach": {
@@ -1632,6 +1985,281 @@
           "source_id"
         ],
         "title": "TrainingExample",
+        "type": "object"
+      },
+      "TrainingOverrides": {
+        "additionalProperties": false,
+        "properties": {
+          "batch_size": {
+            "anyOf": [
+              {
+                "maximum": 64.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Size"
+          },
+          "epochs": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Epochs"
+          },
+          "gradient_accumulation_steps": {
+            "anyOf": [
+              {
+                "maximum": 256.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gradient Accumulation Steps"
+          },
+          "learning_rate": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 0.01,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Learning Rate"
+          },
+          "lora_alpha": {
+            "anyOf": [
+              {
+                "maximum": 512.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lora Alpha"
+          },
+          "lora_dropout": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lora Dropout"
+          },
+          "lora_rank": {
+            "anyOf": [
+              {
+                "maximum": 256.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lora Rank"
+          },
+          "max_sequence_length": {
+            "anyOf": [
+              {
+                "maximum": 32768.0,
+                "minimum": 128.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Sequence Length"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "maximum": 2147483647.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          }
+        },
+        "title": "TrainingOverrides",
+        "type": "object"
+      },
+      "TrainingParameters": {
+        "additionalProperties": false,
+        "properties": {
+          "batch_size": {
+            "maximum": 64.0,
+            "minimum": 1.0,
+            "title": "Batch Size",
+            "type": "integer"
+          },
+          "epochs": {
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Epochs",
+            "type": "integer"
+          },
+          "gradient_accumulation_steps": {
+            "maximum": 256.0,
+            "minimum": 1.0,
+            "title": "Gradient Accumulation Steps",
+            "type": "integer"
+          },
+          "learning_rate": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 0.01,
+            "title": "Learning Rate",
+            "type": "number"
+          },
+          "lora_alpha": {
+            "maximum": 512.0,
+            "minimum": 1.0,
+            "title": "Lora Alpha",
+            "type": "integer"
+          },
+          "lora_dropout": {
+            "exclusiveMaximum": 1.0,
+            "minimum": 0.0,
+            "title": "Lora Dropout",
+            "type": "number"
+          },
+          "lora_rank": {
+            "maximum": 256.0,
+            "minimum": 1.0,
+            "title": "Lora Rank",
+            "type": "integer"
+          },
+          "lora_target": {
+            "const": "all_linear",
+            "default": "all_linear",
+            "title": "Lora Target",
+            "type": "string"
+          },
+          "max_sequence_length": {
+            "maximum": 32768.0,
+            "minimum": 128.0,
+            "title": "Max Sequence Length",
+            "type": "integer"
+          },
+          "optimizer": {
+            "const": "adamw",
+            "default": "adamw",
+            "title": "Optimizer",
+            "type": "string"
+          },
+          "precision": {
+            "const": "bf16",
+            "default": "bf16",
+            "title": "Precision",
+            "type": "string"
+          },
+          "quantization": {
+            "const": "none",
+            "default": "none",
+            "title": "Quantization",
+            "type": "string"
+          },
+          "scheduler": {
+            "const": "linear",
+            "default": "linear",
+            "title": "Scheduler",
+            "type": "string"
+          },
+          "seed": {
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "type": "integer"
+          },
+          "warmup_ratio": {
+            "default": 0.0,
+            "maximum": 0.0,
+            "minimum": 0.0,
+            "title": "Warmup Ratio",
+            "type": "number"
+          },
+          "weight_decay": {
+            "default": 0.0,
+            "maximum": 0.0,
+            "minimum": 0.0,
+            "title": "Weight Decay",
+            "type": "number"
+          }
+        },
+        "required": [
+          "epochs",
+          "learning_rate",
+          "max_sequence_length",
+          "batch_size",
+          "gradient_accumulation_steps",
+          "lora_rank",
+          "lora_alpha",
+          "lora_dropout",
+          "seed"
+        ],
+        "title": "TrainingParameters",
+        "type": "object"
+      },
+      "TrainingPlanView": {
+        "additionalProperties": false,
+        "properties": {
+          "appspec": {
+            "$ref": "#/components/schemas/AppSpec"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/ResolvedPlan"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "appspec",
+          "resolved",
+          "sha256",
+          "id",
+          "created_at"
+        ],
+        "title": "TrainingPlanView",
         "type": "object"
       },
       "UploadRequest": {
@@ -3209,6 +3837,198 @@
         "summary": "Get Model",
         "tags": [
           "models"
+        ]
+      }
+    },
+    "/api/v1/recipes": {
+      "get": {
+        "operationId": "recipes_api_v1_recipes_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Recipe"
+                  },
+                  "title": "Response Recipes Api V1 Recipes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Recipes",
+        "tags": [
+          "training plans"
+        ]
+      }
+    },
+    "/api/v1/training-plans": {
+      "get": {
+        "operationId": "list_plans_api_v1_training_plans_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TrainingPlanView"
+                  },
+                  "title": "Response List Plans Api V1 Training Plans Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Plans",
+        "tags": [
+          "training plans"
+        ]
+      },
+      "post": {
+        "operationId": "create_plan_api_v1_training_plans_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Plan-SHA256",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9a-f]{64}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Plan-Sha256"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppSpec"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainingPlanView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Plan",
+        "tags": [
+          "training plans"
+        ]
+      }
+    },
+    "/api/v1/training-plans/preview": {
+      "post": {
+        "operationId": "preview_plan_api_v1_training_plans_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppSpec"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Plan",
+        "tags": [
+          "training plans"
+        ]
+      }
+    },
+    "/api/v1/training-plans/{plan_id}": {
+      "get": {
+        "operationId": "get_plan_api_v1_training_plans__plan_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Plan Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainingPlanView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Plan",
+        "tags": [
+          "training plans"
         ]
       }
     },

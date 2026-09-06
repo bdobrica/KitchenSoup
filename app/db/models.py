@@ -330,3 +330,14 @@ class DocumentIngestion(Entity):
     logs_artifact_id: Mapped[UUID] = mapped_column(ForeignKey("artifacts.id"))
     manifest_artifact_id: Mapped[UUID] = mapped_column(ForeignKey("artifacts.id"))
     manifest: Mapped[dict[str, Any]] = mapped_column(JSONB)
+
+
+class TrainingPlan(Entity):
+    __tablename__ = "training_plans"
+    __table_args__ = (CheckConstraint("sha256 ~ '^[0-9a-f]{64}$'", name="valid_sha256"),)
+    base_model_version_id: Mapped[UUID] = mapped_column(ForeignKey("model_versions.id"), index=True)
+    dataset_version_id: Mapped[UUID] = mapped_column(ForeignKey("dataset_versions.id"), index=True)
+    appspec_version: Mapped[str]
+    appspec: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    resolved_config: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    sha256: Mapped[str] = mapped_column(String(64))
