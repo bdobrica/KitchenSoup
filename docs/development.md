@@ -12,8 +12,7 @@ FastAPI provides HTTP routing and OpenAPI; Uvicorn serves ASGI; Jinja2 renders
 HTML; Pydantic Settings loads validated operator configuration. Development
 uses pytest and HTTPX for in-process HTTP tests, Ruff for linting/formatting, and
 mypy for strict type checking. Hatchling builds the Python package, including
-its templates and static assets. None of these dependencies runs training or
-connects to other ThinkPixel components.
+its templates and static assets.
 
 Run `make dev` from the repository root. It binds to `127.0.0.1:8000` with reload.
 The ASGI entry point is `app.main:create_app` with Uvicorn's `--factory` option.

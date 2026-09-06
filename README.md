@@ -1,6 +1,6 @@
 # KitchenSoup
 
-KitchenSoup is a lightweight, self-hosted ThinkPixel application for guided
+KitchenSoup is a lightweight, self-hosted application for guided
 language-model fine-tuning. The planned workflow covers preparing datasets,
 training through Soup, comparing results, and serving temporary vLLM playgrounds.
 

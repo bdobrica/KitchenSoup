@@ -1,7 +1,5 @@
 # AGENTS.md
 
-This repository is one component of the modular, vendor-neutral **ThinkPixel** platform.
-
 Make the **smallest coherent change** that satisfies the task while preserving this repository's ownership boundary, published contracts, compatibility obligations, and the cross-component security model. Do not fix unrelated issues opportunistically; report them separately when relevant.
 
 ## Read before changing
@@ -23,8 +21,6 @@ If the authoritative sources are ambiguous or incomplete, prefer the change that
 
 ## Engineering rules
 
-* Preserve the component boundary described in `ALIGNMENT.md`; do not absorb another ThinkPixel component's responsibilities for convenience.
-* Keep integrations replaceable. Put provider-, harness-, storage-, policy-, and ThinkPixel-specific behavior behind explicit ports/adapters.
 * Do not create direct cross-repository database access or depend on another repository's `internal` implementation types.
 * Cross-component behavior must use versioned wire/schema contracts and stable identifiers.
 * Preserve backward compatibility for published contracts unless an accepted architectural decision explicitly permits a breaking change.
@@ -57,7 +53,6 @@ If the authoritative sources are ambiguous or incomplete, prefer the change that
 * Run generators, formatters, linters, schema checks, migrations, and compatibility checks when the affected area requires them.
 * Do not claim that a test, migration, generator, live-provider check, deployment check, or other verification step was run when it was not.
 * If verification cannot be run, state what was not verified and why.
-* If a change alters a ThinkPixel integration boundary or shared convention, update `ALIGNMENT.md` and the relevant contract documentation in the same change. Add or supersede an ADR when the architectural decision itself changes.
 
 ## Completing implementation
 
