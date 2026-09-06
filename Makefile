@@ -3,9 +3,11 @@ PYTHON ?= python3.13
 VENV := .venv
 VENV_PYTHON := $(VENV)/bin/python
 COMPOSE ?= docker compose
+export MESSAGE
 
 .PHONY: help setup fmt lint test test-unit verify dev
 .PHONY: local-env up down restart logs ps clean shell db-shell compose-check check-dependencies
+.PHONY: migrate migration migration-check test-integration
 
 help: ## Show available developer commands
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z_-]+:.*## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -69,3 +71,20 @@ compose-check: local-env ## Validate the Compose configuration without printing 
 
 check-dependencies: ## Probe PostgreSQL, Valkey, and RustFS from the web container
 	$(COMPOSE) exec -T web python -c 'from app.config import Settings; from app.dependencies import check_dependencies; check_dependencies(Settings()); print("All dependency checks passed")'
+
+migrate: local-env ## Build the application and upgrade the local database to head
+	$(COMPOSE) up --detach --wait postgres
+	$(COMPOSE) build web
+	$(COMPOSE) run --rm --no-deps web python -m alembic upgrade head
+
+migration: local-env ## Generate a reviewed migration (MESSAGE="describe change")
+	@test -n "$$MESSAGE" || { echo 'Set MESSAGE to describe the migration.'; exit 1; }
+	$(COMPOSE) up --detach --wait postgres
+	$(COMPOSE) build web
+	$(COMPOSE) run --rm --no-deps --user "$$(id -u):$$(id -g)" --volume "$(CURDIR):/workspace" --workdir /workspace web python -m alembic revision --autogenerate -m "$$MESSAGE"
+
+migration-check: ## Detect schema drift between the migrated database and ORM metadata
+	$(COMPOSE) run --rm --no-deps web python -m alembic check
+
+test-integration: ## Run database tests using a disposable PostgreSQL container
+	$(VENV_PYTHON) scripts/test_database.py

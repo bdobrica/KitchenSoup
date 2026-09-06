@@ -4,9 +4,10 @@ KitchenSoup is a lightweight, self-hosted application for guided
 language-model fine-tuning. The planned workflow covers preparing datasets,
 training through Soup, comparing results, and serving temporary vLLM playgrounds.
 
-**Status:** local infrastructure. Docker Compose runs PostgreSQL, Valkey,
-RustFS, the web application, and idle worker/reconciler placeholders. Database
-schemas and training workflows remain in [TODO.md](TODO.md).
+**Status:** database foundation. The local stack includes PostgreSQL metadata
+tables, Alembic migrations, and transaction support alongside the web shell,
+Valkey, RustFS, and idle worker/reconciler placeholders. Ingestion and training
+workflows remain in [TODO.md](TODO.md).
 
 ## Quick start
 
@@ -17,6 +18,7 @@ No Node.js toolchain or GPU is required.
 ```sh
 make setup
 make test
+make migrate
 make up
 ```
 
@@ -39,6 +41,9 @@ separately from the Compose web service to avoid a port conflict.
 - `make ps` shows service health; `make logs` follows logs.
 - `make shell` opens the web container; `make db-shell` opens psql.
 - `make check-dependencies` checks live service connections.
+- `make migrate` applies migrations; `make migration MESSAGE="..."` generates one.
+- `make migration-check` detects schema drift.
+- `make test-integration` tests persistence using a disposable PostgreSQL container.
 - `make clean CONFIRM=1` deletes the stack and its data volumes.
 - `make fmt` formats Python and organizes imports.
 - `make lint` checks formatting, lint rules, and strict types.
@@ -52,12 +57,13 @@ the server-rendered page and health link work without JavaScript.
 ## Key concepts and documentation
 
 KitchenSoup owns orchestration and registry state. Soup and vLLM remain separate
-engines behind container/CLI boundaries. Planned durable state belongs in
+engines behind container/CLI boundaries. Durable metadata belongs in
 PostgreSQL; Valkey holds transient state, and object storage sits behind an
 S3-compatible adapter. Model versions and artifact representations have separate
 lineages.
 
 - [Development, local infrastructure, and HTTP contract](docs/development.md)
+- [Database schema and migration workflow](docs/database.md)
 - [Project design and implementation intent](PLAN.md)
 - [Remaining milestones](TODO.md)
 - [Repository contribution instructions](AGENTS.md)

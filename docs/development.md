@@ -14,7 +14,8 @@ uses pytest and HTTPX for in-process HTTP tests, Ruff for linting/formatting, an
 mypy for strict type checking. Hatchling builds the Python package, including
 its templates and static assets. Psycopg supplies the authenticated PostgreSQL
 startup query; redis-py supplies the Valkey PING probe. These small clients will
-also support the later database and queue milestones. RustFS readiness uses
+also support database and future queue operations. SQLAlchemy owns ORM mappings
+and transactions; Alembic manages PostgreSQL schema changes. RustFS readiness uses
 Python’s standard HTTP client; S3 artifact operations remain in Milestone 3.
 
 Run `make dev` from the repository root. It binds to `127.0.0.1:8000` with reload.
@@ -67,7 +68,8 @@ See the upstream [FastAPI template documentation](https://fastapi.tiangolo.com/a
 Run `make setup && make test`, then `make verify`. Tests cover health responses,
 templates/static files from a different working directory, HTML escaping,
 configuration defaults, dotenv/environment precedence, and invalid configuration.
-CI uses the same commands on Python 3.13 and requires no external services or GPU.
+The unit-test gate requires no services or GPU. CI also runs the disposable
+PostgreSQL integration suite through `make test-integration`.
 Browser JavaScript execution is not covered by the unit suite.
 
 ## Local infrastructure
@@ -92,10 +94,11 @@ against retained data before changing image tags. PostgreSQL 18 uses its
 versioned data directory beneath `/var/lib/postgresql`. Image tags and Python
 dependency ranges are not digest/transitive lockfiles.
 
-PostgreSQL remains authoritative for future durable application state. Valkey
-persistence does not make queue/cache contents authoritative. No schema,
-ArtifactStore, bucket provisioning, queue dispatch, reconciliation, Docker
-socket mount, or training executor is implemented by this milestone.
+PostgreSQL is authoritative for durable application metadata. Run `make migrate`
+to create or upgrade its schema; see [the database reference](database.md).
+Valkey persistence does not make queue/cache contents authoritative. ArtifactStore,
+bucket provisioning, queue dispatch, reconciliation, Docker socket mounts, and
+training executors remain future work.
 
 `make local-env` creates `.env` from the example when absent and fills missing
 or blank `KITCHENSOUP_POSTGRES_PASSWORD`, `RUSTFS_ACCESS_KEY`, and
@@ -149,9 +152,10 @@ stops them cleanly. They neither consume jobs nor mutate application state.
   including database and object data. It keeps `.env` and images. Without the
   confirmation flag it fails before running Docker; it never prunes other projects.
 
-Normal `make verify` remains service-free. CI additionally runs `make compose-check`.
+Normal `make verify` remains service-free. CI additionally runs `make compose-check`
+and `make test-integration` against an isolated PostgreSQL container.
 For live validation, run `make up`, `make check-dependencies`, visit `/` and
-`/healthz`, run `make restart`, then `make down`. Docker integration is not part
+`/healthz`, run `make restart`, then `make down`. The full stack is not part
 of the unit-test gate.
 
 Upstream references: [Compose startup ordering](https://docs.docker.com/compose/how-tos/startup-order/),

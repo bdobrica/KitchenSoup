@@ -67,45 +67,45 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 2 — Database foundation
 
-- [ ] Add SQLAlchemy.
-- [ ] Add Alembic.
-- [ ] Add initial database session/unit-of-work layer.
-- [ ] Create migration for application metadata.
-- [ ] Create tables for:
-  - [ ] `model_catalog_entries`
-  - [ ] `models`
-  - [ ] `model_versions`
-  - [ ] `model_version_parents`
-  - [ ] `model_sources`
-  - [ ] `artifacts`
-  - [ ] `artifact_derivations`
-  - [ ] `datasets`
-  - [ ] `dataset_versions`
-  - [ ] `dataset_sources`
-  - [ ] `documents`
-  - [ ] `conversation_imports`
-  - [ ] `conversations`
-  - [ ] `training_runs`
-  - [ ] `job_events`
-  - [ ] `execution_targets`
-  - [ ] `llm_providers`
-  - [ ] `evaluation_suites`
-  - [ ] `evaluation_prompts`
-  - [ ] `evaluation_results`
-  - [ ] `deployments`
-- [ ] Add timestamps consistently.
-- [ ] Add immutable identifiers using UUIDs.
-- [ ] Add content-hash fields where relevant.
-- [ ] Add migration Makefile commands:
-  - [ ] `make migrate`
-  - [ ] `make migration`
-- [ ] Add repository/service tests for basic CRUD.
+- [x] Add SQLAlchemy.
+- [x] Add Alembic.
+- [x] Add initial database session/unit-of-work layer.
+- [x] Create migration for application metadata.
+- [x] Create tables for:
+  - [x] `model_catalog_entries`
+  - [x] `models`
+  - [x] `model_versions`
+  - [x] `model_version_parents`
+  - [x] `model_sources`
+  - [x] `artifacts`
+  - [x] `artifact_derivations`
+  - [x] `datasets`
+  - [x] `dataset_versions`
+  - [x] `dataset_sources`
+  - [x] `documents`
+  - [x] `conversation_imports`
+  - [x] `conversations`
+  - [x] `training_runs`
+  - [x] `job_events`
+  - [x] `execution_targets`
+  - [x] `llm_providers`
+  - [x] `evaluation_suites`
+  - [x] `evaluation_prompts`
+  - [x] `evaluation_results`
+  - [x] `deployments`
+- [x] Add timestamps consistently.
+- [x] Add immutable identifiers using UUIDs.
+- [x] Add content-hash fields where relevant.
+- [x] Add migration Makefile commands:
+  - [x] `make migrate`
+  - [x] `make migration`
+- [x] Add repository/service tests for basic CRUD.
 
 **Acceptance criteria**
 
-- [ ] A fresh database can be created using only Make targets.
-- [ ] All migrations are repeatable in CI.
-- [ ] Core entities can be created and queried.
+- [x] A fresh database can be created using only Make targets.
+- [x] All migrations are repeatable in CI.
+- [x] Core entities can be created and queried.
 
 ---
 

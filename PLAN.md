@@ -1579,7 +1579,8 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 2: database foundation.
+The current implementation frontier is Milestone 3: ArtifactStore and RustFS.
+The database foundation and migration workflow are documented in [docs/database.md](docs/database.md).
 The developer workflow and local infrastructure are documented in [docs/development.md](docs/development.md).
 
 Implementation should proceed in vertical slices:
