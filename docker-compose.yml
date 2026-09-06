@@ -1,0 +1,103 @@
+name: kitchensoup
+
+x-app: &app
+  build: .
+  image: kitchensoup:local
+  init: true
+  restart: unless-stopped
+  environment:
+    KITCHENSOUP_APP_NAME: ${KITCHENSOUP_APP_NAME:-KitchenSoup}
+    KITCHENSOUP_CHECK_DEPENDENCIES: "true"
+    KITCHENSOUP_POSTGRES_PASSWORD: ${KITCHENSOUP_POSTGRES_PASSWORD:?Run make local-env first}
+  depends_on:
+    postgres:
+      condition: service_healthy
+    valkey:
+      condition: service_healthy
+    rustfs:
+      condition: service_healthy
+
+x-background-health: &background-health
+  test: ["CMD", "python", "-c", "import pathlib,time; p=pathlib.Path('/tmp/kitchensoup-heartbeat'); assert p.exists() and time.time()-p.stat().st_mtime < 20"]
+  interval: 10s
+  timeout: 5s
+  retries: 3
+  start_period: 15s
+
+services:
+  postgres:
+    image: postgres:18.6-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kitchensoup
+      POSTGRES_USER: kitchensoup
+      POSTGRES_PASSWORD: ${KITCHENSOUP_POSTGRES_PASSWORD:?Run make local-env first}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kitchensoup -d kitchensoup"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:9.1.1-alpine3.24
+    restart: unless-stopped
+    command: ["valkey-server", "--appendonly", "yes"]
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0-beta.12
+    restart: unless-stopped
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?Run make local-env first}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:?Run make local-env first}
+    ports:
+      - "127.0.0.1:${RUSTFS_API_PORT:-9000}:9000"
+      - "127.0.0.1:${RUSTFS_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - rustfs-data:/data
+      - rustfs-logs:/logs
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+
+  web:
+    <<: *app
+    ports:
+      - "127.0.0.1:${KITCHENSOUP_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "app.background", "worker"]
+    healthcheck: *background-health
+
+  reconciler:
+    <<: *app
+    command: ["python", "-m", "app.background", "reconciler"]
+    healthcheck: *background-health
+
+volumes:
+  postgres-data:
+  valkey-data:
+  rustfs-data:
+  rustfs-logs:

@@ -39,29 +39,29 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 1 — Local infrastructure
 
-- [ ] Add PostgreSQL to Docker Compose.
-- [ ] Add Valkey to Docker Compose.
-- [ ] Add RustFS to Docker Compose.
-- [ ] Add persistent local volumes.
-- [ ] Add service health checks.
-- [ ] Add FastAPI application service.
-- [ ] Add worker service placeholder.
-- [ ] Add reconciler service placeholder.
-- [ ] Implement `make up`.
-- [ ] Implement `make down`.
-- [ ] Implement `make restart`.
-- [ ] Implement `make logs`.
-- [ ] Implement `make ps`.
-- [ ] Implement `make clean`.
-- [ ] Add dependency health checks to application startup.
-- [ ] Add `make db-shell`.
-- [ ] Add `make shell`.
+- [x] Add PostgreSQL to Docker Compose.
+- [x] Add Valkey to Docker Compose.
+- [x] Add RustFS to Docker Compose.
+- [x] Add persistent local volumes.
+- [x] Add service health checks.
+- [x] Add FastAPI application service.
+- [x] Add worker service placeholder.
+- [x] Add reconciler service placeholder.
+- [x] Implement `make up`.
+- [x] Implement `make down`.
+- [x] Implement `make restart`.
+- [x] Implement `make logs`.
+- [x] Implement `make ps`.
+- [x] Implement `make clean`.
+- [x] Add dependency health checks to application startup.
+- [x] Add `make db-shell`.
+- [x] Add `make shell`.
 
 **Acceptance criteria**
 
-- [ ] `make up` starts a healthy development stack.
-- [ ] Application can connect to PostgreSQL, Valkey, and RustFS.
-- [ ] `make down` shuts the stack down cleanly.
+- [x] `make up` starts a healthy development stack.
+- [x] Application can connect to PostgreSQL, Valkey, and RustFS.
+- [x] `make down` shuts the stack down cleanly.
 
 ---
 

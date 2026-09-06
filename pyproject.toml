@@ -15,6 +15,8 @@ dependencies = [
     "jinja2>=3.1.6,<4",
     "pydantic>=2.9,<3",
     "pydantic-settings>=2.7,<3",
+    "psycopg[binary]>=3.2,<4",
+    "redis>=5.2,<7",
     "uvicorn>=0.34,<1",
 ]
 

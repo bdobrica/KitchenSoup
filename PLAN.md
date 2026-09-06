@@ -1579,8 +1579,8 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 1: local infrastructure.
-The bootstrap developer workflow is documented in [docs/development.md](docs/development.md).
+The current implementation frontier is Milestone 2: database foundation.
+The developer workflow and local infrastructure are documented in [docs/development.md](docs/development.md).
 
 Implementation should proceed in vertical slices:
 

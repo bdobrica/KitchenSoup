@@ -19,3 +19,4 @@ jobs:
           cache-dependency-path: pyproject.toml
       - run: make setup
       - run: make verify
+      - run: make compose-check

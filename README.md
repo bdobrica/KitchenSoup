@@ -4,31 +4,42 @@ KitchenSoup is a lightweight, self-hosted application for guided
 language-model fine-tuning. The planned workflow covers preparing datasets,
 training through Soup, comparing results, and serving temporary vLLM playgrounds.
 
-**Status:** repository bootstrap. The application currently serves a home page
-and a process health endpoint. Infrastructure and training workflows are future
-milestones in [TODO.md](TODO.md).
+**Status:** local infrastructure. Docker Compose runs PostgreSQL, Valkey,
+RustFS, the web application, and idle worker/reconciler placeholders. Database
+schemas and training workflows remain in [TODO.md](TODO.md).
 
 ## Quick start
 
 Install Python **3.13** (including `venv`/`ensurepip`) and GNU Make. On Windows,
-use WSL. No Node.js, Docker, database, or GPU is required for this milestone.
+use WSL. Install Docker Engine and Docker Compose v2.20+ for the local stack.
+No Node.js toolchain or GPU is required.
 
 ```sh
 make setup
 make test
-make dev
+make up
 ```
 
-Open <http://127.0.0.1:8000>. Stop the development server with Ctrl+C.
+Open <http://127.0.0.1:8000>. Stop the stack with `make down`; data volumes
+are retained. `make restart` recreates the stack with its existing data.
 If your Python 3.13 executable has a different name, use
-`make setup PYTHON=python3`.
+`make setup PYTHON=python3` and `make up PYTHON=python3`.
 
-Configuration is optional: copy `.env.example` to `.env` to customize the display
-name. Environment variables take precedence over `.env` values.
+`make up` generates missing local credentials in ignored `.env`. Existing
+values are preserved. Edit that file to change the display name or host ports;
+environment variables take precedence. RustFS exposes its console at
+<http://127.0.0.1:9001>, using the generated RustFS credentials in `.env`.
+
+For the service-free web shell, use `make dev` and stop it with Ctrl+C. Run it
+separately from the Compose web service to avoid a port conflict.
 
 ## Development
 
 - `make help` lists available commands.
+- `make ps` shows service health; `make logs` follows logs.
+- `make shell` opens the web container; `make db-shell` opens psql.
+- `make check-dependencies` checks live service connections.
+- `make clean CONFIRM=1` deletes the stack and its data volumes.
 - `make fmt` formats Python and organizes imports.
 - `make lint` checks formatting, lint rules, and strict types.
 - `make test` runs service-free tests; `make test-unit` runs unit tests.
@@ -46,7 +57,7 @@ PostgreSQL; Valkey holds transient state, and object storage sits behind an
 S3-compatible adapter. Model versions and artifact representations have separate
 lineages.
 
-- [Development and bootstrap HTTP contract](docs/development.md)
+- [Development, local infrastructure, and HTTP contract](docs/development.md)
 - [Project design and implementation intent](PLAN.md)
 - [Remaining milestones](TODO.md)
 - [Repository contribution instructions](AGENTS.md)

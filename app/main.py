@@ -1,5 +1,8 @@
 """ASGI application factory."""
 
+import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
 
@@ -10,6 +13,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 from app.config import Settings
+from app.dependencies import check_dependencies
 
 UI_DIR = Path(__file__).resolve().parent / "ui"
 
@@ -20,7 +24,13 @@ class HealthResponse(BaseModel):
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings if settings is not None else Settings()
-    app = FastAPI(title=settings.app_name, version="0.1.0")
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        await asyncio.to_thread(check_dependencies, settings)
+        yield
+
+    app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
     templates = Jinja2Templates(directory=UI_DIR / "templates")
     app.mount("/static", StaticFiles(directory=UI_DIR / "static"), name="static")
 
