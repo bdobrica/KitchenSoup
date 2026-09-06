@@ -197,31 +197,31 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 6 — Canonical ChatGPT importer
 
-- [ ] Define `kitchensoup.conversation/v1`.
-- [ ] Define importer protocol.
-- [ ] Implement ChatGPT export detector.
-- [ ] Accept complete ChatGPT ZIP export.
-- [ ] Detect supported conversation JSON file layouts.
-- [ ] Parse conversations.
-- [ ] Preserve source conversation IDs.
-- [ ] Normalize message roles.
-- [ ] Normalize text content.
-- [ ] Mark unsupported multimodal/tool/attachment content.
-- [ ] Store canonical conversation artifacts.
-- [ ] Store conversation metadata in PostgreSQL.
-- [ ] Build conversation-selection UI.
-- [ ] Add search.
-- [ ] Add select all / select none.
-- [ ] Show title, date, and message count.
-- [ ] Add fixture-based importer tests.
-- [ ] Ensure importer failures do not destroy the raw upload.
+- [x] Define `kitchensoup.conversation/v1`.
+- [x] Define importer protocol.
+- [x] Implement ChatGPT export detector.
+- [x] Accept complete ChatGPT ZIP export.
+- [x] Detect supported conversation JSON file layouts.
+- [x] Parse conversations.
+- [x] Preserve source conversation IDs.
+- [x] Normalize message roles.
+- [x] Normalize text content.
+- [x] Mark unsupported multimodal/tool/attachment content.
+- [x] Store canonical conversation artifacts.
+- [x] Store conversation metadata in PostgreSQL.
+- [x] Build conversation-selection UI.
+- [x] Add search.
+- [x] Add select all / select none.
+- [x] Show title, date, and message count.
+- [x] Add fixture-based importer tests.
+- [x] Ensure importer failures do not destroy the raw upload.
 
 **Acceptance criteria**
 
-- [ ] User uploads a ChatGPT export ZIP directly.
-- [ ] KitchenSoup lists the imported conversations.
-- [ ] User selects a subset for dataset creation.
-- [ ] Original export remains unchanged and stored.
+- [x] User uploads a ChatGPT export ZIP directly.
+- [x] KitchenSoup lists the imported conversations.
+- [x] User selects a subset for dataset creation.
+- [x] Original export remains unchanged and stored.
 
 ---
 

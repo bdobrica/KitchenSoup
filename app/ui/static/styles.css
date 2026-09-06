@@ -26,3 +26,6 @@ button { font: inherit; cursor: pointer; padding: 0.5rem 1rem; }
 #dataset-detail { overflow-wrap: anywhere; }
 #source-list article { padding: 1rem 0; border-bottom: 1px solid #ccd7cc; }
 #source-list button { margin-right: 0.5rem; }
+
+#conversation-list article { padding: 0.75rem 0; border-bottom: 1px solid #ccd7cc; }
+#conversation-list input[type="checkbox"] { display: inline; }

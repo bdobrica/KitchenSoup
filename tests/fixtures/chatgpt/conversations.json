@@ -1,0 +1,27 @@
+[
+  {
+    "id": "synthetic-chat-001",
+    "title": "Writing example",
+    "create_time": 1700000000,
+    "current_node": "answer",
+    "mapping": {
+      "root": {"parent": null, "message": null},
+      "question": {"parent": "root", "message": {"id": "message-q", "author": {"role": "user"}, "content": {"content_type": "text", "parts": ["Hello\r\nworld"]}}},
+      "old-answer": {"parent": "question", "message": {"id": "old-answer", "author": {"role": "assistant"}, "content": {"content_type": "text", "parts": ["Unused branch"]}}},
+      "answer": {"parent": "question", "message": {"id": "message-a", "author": {"role": "assistant"}, "content": {"content_type": "text", "parts": ["Hello there"]}}}
+    }
+  },
+  {
+    "conversation_id": "synthetic-chat-002",
+    "title": "Attachment example",
+    "create_time": null,
+    "current_node": "final",
+    "mapping": {
+      "root": {"parent": null, "message": null},
+      "image": {"parent": "root", "message": {"id": "image-q", "author": {"role": "user"}, "metadata": {"attachments": [{"name": "synthetic.png"}]}, "content": {"content_type": "multimodal_text", "parts": ["Describe this", {"content_type": "image_asset_pointer", "asset_pointer": "synthetic-only"}]}}},
+      "tool-call": {"parent": "image", "message": {"id": "call", "author": {"role": "assistant"}, "recipient": "browser", "content": {"content_type": "text", "parts": ["Ignored tool request"]}}},
+      "tool": {"parent": "tool-call", "message": {"id": "tool", "author": {"role": "tool"}, "content": {"content_type": "text", "parts": ["Ignored tool output"]}}},
+      "final": {"parent": "tool", "message": {"id": "final-a", "author": {"role": "assistant"}, "content": {"content_type": "text", "parts": ["A text response"]}}}
+    }
+  }
+]

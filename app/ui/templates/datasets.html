@@ -18,7 +18,7 @@
 <p id="dataset-description"></p>
 <p id="dataset-license"></p>
 <h2>Add raw source material</h2>
-<p>Upload TXT, Markdown, PDF, DOCX, JSON, JSONL, CSV, or ZIP files. Originals are kept unchanged. Conversation import and document processing will follow.</p>
+<p>Upload TXT, Markdown, PDF, DOCX, JSON, JSONL, CSV, or ZIP files. Originals are kept unchanged. Use the import button on a ChatGPT ZIP to browse its conversations. Document processing will follow.</p>
 <form id="source-upload">
 <label>Source file <input name="file" type="file" accept=".txt,.md,.pdf,.docx,.json,.jsonl,.csv,.zip" required></label>
 <label>Source license (optional) <input name="license" maxlength="200"></label>
@@ -28,7 +28,19 @@
 <div id="source-list"></div>
 <p>Removing an unprocessed source removes it from this dataset and retains the original file. Sources with derived data or dataset versions cannot be removed.</p>
 <div id="retained-source"></div>
+<section id="conversation-selection">
+<h2>Choose conversations</h2>
+<p>Save the conversations to use when creating a training dataset. No training examples are generated yet.</p>
+<label>Search titles <input id="conversation-search" type="search"></label>
+<button id="conversation-all" type="button">Select all shown</button>
+<button id="conversation-none" type="button">Select none</button>
+<button id="conversation-save" type="button">Save selection</button>
+<p id="conversation-status" role="status" aria-live="polite"></p>
+<div id="conversation-list"></div>
+<div id="canonical-download"></div>
+</section>
 </section>
 <noscript>Dataset browsing and uploads require JavaScript.</noscript>
 <script defer src="{{ url_for('static', path='/datasets.js') }}"></script>
+<script defer src="{{ url_for('static', path='/conversations.js') }}"></script>
 {% endblock %}

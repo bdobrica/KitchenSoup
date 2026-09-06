@@ -204,6 +204,10 @@ class Conversation(Entity):
     title: Mapped[str]
     message_count: Mapped[int]
     source_created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    selected: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
+    warnings: Mapped[list[str]] = mapped_column(
+        JSONB, default=list, server_default=text("'[]'::jsonb")
+    )
 
 
 class ExecutionTarget(Entity):

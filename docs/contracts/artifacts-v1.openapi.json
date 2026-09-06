@@ -198,6 +198,134 @@
         "title": "CatalogEntry",
         "type": "object"
       },
+      "ChatGPTImportView": {
+        "properties": {
+          "canonical_artifact_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Canonical Artifact Id"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "importer": {
+            "title": "Importer",
+            "type": "string"
+          },
+          "importer_version": {
+            "title": "Importer Version",
+            "type": "string"
+          },
+          "schema_version": {
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_id": {
+            "format": "uuid",
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source_id",
+          "canonical_artifact_id",
+          "importer",
+          "importer_version",
+          "schema_version"
+        ],
+        "title": "ChatGPTImportView",
+        "type": "object"
+      },
+      "ConversationSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "conversation_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10000,
+            "title": "Conversation Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "conversation_ids"
+        ],
+        "title": "ConversationSelection",
+        "type": "object"
+      },
+      "ConversationView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "import_id": {
+            "format": "uuid",
+            "title": "Import Id",
+            "type": "string"
+          },
+          "message_count": {
+            "title": "Message Count",
+            "type": "integer"
+          },
+          "selected": {
+            "title": "Selected",
+            "type": "boolean"
+          },
+          "source_conversation_id": {
+            "title": "Source Conversation Id",
+            "type": "string"
+          },
+          "source_created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Created At"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "import_id",
+          "source_conversation_id",
+          "title",
+          "message_count",
+          "source_created_at",
+          "selected",
+          "warnings"
+        ],
+        "title": "ConversationView",
+        "type": "object"
+      },
       "DatasetCreate": {
         "additionalProperties": false,
         "properties": {
@@ -1097,6 +1225,110 @@
         ]
       }
     },
+    "/api/v1/datasets/{dataset_id}/conversation-selection": {
+      "put": {
+        "operationId": "select_conversations_api_v1_datasets__dataset_id__conversation_selection_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversationSelection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationView"
+                  },
+                  "title": "Response Select Conversations Api V1 Datasets  Dataset Id  Conversation Selection Put",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Select Conversations",
+        "tags": [
+          "conversations"
+        ]
+      }
+    },
+    "/api/v1/datasets/{dataset_id}/conversations": {
+      "get": {
+        "operationId": "list_conversations_api_v1_datasets__dataset_id__conversations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationView"
+                  },
+                  "title": "Response List Conversations Api V1 Datasets  Dataset Id  Conversations Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Conversations",
+        "tags": [
+          "conversations"
+        ]
+      }
+    },
     "/api/v1/datasets/{dataset_id}/sources": {
       "post": {
         "operationId": "attach_source_api_v1_datasets__dataset_id__sources_post",
@@ -1253,6 +1485,59 @@
         "summary": "Download Source",
         "tags": [
           "datasets"
+        ]
+      }
+    },
+    "/api/v1/datasets/{dataset_id}/sources/{source_id}/imports/chatgpt": {
+      "post": {
+        "operationId": "import_chatgpt_api_v1_datasets__dataset_id__sources__source_id__imports_chatgpt_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatGPTImportView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Chatgpt",
+        "tags": [
+          "conversations"
         ]
       }
     },

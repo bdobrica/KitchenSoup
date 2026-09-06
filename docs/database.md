@@ -159,3 +159,8 @@ the migrated schema to ORM metadata. CI runs the same Make target.
 
 Upstream references: [SQLAlchemy sessions](https://docs.sqlalchemy.org/en/20/orm/session_basics.html)
 and [Alembic autogeneration](https://alembic.sqlalchemy.org/en/latest/autogenerate.html).
+
+Conversation metadata now includes a mutable `selected` draft flag (false by default)
+and an array of ignored-content warning codes. Migration `953d3fcf27d6` adds these
+fields to existing rows; the existing identity/timestamp guard still applies.
+See [canonical import and selection](conversations.md).

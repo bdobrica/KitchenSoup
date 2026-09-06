@@ -1,0 +1,144 @@
+{
+  "$defs": {
+    "CanonicalMessage": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "items": {
+            "$ref": "#/$defs/TextPart"
+          },
+          "minItems": 1,
+          "title": "Content",
+          "type": "array"
+        },
+        "message_id": {
+          "title": "Message Id",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "system",
+            "user",
+            "assistant"
+          ],
+          "title": "Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message_id",
+        "role",
+        "content"
+      ],
+      "title": "CanonicalMessage",
+      "type": "object"
+    },
+    "ConversationMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "importer_version": {
+          "title": "Importer Version",
+          "type": "string"
+        },
+        "source_created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Created At"
+        },
+        "warnings": {
+          "items": {
+            "enum": [
+              "attachments_ignored",
+              "multimodal_ignored",
+              "tool_content_ignored",
+              "unknown_role_ignored",
+              "alternate_branches_ignored",
+              "hidden_messages_ignored",
+              "unsupported_content_ignored",
+              "developer_role_normalized"
+            ],
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "importer_version",
+        "warnings"
+      ],
+      "title": "ConversationMetadata",
+      "type": "object"
+    },
+    "TextPart": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "const": "text",
+          "default": "text",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "TextPart",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "conversation_id": {
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "messages": {
+      "items": {
+        "$ref": "#/$defs/CanonicalMessage"
+      },
+      "title": "Messages",
+      "type": "array"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ConversationMetadata"
+    },
+    "schema": {
+      "const": "kitchensoup.conversation/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "source": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Source",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "conversation_id",
+    "title",
+    "source",
+    "messages",
+    "metadata"
+  ],
+  "title": "CanonicalConversation",
+  "type": "object"
+}

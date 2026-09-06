@@ -65,9 +65,24 @@ async function refresh() {
         document.querySelector("#retained-source").replaceChildren(element("p", `Retained artifact: ${result.artifact_id}`), retained);
       });
     });
-    card.append(get, remove); list.append(card);
+    card.append(get, remove);
+    if (source.kind === "archive" && source.filename.toLowerCase().endsWith(".zip")) {
+      const importButton = element("button", "Import ChatGPT conversations");
+      importButton.addEventListener("click", () => busy(importButton, async () => {
+        statusText.textContent = "Importing conversations…";
+        const imported = await api(`/datasets/${datasetId}/sources/${source.id}/imports/chatgpt`, {});
+        await refresh();
+        statusText.textContent = "Conversations imported. Choose and save your selection below.";
+        const canonical = element("button", "Download canonical conversations");
+        canonical.addEventListener("click", () => busy(canonical, () => download(`/artifacts/${imported.canonical_artifact_id}/download`)));
+        document.querySelector("#canonical-download").replaceChildren(canonical);
+      }));
+      card.append(importButton);
+    }
+    list.append(card);
   }
   if (!dataset.sources.length) list.append(element("p", "No sources yet."));
+  document.dispatchEvent(new Event("dataset-refreshed"));
 }
 document.querySelector("#dataset-create").addEventListener("submit", event => {
   event.preventDefault(); const form = event.currentTarget;

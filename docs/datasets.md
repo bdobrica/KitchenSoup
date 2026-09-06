@@ -25,10 +25,11 @@ unchanged and creates no source or document records.
 | `.zip` | Safe archive extraction and CRC checks | Archive raw source |
 
 Extensions are case-insensitive. The declared browser MIME type is not trusted
-as proof of format. JSON/JSONL/CSV syntax, conversation layouts, PDF internals,
-and Word XML are not parsed at this milestone. No canonical artifacts, extracted
-text, training examples or dataset versions are produced. Original line endings,
-encoding markers, filenames inside archives and all source bytes are retained.
+as proof of format. Raw-source attachment does not parse JSON/JSONL/CSV syntax,
+conversation layouts, PDF internals or Word XML. It produces no canonical
+artifacts, extracted text, training examples or dataset versions. The separate [ChatGPT import action](conversations.md)
+can create canonical conversations from an attached export ZIP. Original line
+endings, encoding markers, filenames inside archives and all source bytes are retained.
 
 ## ZIP extraction utility
 
