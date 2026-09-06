@@ -24,6 +24,8 @@ PDF, Word, Markdown and text extraction is Soup's responsibility.
 Upstream references: [Soup document ingestion documentation](https://github.com/MakazhanAlpamys/Soup/blob/v0.74.0/docs/data.md)
 and [CLI implementation](https://github.com/MakazhanAlpamys/Soup/blob/v0.74.0/src/soup_cli/commands/data.py).
 
+Successful extractions can be selected when creating [dataset versions](dataset-versions.md).
+
 The `DocumentRunner` protocol is the application boundary. The default HTTP adapter
 uses the operator-only `KITCHENSOUP_SOUP_INGESTION_URL`; an empty setting disables
 new ingestion outside Compose. Users cannot supply runner addresses or commands.

@@ -560,7 +560,8 @@ The initial Soup document CLI supports PDF, DOCX, Markdown and plain text.
 Structured JSONL/CSV remain raw sources until a suitable conversion mode is added.
 The [document-ingestion reference](docs/documents.md) defines the implemented
 limits, immutable extraction history and versioned intermediate artifacts.
-Dataset manifests and resolved training-example preview remain Milestone 8.
+Dataset manifests and exact example preview are documented in
+[dataset versions](docs/dataset-versions.md).
 
 KitchenSoup should retain:
 
@@ -1574,7 +1575,8 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 8: dataset manifests and preview.
+The current implementation frontier is Milestone 9: LLM provider abstraction.
+Dataset snapshots and previews are documented in [docs/dataset-versions.md](docs/dataset-versions.md).
 Soup document extraction is documented in [docs/documents.md](docs/documents.md).
 Canonical ChatGPT import and draft conversation selection are documented in [docs/conversations.md](docs/conversations.md).
 Dataset creation and raw-source admission are documented in [docs/datasets.md](docs/datasets.md).

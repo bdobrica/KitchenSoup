@@ -1,0 +1,302 @@
+{
+  "$defs": {
+    "DatasetStatistics": {
+      "additionalProperties": false,
+      "properties": {
+        "conversation_count": {
+          "default": 0,
+          "title": "Conversation Count",
+          "type": "integer"
+        },
+        "example_count": {
+          "default": 0,
+          "title": "Example Count",
+          "type": "integer"
+        },
+        "ignored_item_count": {
+          "default": 0,
+          "title": "Ignored Item Count",
+          "type": "integer"
+        },
+        "message_count": {
+          "default": 0,
+          "title": "Message Count",
+          "type": "integer"
+        },
+        "size_bytes": {
+          "default": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "source_count": {
+          "default": 0,
+          "title": "Source Count",
+          "type": "integer"
+        }
+      },
+      "title": "DatasetStatistics",
+      "type": "object"
+    },
+    "DatasetWarning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "conversation_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Conversation Id"
+        },
+        "count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Count"
+        },
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "source_id"
+      ],
+      "title": "DatasetWarning",
+      "type": "object"
+    },
+    "VersionArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "format": "uuid",
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "format": {
+          "title": "Format",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "sha256",
+        "size_bytes",
+        "format"
+      ],
+      "title": "VersionArtifact",
+      "type": "object"
+    },
+    "VersionConversation": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical": {
+          "$ref": "#/$defs/VersionArtifact"
+        },
+        "conversation_id": {
+          "format": "uuid",
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "import_id": {
+          "format": "uuid",
+          "title": "Import Id",
+          "type": "string"
+        },
+        "source_conversation_id": {
+          "title": "Source Conversation Id",
+          "type": "string"
+        },
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "source_conversation_id",
+        "import_id",
+        "source_id",
+        "canonical"
+      ],
+      "title": "VersionConversation",
+      "type": "object"
+    },
+    "VersionDocument": {
+      "additionalProperties": false,
+      "properties": {
+        "ingestion_id": {
+          "format": "uuid",
+          "title": "Ingestion Id",
+          "type": "string"
+        },
+        "manifest": {
+          "$ref": "#/$defs/VersionArtifact"
+        },
+        "output": {
+          "$ref": "#/$defs/VersionArtifact"
+        }
+      },
+      "required": [
+        "ingestion_id",
+        "manifest",
+        "output"
+      ],
+      "title": "VersionDocument",
+      "type": "object"
+    },
+    "VersionSource": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact": {
+          "$ref": "#/$defs/VersionArtifact"
+        },
+        "filename": {
+          "title": "Filename",
+          "type": "string"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "License"
+        },
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "filename",
+        "license",
+        "artifact"
+      ],
+      "title": "VersionSource",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "conversations": {
+      "items": {
+        "$ref": "#/$defs/VersionConversation"
+      },
+      "title": "Conversations",
+      "type": "array"
+    },
+    "converter": {
+      "const": "kitchensoup.examples/v1",
+      "default": "kitchensoup.examples/v1",
+      "title": "Converter",
+      "type": "string"
+    },
+    "dataset_id": {
+      "format": "uuid",
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "dataset_version_id": {
+      "format": "uuid",
+      "title": "Dataset Version Id",
+      "type": "string"
+    },
+    "documents": {
+      "items": {
+        "$ref": "#/$defs/VersionDocument"
+      },
+      "title": "Documents",
+      "type": "array"
+    },
+    "examples": {
+      "$ref": "#/$defs/VersionArtifact"
+    },
+    "license": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "License"
+    },
+    "schema": {
+      "const": "kitchensoup.dataset-manifest/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/VersionSource"
+      },
+      "title": "Sources",
+      "type": "array"
+    },
+    "statistics": {
+      "$ref": "#/$defs/DatasetStatistics"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "warnings": {
+      "items": {
+        "$ref": "#/$defs/DatasetWarning"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "dataset_id",
+    "dataset_version_id",
+    "version",
+    "license",
+    "sources",
+    "conversations",
+    "documents",
+    "examples",
+    "statistics",
+    "warnings"
+  ],
+  "title": "DatasetManifest",
+  "type": "object"
+}

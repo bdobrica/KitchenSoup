@@ -6,6 +6,7 @@ from pathlib import Path
 from app.config import Settings
 from app.ingestion.conversations import CanonicalConversation
 from app.ingestion.documents import DocumentIngestionManifest, SoupResult
+from app.ingestion.versions import DatasetManifest, TrainingExample
 from app.main import create_app
 from app.registry.schemas import Catalog
 
@@ -26,4 +27,11 @@ Path("docs/contracts/document-ingestion-v1.schema.json").write_text(
 )
 Path("docs/contracts/soup-ingest-response-v1.schema.json").write_text(
     json.dumps(SoupResult.model_json_schema(), indent=2, sort_keys=True) + "\n"
+)
+
+Path("docs/contracts/dataset-manifest-v1.schema.json").write_text(
+    json.dumps(DatasetManifest.model_json_schema(), indent=2, sort_keys=True) + "\n"
+)
+Path("docs/contracts/training-example-v1.schema.json").write_text(
+    json.dumps(TrainingExample.model_json_schema(), indent=2, sort_keys=True) + "\n"
 )

@@ -19,6 +19,7 @@ from app.api.conversations import router as conversation_router
 from app.api.datasets import router as dataset_router
 from app.api.documents import router as document_router
 from app.api.models import router as model_router
+from app.api.versions import router as version_router
 from app.config import Settings
 from app.db.session import create_database_engine
 from app.dependencies import check_dependencies
@@ -88,6 +89,7 @@ def create_app(
     app.include_router(dataset_router)
     app.include_router(conversation_router)
     app.include_router(document_router)
+    app.include_router(version_router)
     app.state.soup_ingestion_url = settings.soup_ingestion_url
 
     @app.exception_handler(SourceError)
@@ -164,6 +166,16 @@ def create_app(
     async def dataset_page(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(
             request=request, name="datasets.html", context={"app_name": settings.app_name}
+        )
+
+    @app.get(
+        "/datasets/{dataset_id}/versions/{version_id}",
+        response_class=HTMLResponse,
+        include_in_schema=False,
+    )
+    async def version_page(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request=request, name="dataset-version.html", context={"app_name": settings.app_name}
         )
 
     return app

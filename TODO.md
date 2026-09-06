@@ -246,28 +246,28 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 8 — Dataset manifests and preview
 
-- [ ] Define `kitchensoup.dataset-manifest/v1`.
-- [ ] Add dataset-version creation.
-- [ ] Make dataset versions immutable.
-- [ ] Store selected source IDs/hashes in manifest.
-- [ ] Convert selected canonical conversations into training examples.
-- [ ] Generate preview statistics:
-  - [ ] source count
-  - [ ] conversation count
-  - [ ] message count
-  - [ ] example count
-  - [ ] ignored item count
-- [ ] Add training-example preview UI.
-- [ ] Add paginated example browsing.
-- [ ] Add validation warnings.
-- [ ] Add dataset version detail page.
-- [ ] Add "create new version" flow.
+- [x] Define `kitchensoup.dataset-manifest/v1`.
+- [x] Add dataset-version creation.
+- [x] Make dataset versions immutable.
+- [x] Store selected source IDs/hashes in manifest.
+- [x] Convert selected canonical conversations into training examples.
+- [x] Generate preview statistics:
+  - [x] source count
+  - [x] conversation count
+  - [x] message count
+  - [x] example count
+  - [x] ignored item count
+- [x] Add training-example preview UI.
+- [x] Add paginated example browsing.
+- [x] Add validation warnings.
+- [x] Add dataset version detail page.
+- [x] Add "create new version" flow.
 
 **Acceptance criteria**
 
-- [ ] User can see exactly what training examples will be used.
-- [ ] Changing source selection creates a new dataset version.
-- [ ] Existing dataset versions never mutate.
+- [x] User can see exactly what training examples will be used.
+- [x] Changing source selection creates a new dataset version.
+- [x] Existing dataset versions never mutate.
 
 ---
 

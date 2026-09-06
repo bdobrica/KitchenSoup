@@ -38,7 +38,7 @@
 </section>
 <section id="conversation-selection">
 <h2>Choose conversations</h2>
-<p>Save the conversations to use when creating a training dataset. No training examples are generated yet.</p>
+<p>Save the conversations to use when creating a training dataset. Version creation uses your saved selection.</p>
 <label>Search titles <input id="conversation-search" type="search"></label>
 <button id="conversation-all" type="button">Select all shown</button>
 <button id="conversation-none" type="button">Select none</button>
@@ -47,9 +47,20 @@
 <div id="conversation-list"></div>
 <div id="canonical-download"></div>
 </section>
+<section id="version-create">
+<h2>Create a dataset version</h2>
+<p>Use saved conversations and choose completed document extractions. Each version preserves its exact examples and selection.</p>
+<label><input id="version-conversations" type="checkbox" checked> Include saved conversation selection</label>
+<div id="version-documents"></div>
+<button id="version-save" type="button">Create new version</button>
+<p id="version-status" role="status"></p>
+<h3>Dataset versions</h3>
+<div id="version-list"></div>
+</section>
 </section>
 <noscript>Dataset browsing and uploads require JavaScript.</noscript>
 <script defer src="{{ url_for('static', path='/datasets.js') }}"></script>
 <script defer src="{{ url_for('static', path='/conversations.js') }}"></script>
 <script defer src="{{ url_for('static', path='/documents.js') }}"></script>
+<script defer src="{{ url_for('static', path='/dataset-versions.js') }}"></script>
 {% endblock %}

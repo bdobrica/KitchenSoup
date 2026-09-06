@@ -97,3 +97,9 @@ conflicting attachments or protected removals return 409; artifact-size bounds
 return 413; unavailable services/workspace return 503. Successful data responses
 use `Cache-Control: no-store`. The existing trusted-user, localhost deployment
 assumptions apply. The service-free shell renders `/datasets` but its API returns 503.
+
+## Immutable versions
+
+[Dataset versions and preview](dataset-versions.md) freeze saved conversations
+and selected successful document extractions into exact training examples.
+Changing draft selection requires a new version and leaves earlier versions intact.

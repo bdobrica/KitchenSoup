@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a id="version-back">Back to dataset / create new version</a></p>
+<h1 id="version-title">Dataset version</h1>
+<p id="preview-status" role="status" aria-live="polite"></p>
+<p id="version-statistics"></p>
+<p id="version-license"></p>
+<div id="version-downloads"></div>
+<h2>Selected sources</h2>
+<div id="version-sources"></div>
+<h2>Validation warnings</h2>
+<p>Ignored counts include known skipped rows, messages, targets and unusable conversations. Importer warnings may describe additional omitted content whose count is unavailable.</p>
+<div id="version-warnings"></div>
+<h2>Training examples</h2>
+<p>Conversation examples show context through one assistant target. Document examples contain extracted text. Model formatting and tokenization are resolved when training is configured.</p>
+<label>Examples per page <select id="preview-limit"><option>5</option><option selected>20</option><option>100</option></select></label>
+<button id="preview-previous">Previous</button>
+<button id="preview-next">Next</button>
+<p id="preview-position"></p>
+<div id="preview-examples"></div>
+<script defer src="{{ url_for('static', path='/dataset-preview.js') }}"></script>
+{% endblock %}

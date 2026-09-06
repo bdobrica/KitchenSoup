@@ -3,9 +3,9 @@
 Create a dataset at `/datasets`, upload a complete ChatGPT export ZIP, and click
 **Import ChatGPT conversations** on its source card. No manual extraction is needed.
 Use title search, **Select all shown**, **Select none**, and individual checkboxes,
-then **Save selection**. Selection survives page reloads and is reserved for future
-training-dataset creation. Dataset manifests and example generation follow in
-Milestone 8; importing and selecting do not start training.
+then **Save selection**. Selection survives page reloads and can be frozen into
+a [dataset version with example preview](dataset-versions.md). Importing, selecting
+and creating versions do not start training.
 
 The list shows title, source creation date, retained text-message count and ignored
 content warnings. Search affects only visible rows; Select all shown adds those
