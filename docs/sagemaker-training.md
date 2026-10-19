@@ -166,8 +166,10 @@ as a per-run cleanup action. Local staging follows operator retention.
 For disposable validation, additionally remove every resource created specifically
 for the check: job metadata (DeleteTrainingJob after terminal state if permitted),
 that job's log streams, test ECR repository/images, emptied staging bucket, dedicated
-inline role policy and role. Remove only recorded test-owned names. Do not delete
-pre-existing infrastructure or the shared `/aws/sagemaker/TrainingJobs` group. Verify
-absence and terminal state, and retain cleanup evidence without credentials or
-runtime payloads. There is no automatic provisioning/cleanup script that can erase
-shared account resources.
+inline role policy and role. Remove only recorded test-owned names. Never delete
+pre-existing infrastructure, another job's streams or a shared log group. A
+disposable validation may remove a newly created, empty training log group only
+when it recorded that the group was absent before the test and confirmed that
+no other job's streams remain. Verify absence and terminal state, and retain
+cleanup evidence without credentials or runtime payloads. There is no automatic
+provisioning/cleanup script that can erase shared account resources.

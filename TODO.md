@@ -617,10 +617,10 @@ See [Milestone 20 evidence](docs/evidence/milestone-20.md).
 
 **Acceptance criteria**
 
-- [ ] Same logical KitchenSoup run can execute as a SageMaker Training Job.
+- [x] Same logical KitchenSoup run can execute as a SageMaker Training Job.
 
-Implementation and local lifecycle/FP16 wrapper checks are complete; live AWS GPU
-acceptance awaits an approved regional training-instance quota. See
+Implementation and live FP16 GPU acceptance are complete, including verified
+adapter import and confirmed cleanup of all disposable AWS resources. See
 [setup and cost controls](docs/sagemaker-training.md) and
 [validation evidence](docs/evidence/milestone-21.md).
 

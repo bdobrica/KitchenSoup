@@ -1586,8 +1586,9 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 Milestone 23 error UX and safety polish is implemented; see
 [errors and object retention](docs/safety-and-retention.md).
-Milestone 21 SageMaker training is implemented; live AWS GPU acceptance awaits an
-approved training-instance quota. See [setup and cost controls](docs/sagemaker-training.md).
+Milestone 21 SageMaker training is implemented and validated with live FP16
+training, verified registry import and confirmed AWS cleanup. See [setup and cost controls](docs/sagemaker-training.md)
+and [validation evidence](docs/evidence/milestone-21.md).
 Milestone 22 (SageMaker serving) remains unimplemented.
 Milestone 25 Runpod training and shared infrastructure is implemented and validated
 with live BF16 training and confirmed Pod cleanup. See [setup and limits](docs/runpod-training.md) and

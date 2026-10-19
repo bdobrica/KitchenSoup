@@ -51,32 +51,88 @@ See [setup and cost controls](../sagemaker-training.md) and
   HTTP/template regression tests passed. No live endpoint, provider or AWS GPU test
   is represented by the local smoke.
 
-## AWS preflight and cleanup accounting
+## Live AWS follow-up
 
-Only read-only AWS CLI calls were made: STS identity, regional SageMaker job
-discovery, IAM execution-role discovery, ECR/S3 access discovery, quota discovery,
-and DescribeTrainingJob for a deliberately absent UUID. No credential values,
-profile files, signed URLs, account-specific runtime payloads or real dataset/model
-bytes are retained in source or evidence.
+Date: 2026-10-20 (Europe/Bucharest)
 
-Initial discovery was denied by an Organizations SCP. After the operator removed
-that restriction and granted quota-read permission, SageMaker API access worked.
-No existing SageMaker-named execution role was found. In `us-east-2`, both g4dn.xlarge
-and g5.xlarge training quotas were zero; discovery found no nonzero training-instance
-quota. The operator requested quota 1 for g4dn.xlarge. The subsequent quota recheck
-still reported **0**, so no paid training launch or image upload was attempted.
+The initial validation was blocked by an Organizations SCP and zero training GPU
+quotas; no AWS resources were created at that stage. After the operator's access
+and quota updates, a read-only check in `us-east-2` reported quota **1** for each
+of `ml.g4dn.xlarge`, `ml.g5.xlarge` and `ml.g6.xlarge`. No in-progress training job,
+ECR repository or SageMaker-named execution role was found during preflight.
 
-**AWS resources created by this implementation/validation: none.** No training job,
-bucket, object, multipart upload, repository/image, IAM role/policy, log group/stream,
-endpoint, VPC or notebook was provisioned. No billable AWS compute/storage was
-allocated and there is no implementation-created AWS resource to delete. The
-operator's account-policy/quota changes are outside the validation harness.
+The operator authorized inexpensive live validation and removal of its AWS
+resources. A dedicated, restricted execution role/inline policy, private encrypted
+unversioned staging bucket and private ECR repository were provisioned. The managed
+trainer image was published as a single-platform manifest pinned to
+`sha256:172cdff4687bb9956e98dc528c29fd572768c904102486c0b1f762daf4a36272`.
+The role trust was restricted to the account's regional SageMaker service; its
+data/image policy covered only the disposable bucket/prefix and repository.
+Credentials remained in the trusted control plane.
 
-## Remaining acceptance
+One `ml.g4dn.xlarge` job used an actual **Tesla T4**, explicit **FP16**, 30 GiB,
+a **600-second** maximum runtime, no spot/retry/warm pool, and network isolation.
+A tiny randomly initialized Qwen2 model and repository conversation fixture were
+registered through the real application services, with no external model download
+or private user data. The reviewed plan used eight epochs, sequence length 256,
+batch size/gradient accumulation 1 and LoRA rank 2. FP16 preflight enforced the
+reviewed precision against Soup's hardware selection.
 
-Milestone 21 implementation and local lifecycle checks are complete. Live acceptance
-remains unchecked in TODO.md until an approved regional training GPU quota permits
-a tiny SageMaker job, verified output import and recorded cleanup of every disposable
-resource created for that check. IAM/ECR/S3 role and image prerequisites must also
-be provisioned before that run. No live SageMaker success or exact AWS bill total
-is claimed. Milestone 22 serving remains unimplemented.
+The production `TrainingRunService` and `JobProcessor.process` worker/reconciler
+paths dispatched only this run; AWS clients, PostgreSQL, Soup and ArtifactStore
+were real. The target connection test verified regional unversioned staging and
+the exact ECR manifest before submission.
+
+| Evidence | Result |
+| --- | --- |
+| Run | `21765bd0-77a0-4b55-aabd-2fd6153570de` |
+| Reviewed plan SHA-256 | `da84270cdfa36ac69cbf375ecde1588f02576e8225fe61ebdb75d06826aeb4e0` |
+| AWS result | `Completed`; training and billable duration **139 seconds** |
+| Runner result | `succeeded`, stage `complete`, runner and Soup exit codes **0** |
+| Registered model version | `e662339f-9344-5585-b1d7-90861af77dbd` |
+| Registered adapter artifact | `4c007c69-3385-53e9-80b3-6cd22961118a` |
+| Registered adapter ZIP SHA-256 | `ad26c5008b987b98ee233e243c4b7098365a69607dc51532f1011fae7fac165d` (21,867 bytes) |
+| Adapter safetensors SHA-256 | `c483fadf2de4eacff7ec18ac26a1dccc1e99e7ff8dacb50a7e1148aee53a4ec6` |
+
+The exact durable event sequence was
+`QUEUED → PREPARING → SUBMITTED → RUNNING → POSTPROCESSING → SUCCEEDED`.
+Output manifest identity and artifact hashes were verified before normal registry
+import. The registered adapter ZIP was independently re-read from ArtifactStore
+and its SHA-256/size checked against PostgreSQL. Its model-parent edge and all
+three artifact-parent edges (base, dataset manifest and examples) were confirmed.
+The application's cursor-based stdout log reader also returned training logs.
+This establishes execution/lifecycle compatibility, not model quality.
+
+## Follow-up verification and cleanup
+
+- `make verify`: **441 unit tests passed**, Ruff formatting/lint (**294 files**)
+  and strict mypy (**163 source files**) passed. The **21 focused SageMaker unit
+  tests** also passed separately.
+- `make test-integration`: **115 passed**, including both SageMaker cases,
+  migration round trips/schema drift, registry lineage, restart and cancellation.
+  Disposable local PostgreSQL/RustFS/Valkey containers were removed by the harness.
+  An initial direct pytest invocation was rejected by its isolated-database guard;
+  the documented harness then passed.
+- No executor, runner, contract or dependency changes were needed for live AWS
+  acceptance. Existing local CPU/FP16 evidence above remains applicable.
+- AWS confirmed terminal completion before cleanup. The application's cleanup
+  removed the run's staged objects and checked for stranded multipart uploads.
+  The disposable job metadata, bucket, ECR image/repository and dedicated IAM
+  role/inline policy were then deleted.
+- AWS initially denied log deletion. After the operator granted access, the owned
+  stream was removed. The training log group was confirmed absent immediately
+  before this test and empty after stream deletion, so the validation-created
+  group was also removed. No pre-existing or shared group was deleted.
+- **Independent AWS absence checks passed** for the job, staging bucket, ECR
+  repository/image, IAM role, owned log stream and newly created log group.
+  The dedicated inline policy was deleted before its role. No temporary AWS
+  resource or cleanup request remains pending, and no compute remains running.
+
+No endpoint, Studio resource, notebook, VPC or NAT gateway was created. Local
+synthetic registry artifacts, private execution evidence and cached development
+images are retained. The disposable target is historical: cloning it requires
+reprovisioning its deleted infrastructure/image. Operator IAM/quota changes were
+not reverted. No credential, private runtime payload or exact AWS billing total
+is retained or claimed; training duration excludes separate storage/log charges.
+Milestone 21 live training acceptance is complete. Milestone 22 serving remains
+unimplemented.
