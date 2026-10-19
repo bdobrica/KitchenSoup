@@ -54,6 +54,16 @@
       const data = Object.fromEntries(new FormData(event.target));
       const configuration = {schema: 'kitchensoup.runpod-target/v1', ssh_credential_ref: data.ssh_credential_ref, training_image: data.training_image, gpu_id: data.gpu_id, allowed_gpu_ids: [data.gpu_id], cloud: data.cloud, min_vram_gb: Number(data.min_vram_gb), max_hourly_price_usd: Number(data.max_hourly_price_usd), max_runtime_minutes: Number(data.max_runtime_minutes), disk_gb: Number(data.disk_gb), max_concurrent_pods: Number(data.max_concurrent_pods), data_center_ids: data.data_center_ids.split(',').map(s => s.trim()).filter(Boolean)};
       configuration.ssh_host_trust = data.ssh_host_trust;
+      if (data.deployment_image) {
+        configuration.deployment_image = data.deployment_image;
+        configuration.deployment_min_vram_gb = Number(data.deployment_min_vram_gb);
+        configuration.deployment_disk_gb = Number(data.deployment_disk_gb);
+        configuration.max_deployment_lease_minutes = Number(data.max_deployment_lease_minutes);
+        if (data.deployment_gpu_id) {
+          configuration.deployment_gpu_id = data.deployment_gpu_id;
+          configuration.allowed_gpu_ids = [...new Set([data.gpu_id, data.deployment_gpu_id])];
+        }
+      }
       await api('', 'POST', {name: data.name, kind: 'runpod_pod', credential_ref: data.credential_ref, configuration});
       el('target-status').textContent = 'Runpod target created. Check API access, price and host trust before submitting a paid run.'; await load();
     } catch (e) { error(e); } finally { button.disabled = false; }

@@ -200,3 +200,10 @@ test-kubernetes-gpu: ## Optional FP16 Kubernetes Job smoke (set KUBERNETES_TEST_
 .PHONY: test-kubernetes-vllm-gpu
 test-kubernetes-vllm-gpu: ## Optional Kubernetes FP16 serving smoke (set KUBERNETES_SERVING_TEST_ARGS)
 	$(VENV_PYTHON) scripts/test_vllm_gpu.py $(KUBERNETES_SERVING_TEST_ARGS)
+
+.PHONY: build-runpod-vllm test-runpod-vllm
+build-runpod-vllm: ## Build the separately pinned SSH-capable vLLM image (no cloud cost)
+	docker build --network $(DOCKER_BUILD_NETWORK) --platform linux/amd64 --provenance=false -f images/vllm/Dockerfile.runpod -t kitchensoup-runpod-vllm:local .
+
+test-runpod-vllm: ## Opt-in paid serving smoke (set RUNPOD_VLLM_TEST_ARGS; see docs/runpod-serving.md)
+	$(VENV_PYTHON) scripts/test_runpod_vllm.py $(RUNPOD_VLLM_TEST_ARGS)

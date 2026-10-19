@@ -193,7 +193,7 @@ def test_api_opt_in_sql_immutability_and_read_only_probe(
             {"id": run.execution_target_id},
         )
         session.commit()
-    with pytest.raises(SourceError, match="Milestone 26"):
+    with pytest.raises(SourceError, match="separately pinned"):
         targets.deployment(run.execution_target_id)
     targets.settings.runpod_execution_enabled = False
     with pytest.raises(SourceError, match="disabled"):

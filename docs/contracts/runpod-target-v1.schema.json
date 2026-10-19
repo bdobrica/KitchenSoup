@@ -28,6 +28,62 @@
       "title": "Data Center Ids",
       "type": "array"
     },
+    "deployment_disk_gb": {
+      "anyOf": [
+        {
+          "maximum": 100,
+          "minimum": 20,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deployment Disk Gb"
+    },
+    "deployment_gpu_id": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "pattern": "^[a-zA-Z0-9 ._-]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deployment Gpu Id"
+    },
+    "deployment_image": {
+      "anyOf": [
+        {
+          "maxLength": 255,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/:-]*@sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deployment Image"
+    },
+    "deployment_min_vram_gb": {
+      "anyOf": [
+        {
+          "maximum": 192,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deployment Min Vram Gb"
+    },
     "disk_gb": {
       "default": 30,
       "maximum": 100,
@@ -53,6 +109,13 @@
       "maximum": 4,
       "minimum": 1,
       "title": "Max Concurrent Pods",
+      "type": "integer"
+    },
+    "max_deployment_lease_minutes": {
+      "default": 30,
+      "maximum": 60,
+      "minimum": 1,
+      "title": "Max Deployment Lease Minutes",
       "type": "integer"
     },
     "max_hourly_price_usd": {

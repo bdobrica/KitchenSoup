@@ -54,6 +54,15 @@ class DeploymentView(StrictModel):
     created_at: datetime
     precision: Literal["fp16", "bf16"]
     image_digest: str
+    bounded_lease: bool = False
+    maximum_lease_minutes: int | None = None
+    maximum_compute_estimate_usd: float | None = None
+    resource_cleanup: str | None = None
+    resource_warning: str | None = None
+
+
+class DeploymentLogs(StrictModel):
+    content: str = Field(max_length=65536)
 
 
 Content = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=8000)]
@@ -65,6 +74,7 @@ class ChatMessage(StrictModel):
 
 
 class ChatRequest(StrictModel):
+    stream: bool = False
     messages: list[ChatMessage] = Field(min_length=1, max_length=32)
 
     @model_validator(mode="after")

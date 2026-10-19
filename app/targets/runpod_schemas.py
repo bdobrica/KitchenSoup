@@ -27,6 +27,13 @@ class RunpodConfig(BaseModel):
     )
     disk_gb: int = Field(default=30, ge=20, le=100)
     training_image: PinnedImage
+    deployment_image: PinnedImage | None = None
+    deployment_gpu_id: str | None = Field(
+        default=None, max_length=120, pattern=r"^[a-zA-Z0-9 ._-]+$"
+    )
+    deployment_min_vram_gb: int | None = Field(default=None, ge=1, le=192)
+    deployment_disk_gb: int | None = Field(default=None, ge=20, le=100)
+    max_deployment_lease_minutes: int = Field(default=30, ge=1, le=60)
     transfer_mode: Literal["ssh-sftp"] = "ssh-sftp"
     ssh_host_trust: Literal["known-hosts", "provisioned-ephemeral"] = "known-hosts"
     max_hourly_price_usd: float = Field(gt=0, le=10, allow_inf_nan=False)
@@ -43,7 +50,27 @@ class RunpodConfig(BaseModel):
     def approved_gpu(self) -> "RunpodConfig":
         if self.gpu_id not in self.allowed_gpu_ids:
             raise ValueError("Selected GPU must be in the target allowlist")
+        if (
+            self.deployment_gpu_id is not None
+            and self.deployment_gpu_id not in self.allowed_gpu_ids
+        ):
+            raise ValueError("Serving GPU must be in the target allowlist")
         return self
+
+    def serving(self) -> "RunpodConfig":
+        if self.deployment_image is None:
+            raise ValueError("Configure a separately pinned SSH-capable serving image")
+        if self.deployment_image == self.training_image:
+            raise ValueError("Training and serving require separate images")
+        return self.model_copy(
+            update={
+                "training_image": self.deployment_image,
+                "gpu_id": self.deployment_gpu_id or self.gpu_id,
+                "min_vram_gb": self.deployment_min_vram_gb or self.min_vram_gb,
+                "disk_gb": self.deployment_disk_gb or self.disk_gb,
+                "max_runtime_minutes": self.max_deployment_lease_minutes,
+            }
+        )
 
 
 class RunpodTargetTest(BaseModel):

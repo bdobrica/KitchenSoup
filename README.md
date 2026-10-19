@@ -82,6 +82,7 @@ lineages.
 - [Kubernetes GPU training and target setup](docs/kubernetes-training.md)
 - [Kubernetes vLLM playgrounds](docs/kubernetes-serving.md)
 - [Runpod ephemeral GPU training and cleanup](docs/runpod-training.md)
+- [Runpod playgrounds](docs/runpod-serving.md)
 - [Lazy merge and AWQ representations](docs/representations.md)
 - [Temporary local model playgrounds and leases](docs/deployments.md)
 - [Artifact storage and upload API](docs/storage.md)

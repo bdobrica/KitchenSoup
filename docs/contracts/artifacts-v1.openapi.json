@@ -375,6 +375,11 @@
             "minItems": 1,
             "title": "Messages",
             "type": "array"
+          },
+          "stream": {
+            "default": false,
+            "title": "Stream",
+            "type": "boolean"
           }
         },
         "required": [
@@ -1015,6 +1020,21 @@
         "title": "DeploymentCreate",
         "type": "object"
       },
+      "DeploymentLogs": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "maxLength": 65536,
+            "title": "Content",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content"
+        ],
+        "title": "DeploymentLogs",
+        "type": "object"
+      },
       "DeploymentView": {
         "additionalProperties": false,
         "properties": {
@@ -1022,6 +1042,11 @@
             "format": "uuid",
             "title": "Artifact Id",
             "type": "string"
+          },
+          "bounded_lease": {
+            "default": false,
+            "title": "Bounded Lease",
+            "type": "boolean"
           },
           "created_at": {
             "format": "date-time",
@@ -1062,6 +1087,28 @@
             "title": "Keep Running",
             "type": "boolean"
           },
+          "maximum_compute_estimate_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximum Compute Estimate Usd"
+          },
+          "maximum_lease_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximum Lease Minutes"
+          },
           "model_version_id": {
             "format": "uuid",
             "title": "Model Version Id",
@@ -1074,6 +1121,28 @@
             ],
             "title": "Precision",
             "type": "string"
+          },
+          "resource_cleanup": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Cleanup"
+          },
+          "resource_warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Warning"
           },
           "status": {
             "enum": [
@@ -2779,6 +2848,58 @@
             "title": "Data Center Ids",
             "type": "array"
           },
+          "deployment_disk_gb": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 20.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment Disk Gb"
+          },
+          "deployment_gpu_id": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "pattern": "^[a-zA-Z0-9 ._-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment Gpu Id"
+          },
+          "deployment_image": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/:-]*@sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment Image"
+          },
+          "deployment_min_vram_gb": {
+            "anyOf": [
+              {
+                "maximum": 192.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment Min Vram Gb"
+          },
           "disk_gb": {
             "default": 30,
             "maximum": 100.0,
@@ -2804,6 +2925,13 @@
             "maximum": 4.0,
             "minimum": 1.0,
             "title": "Max Concurrent Pods",
+            "type": "integer"
+          },
+          "max_deployment_lease_minutes": {
+            "default": 30,
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Max Deployment Lease Minutes",
             "type": "integer"
           },
           "max_hourly_price_usd": {
@@ -5532,6 +5660,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ChatResponse"
                 }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
               }
             },
             "description": "Successful Response"
@@ -5644,6 +5777,49 @@
           }
         },
         "summary": "Keep",
+        "tags": [
+          "deployments"
+        ]
+      }
+    },
+    "/api/v1/deployments/{identifier}/logs": {
+      "get": {
+        "operationId": "logs_api_v1_deployments__identifier__logs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identifier",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identifier",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentLogs"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Logs",
         "tags": [
           "deployments"
         ]

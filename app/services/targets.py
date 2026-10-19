@@ -13,6 +13,7 @@ from app.db.models import ExecutionTarget
 from app.deployments.base import DeploymentExecutor
 from app.deployments.kubernetes import KubernetesDeploymentExecutor
 from app.deployments.materialize import DeploymentMaterializer
+from app.deployments.runpod import RunpodDeploymentExecutor
 from app.deployments.ssh import SshDockerDeploymentExecutor
 from app.executors.base import ExecutorError, TrainingExecutor
 from app.executors.kubernetes import KubernetesTrainingExecutor
@@ -213,7 +214,32 @@ class TargetService:
 
     def deployment(self, identifier: UUID) -> DeploymentExecutor:
         if self.get(identifier).kind == "runpod_pod":
-            raise SourceError(409, "Runpod serving is Milestone 26; this target supports training")
+            self.runpod_enabled()
+            target = self.get(identifier)
+            assert isinstance(target.configuration, RunpodConfig)
+            try:
+                config = target.configuration.serving()
+            except ValueError as exc:
+                raise SourceError(409, str(exc)) from None
+            resolver = LocalCredentialResolver(
+                {n.strip() for n in self.settings.runpod_env_names.split(",") if n.strip()},
+                Path(self.settings.runpod_secret_directory),
+            )
+            return RunpodDeploymentExecutor(
+                Path(self.settings.runpod_staging_workspace) / str(identifier) / "deployments",
+                DeploymentMaterializer(RegisteredInputMaterializer(self.artifacts)),
+                RunpodLifecycle(
+                    self.factory,
+                    identifier,
+                    config,
+                    RunpodClient(target.credential_ref, resolver),
+                    self.settings.runpod_max_concurrent_pods,
+                    Path(self.settings.runpod_staging_workspace) / "host-keys",
+                ),
+                known_hosts=Path(self.settings.ssh_known_hosts),
+                secret_directory=Path(self.settings.ssh_secret_directory),
+                env_names={n.strip() for n in self.settings.ssh_env_names.split(",") if n.strip()},
+            )
         if self.get(identifier).kind == "sagemaker":
             raise SourceError(409, "SageMaker serving is not implemented; use a training target")
         if self.get(identifier).kind == "kubernetes":

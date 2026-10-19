@@ -1591,9 +1591,11 @@ approved training-instance quota. See [setup and cost controls](docs/sagemaker-t
 Milestone 22 (SageMaker serving) remains unimplemented.
 Milestone 25 Runpod training and shared infrastructure is implemented and validated
 with live BF16 training and confirmed Pod cleanup. See [setup and limits](docs/runpod-training.md) and
-[validation evidence](docs/evidence/milestone-25.md). The next non-AWS implementation
-milestone is 26 (Runpod serving), followed by Milestone 24 documentation and release
-polish. Existing milestone numbers remain stable.
+[validation evidence](docs/evidence/milestone-25.md). Milestone 26 Runpod serving is
+implemented and validated with local FP16 and live BF16 authenticated JSON/streaming
+inference, including confirmed Pod cleanup. See [setup](docs/runpod-serving.md) and
+[validation evidence](docs/evidence/milestone-26.md). The next non-AWS milestone is
+24 (documentation and release polish). Existing milestone numbers remain stable.
 Kubernetes vLLM playgrounds and private API access are documented in
 [docs/kubernetes-serving.md](docs/kubernetes-serving.md).
 Kubernetes Job training and prepared-cluster prerequisites are documented in
@@ -1677,14 +1679,14 @@ Kubernetes and SageMaker then prove that the executor boundaries generalize beyo
 ## 49. Runpod GPU execution
 
 Milestone 25 implements optional automatically provisioned Runpod Pods for Soup
-training and shared resource lifecycle infrastructure. Milestone 26 adds temporary
+training and shared resource lifecycle infrastructure. Milestone 26 implements temporary
 vLLM playgrounds. Training and deployment remain
 separate application concepts, using `RunpodTrainingExecutor` and
 `RunpodDeploymentExecutor` through the existing executor protocols.
 
 [ADR 0024](docs/adr/0024-runpod-training.md) records automatic resource ownership,
-direct training execution, SSH host trust and cleanup. Before serving implementation,
-record its public inference protection and bounded cloud lease decision.
+direct training execution, SSH host trust and cleanup. [ADR 0025](docs/adr/0025-runpod-serving.md)
+records serving public-endpoint protection, streaming and bounded cloud leases.
 Preserve existing executor behavior and versioned contracts;
 streaming and target-specific lease changes need compatible API/schema updates.
 

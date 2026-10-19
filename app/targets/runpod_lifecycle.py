@@ -11,7 +11,7 @@ import paramiko
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.db.models import RunpodResource, TrainingRun
+from app.db.models import Deployment, RunpodResource, TrainingRun
 from app.executors.base import ExecutorError, JobStatus
 from app.targets.runpod import AllocationRejected, RunpodClient
 from app.targets.runpod_schemas import RunpodConfig
@@ -47,6 +47,13 @@ class RunpodLifecycle:
                 "CANCELED",
             )
 
+    def deployment_stop_requested(self, owner: UUID) -> bool:
+        with self.factory() as session:
+            row = session.get(Deployment, owner)
+            return (
+                row is None or row.status == "STOP_REQUESTED" or row.expires_at <= datetime.now(UTC)
+            )
+
     def reserve(self, owner: UUID, kind: str = "training") -> RunpodResource:
         c = self.config
         self.client.quote(c)
@@ -77,7 +84,7 @@ class RunpodLifecycle:
                 "cloud": c.cloud,
                 "dataCenterIds": c.data_center_ids,
                 "disk": c.disk_gb,
-                "ports": ["22/tcp"],
+                "ports": ["22/tcp", "8000/http"] if kind == "deployment" else ["22/tcp"],
                 "startSsh": True,
                 "env": {"KITCHENSOUP_RESOURCE": str(resource_id), "KITCHENSOUP_NONCE": nonce},
             }
@@ -96,6 +103,12 @@ class RunpodLifecycle:
                 request["env"]["KITCHENSOUP_HOST_PUBLIC_KEY"] = (
                     key.get_name() + " " + key.get_base64()
                 )
+            deadline = datetime.now(UTC) + timedelta(minutes=c.max_runtime_minutes)
+            if kind == "deployment":
+                deployment = session.get(Deployment, owner)
+                if deployment is None or deployment.expires_at <= datetime.now(UTC):
+                    raise ExecutorError("Deployment lease expired before allocation")
+                deadline = deployment.created_at + timedelta(minutes=c.max_runtime_minutes)
             row = RunpodResource(
                 id=resource_id,
                 target_id=self.target_id,
@@ -105,7 +118,7 @@ class RunpodLifecycle:
                 cleanup="NONE",
                 request=request,
                 pod_ids=[],
-                expires_at=datetime.now(UTC) + timedelta(minutes=c.max_runtime_minutes),
+                expires_at=deadline,
             )
             session.add(row)
         result = self.resource(owner)
@@ -144,8 +157,8 @@ class RunpodLifecycle:
             row.pod_ids = sorted(set(row.pod_ids) | {self.client.pod_id(pod["id"]) for pod in pods})
             row.state = "BOUND"
 
-    def create(self, owner: UUID) -> None:
-        row = self.reserve(owner)
+    def create(self, owner: UUID, kind: str = "training") -> None:
+        row = self.reserve(owner, kind)
         request = {**row.request, "env": dict(row.request["env"])}
         if self.config.ssh_host_trust == "provisioned-ephemeral":
             assert self.host_key_directory is not None

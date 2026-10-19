@@ -1,0 +1,9 @@
+ARG SERVING_IMAGE=kitchensoup-vllm:local
+FROM ${SERVING_IMAGE}
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends openssh-server && rm -rf /var/lib/apt/lists/* /etc/ssh/ssh_host_* && groupadd -g 10001 runner && useradd -u 10001 -g 10001 -m -s /bin/bash runner && passwd -d runner && mkdir -p /run/sshd /home/runner/jobs /runner && chown runner:runner /home/runner/jobs && chmod 700 /home/runner/jobs
+COPY images/soup-trainer/runpod_bootstrap.py /runner/runpod_bootstrap.py
+COPY images/vllm/runpod_process.py /runner/runpod_serving.py
+COPY images/vllm/runpod_auth.py /runner/runpod_auth.py
+EXPOSE 22 8000
+ENTRYPOINT ["python3", "/runner/runpod_bootstrap.py"]

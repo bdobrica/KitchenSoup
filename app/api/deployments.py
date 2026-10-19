@@ -1,12 +1,17 @@
+from collections.abc import AsyncIterator
 from typing import Annotated, cast
 from uuid import UUID
 
+import anyio
 from fastapi import APIRouter, Depends, Request, Response
+from starlette.concurrency import iterate_in_threadpool, run_in_threadpool
+from starlette.responses import StreamingResponse
 
 from app.deployments.schemas import (
     ChatRequest,
     ChatResponse,
     DeploymentCreate,
+    DeploymentLogs,
     DeploymentView,
     LeaseExtension,
 )
@@ -57,6 +62,34 @@ def keep(identifier: UUID, service: Service) -> DeploymentView:
     return service.action(identifier, "keep")
 
 
-@router.post("/{identifier}/chat/completions", response_model=ChatResponse)
-def chat(identifier: UUID, body: ChatRequest, service: Service) -> ChatResponse:
-    return service.chat(identifier, body)
+@router.post(
+    "/{identifier}/chat/completions",
+    response_model=ChatResponse,
+    responses={200: {"content": {"text/event-stream": {"schema": {"type": "string"}}}}},
+)
+def chat(identifier: UUID, body: ChatRequest, service: Service) -> ChatResponse | StreamingResponse:
+    if not body.stream:
+        return service.chat(identifier, body)
+    source = service.stream_chat(identifier, body)
+    first = next(source, None)
+
+    async def stream() -> AsyncIterator[bytes]:
+        try:
+            if first is not None:
+                yield first
+            async for chunk in iterate_in_threadpool(source):
+                yield chunk
+        finally:
+            with anyio.CancelScope(shield=True):
+                await run_in_threadpool(source.close)
+
+    return StreamingResponse(
+        stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+    )
+
+
+@router.get("/{identifier}/logs", response_model=DeploymentLogs)
+def logs(identifier: UUID, service: Service) -> DeploymentLogs:
+    return DeploymentLogs(content=service.logs(identifier))

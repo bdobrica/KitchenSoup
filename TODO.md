@@ -738,37 +738,40 @@ See [validation evidence](docs/evidence/milestone-25.md).
 ## Milestone 26 — Runpod vLLM deployment
 
 Depends on Milestone 25 shared provider, credential, ownership and cleanup support.
+Implementation, repository checks, local FP16 and live BF16 inference validation
+are complete, including confirmed temporary Pod cleanup. See
+[validation evidence](docs/evidence/milestone-26.md).
 
-- [ ] Record public-endpoint protection and bounded cloud-lease decisions in an ADR.
-- [ ] Implement `RunpodDeploymentExecutor` through the existing deployment protocol.
-- [ ] Reuse shared Pod lifecycle, credential references, capacity reservations and cleanup reconciliation.
-- [ ] Configure independent serving GPU/VRAM/disk settings and a separate pinned SSH-capable vLLM image.
-- [ ] Resolve registered artifacts and validate supported base, merged, LoRA/base-revision and quantized combinations.
-- [ ] Provision a dedicated inference Pod and retain deployment/model/image/Pod ownership bindings.
-- [ ] Stage and verify model artifacts, launch vLLM directly and retain resolved serving parameters.
-- [ ] Implement model-loading/readiness checks, normalized status and bounded logs/errors.
-- [ ] Derive the HTTPS proxy endpoint only from validated owned Pod identity and fixed port.
-- [ ] Protect vLLM with deployment-specific authentication and proxy inference through KitchenSoup.
-- [ ] Keep raw endpoints and provider/inference credentials out of browser responses.
-- [ ] Add bounded streaming chat as a compatible API/UI extension; preserve non-streaming behavior.
-- [ ] Handle proxy timeouts, connection errors and client disconnects without logging prompts.
-- [ ] Integrate stop, bounded lease extension, expiry and unrecoverable-failure termination.
-- [ ] Disable indefinite keep-running for Runpod while preserving other targets' lease semantics.
-- [ ] Resume orphan discovery and pending termination after restart; confirm resource release.
-- [ ] Add model-page target selection, estimated GPU compute cost and remaining lease time.
-- [ ] Add mocked compatibility, readiness, authentication, streaming and cleanup-failure tests.
-- [ ] Add opt-in `make test-runpod-vllm` through the playground proxy with verified cleanup.
-- [ ] Document supported models/images, endpoint security, cost limits and automatic shutdown.
+- [x] Record public-endpoint protection and bounded cloud-lease decisions in an ADR.
+- [x] Implement `RunpodDeploymentExecutor` through the existing deployment protocol.
+- [x] Reuse shared Pod lifecycle, credential references, capacity reservations and cleanup reconciliation.
+- [x] Configure independent serving GPU/VRAM/disk settings and a separate pinned SSH-capable vLLM image.
+- [x] Resolve registered artifacts and validate supported base, merged, LoRA/base-revision and quantized combinations.
+- [x] Provision a dedicated inference Pod and retain deployment/model/image/Pod ownership bindings.
+- [x] Stage and verify model artifacts, launch vLLM directly and retain resolved serving parameters.
+- [x] Implement model-loading/readiness checks, normalized status and bounded logs/errors.
+- [x] Derive the HTTPS proxy endpoint only from validated owned Pod identity and fixed port.
+- [x] Protect vLLM with deployment-specific authentication and proxy inference through KitchenSoup.
+- [x] Keep raw endpoints and provider/inference credentials out of browser responses.
+- [x] Add bounded streaming chat as a compatible API/UI extension; preserve non-streaming behavior.
+- [x] Handle proxy timeouts, connection errors and client disconnects without logging prompts.
+- [x] Integrate stop, bounded lease extension, expiry and unrecoverable-failure termination.
+- [x] Disable indefinite keep-running for Runpod while preserving other targets' lease semantics.
+- [x] Resume orphan discovery and pending termination after restart; confirm resource release.
+- [x] Add model-page target selection, estimated GPU compute cost and remaining lease time.
+- [x] Add mocked compatibility, readiness, authentication, streaming and cleanup-failure tests.
+- [x] Add opt-in `make test-runpod-vllm` through the playground proxy with verified cleanup.
+- [x] Document supported models/images, endpoint security, cost limits and automatic shutdown.
 
 **Acceptance criteria**
 
-- [ ] A registered compatible model automatically provisions a Pod and becomes usable in the playground.
-- [ ] Authenticated OpenAI-compatible inference works through KitchenSoup, including bounded streaming.
-- [ ] Status, logs, stop and bounded lease extension work; expiry and explicit stop terminate the Pod.
-- [ ] Cleanup failures persist and are retried after application restart.
-- [ ] Training and inference use separate pinned images and independent Pod lifecycles under the shared limit.
-- [ ] Browser clients receive no provider/inference credentials or unprotected backend access.
-- [ ] Opt-in live inference validation confirms termination of all temporary provider resources.
+- [x] A registered compatible model automatically provisions a Pod and becomes usable in the playground.
+- [x] Authenticated OpenAI-compatible inference works through KitchenSoup, including bounded streaming.
+- [x] Status, logs, stop and bounded lease extension work; expiry and explicit stop terminate the Pod.
+- [x] Cleanup failures persist and are retried after application restart.
+- [x] Training and inference use separate pinned images and independent Pod lifecycles under the shared limit.
+- [x] Browser clients receive no provider/inference credentials or unprotected backend access.
+- [x] Opt-in live inference validation confirms termination of all temporary provider resources.
 
 ---
 

@@ -19,3 +19,6 @@
 !images/model-transform/**
 !scripts/
 !scripts/check_transform_dependencies.py
+
+!images/vllm/
+!images/vllm/**

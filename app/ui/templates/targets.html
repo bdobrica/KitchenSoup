@@ -54,7 +54,7 @@
 <button>Create SageMaker training target</button>
 </form>
 <h2>Runpod training target</h2>
-<p>Automatically allocates a paid GPU Pod and terminates it after training. Enable Runpod execution, approve API/SSH references and provision SSH host trust first. Operator setup: docs/runpod-training.md.</p>
+<p>Automatically allocates paid GPU Pods for training or leased playgrounds, then terminates them. Enable Runpod execution, approve API/SSH references and provision SSH host trust first. Operator setup: docs/runpod-training.md.</p>
 <form id="runpod-target-form">
 <label>Name <input name="name" required maxlength="200"></label>
 <label>API credential reference <input name="credential_ref" value="env://RUNPOD_API_KEY" required></label>
@@ -73,6 +73,11 @@
 </details>
 <p>One GPU per Pod. GPU estimates exclude storage and other charges. Idle Pods and pending cleanup can remain billable.</p>
 <button>Create Runpod training target</button>
+<label>Serving image (optional, repository@sha256:digest) <input name="deployment_image"></label>
+<label>Serving GPU override (optional) <input name="deployment_gpu_id"></label>
+<label>Serving minimum VRAM (GiB) <input name="deployment_min_vram_gb" type="number" min="1" max="192" value="8"></label>
+<label>Serving disk (GB) <input name="deployment_disk_gb" type="number" min="20" max="100" value="30"></label>
+<label>Maximum serving lease (minutes, includes startup) <input name="max_deployment_lease_minutes" type="number" min="1" max="60" value="30"></label>
 </form>
 <h2>Configured targets</h2><div id="target-list"></div>
 <script defer src="/static/targets.js"></script>

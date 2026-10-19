@@ -58,7 +58,7 @@ are retained independently of serving cleanup.
 
 ## Chat and API
 
-Chat is non-streaming, greedy and capped at 128 new tokens with a 2048-token total
+Chat defaults to non-streaming, is greedy and capped at 128 new tokens with a 2048-token total
 model context. Shorten or clear an overlong conversation. Each request has at most
 32 messages, 8000 characters per message and 16000 total; backend token limits can
 be smaller. Chat history lives only in the browser tab, is rendered as text, and
@@ -79,6 +79,11 @@ a multi-user public inference service.
 | POST | `/api/v1/deployments/{id}/keep` | Disable automatic expiry |
 | POST | `/api/v1/deployments/{id}/stop` | Durable stop; 202 |
 | POST | `/api/v1/deployments/{id}/chat/completions` | `{messages: [{role, content}]}` → `{content}` |
+
+Set `stream: true` for bounded OpenAI-style SSE content deltas and a `[DONE]`
+marker. The default JSON response remains `{content}`. The UI supports streaming;
+Runpod forwards real upstream deltas, while existing executors emit their bounded
+result as one delta. Disconnect closes upstream resources and releases the claim.
 
 The application proxy deliberately exposes a bounded chat subset, not an arbitrary
 OpenAI URL/model proxy. Backend vLLM speaks OpenAI-compatible chat. Endpoints and
@@ -110,3 +115,7 @@ See [Docker-over-SSH setup](ssh-execution.md).
 
 Kubernetes targets with a pinned serving image support the same lease and chat
 workflow through the Kubernetes API. See [Kubernetes playgrounds](kubernetes-serving.md).
+
+Runpod targets with a separate pinned serving image use authenticated public HTTPS
+behind the application proxy. Their leases have an absolute target-specific ceiling
+and do not support indefinite keep-running. See [Runpod playgrounds](runpod-serving.md).

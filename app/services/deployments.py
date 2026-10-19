@@ -1,5 +1,7 @@
 """PostgreSQL-authoritative temporary serving and explicit lease actions."""
 
+import json
+from collections.abc import Generator
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
@@ -13,10 +15,12 @@ from app.db.models import (
     ExecutionTarget,
     ModelSource,
     ModelVersion,
+    RunpodResource,
     TrainingRun,
 )
 from app.deployments.base import DeploymentExecutor
 from app.deployments.local import container_name
+from app.deployments.runpod import RunpodDeploymentExecutor
 from app.deployments.schemas import (
     TERMINAL,
     ChatRequest,
@@ -30,6 +34,7 @@ from app.ingestion.sources import SourceError
 from app.jobs.locking import claim
 from app.services.artifacts import ArtifactService
 from app.services.targets import TargetService
+from app.targets.runpod_schemas import RunpodConfig
 from app.training.schemas import PlanModelSource, PlanPreview
 from app.transformations.schemas import AWQ, MERGED
 
@@ -60,6 +65,7 @@ class DeploymentService:
             if target is None or target.kind not in (
                 "ssh_docker",
                 "kubernetes",
+                "runpod_pod",
                 "local_docker_deployment",
             ):
                 raise SourceError(503, "The retained serving target is not supported")
@@ -73,10 +79,30 @@ class DeploymentService:
             raise SourceError(404, "Playground deployment not found")
         return row
 
-    @staticmethod
-    def view(row: Deployment) -> DeploymentView:
+    def view(self, row: Deployment) -> DeploymentView:
         spec = DeploymentSpec.model_validate(row.snapshot)
+        with self.factory() as session:
+            target = session.get(ExecutionTarget, row.execution_target_id)
+            config = (
+                RunpodConfig.model_validate(target.configuration)
+                if target is not None and target.kind == "runpod_pod"
+                else None
+            )
+            resource = (
+                session.scalar(select(RunpodResource).where(RunpodResource.owner_id == row.id))
+                if config
+                else None
+            )
         return DeploymentView(
+            bounded_lease=config is not None,
+            maximum_lease_minutes=config.max_deployment_lease_minutes if config else None,
+            maximum_compute_estimate_usd=config.max_hourly_price_usd
+            * config.max_deployment_lease_minutes
+            / 60
+            if config
+            else None,
+            resource_cleanup=resource.cleanup if resource else None,
+            resource_warning=resource.warning if resource else None,
             id=row.id,
             model_version_id=row.model_version_id,
             execution_target_id=row.execution_target_id,
@@ -216,8 +242,12 @@ class DeploymentService:
                     raise SourceError(409, "Local serving target configuration conflict")
             else:
                 target = session.get(ExecutionTarget, body.execution_target_id)
-                if target is None or target.kind not in ("ssh_docker", "kubernetes"):
+                if target is None or target.kind not in ("ssh_docker", "kubernetes", "runpod_pod"):
                     raise SourceError(404, "Execution target not found")
+            if target.kind == "runpod_pod":
+                config = RunpodConfig.model_validate(target.configuration)
+                if body.lease_minutes > config.max_deployment_lease_minutes:
+                    raise SourceError(422, "Lease exceeds Runpod target limit")
             identifier = uuid4()
             session.add(
                 Deployment(
@@ -249,15 +279,26 @@ class DeploymentService:
             now = datetime.now(UTC)
             if action != "stop" and not row.keep_running and row.expires_at <= now:
                 raise SourceError(409, "The playground lease has expired")
+            target = session.get(ExecutionTarget, row.execution_target_id)
+            config = (
+                RunpodConfig.model_validate(target.configuration)
+                if target is not None and target.kind == "runpod_pod"
+                else None
+            )
+            if config and action == "keep":
+                raise SourceError(422, "Runpod requires a bounded lease; extend or stop instead")
             if action == "stop":
                 row.status = "STOP_REQUESTED"
             elif action == "keep":
                 row.keep_running = True
             elif action == "extend":
                 row.keep_running = False
-                row.expires_at = min(
-                    max(row.expires_at, now) + timedelta(minutes=minutes), now + timedelta(days=1)
+                ceiling = (
+                    row.created_at + timedelta(minutes=config.max_deployment_lease_minutes)
+                    if config
+                    else now + timedelta(days=1)
                 )
+                row.expires_at = min(max(row.expires_at, now) + timedelta(minutes=minutes), ceiling)
             session.commit()
         return self.get(identifier)
 
@@ -273,7 +314,66 @@ class DeploymentService:
                 ):
                     raise SourceError(409, "The playground is not ready or its lease has expired")
                 spec = DeploymentSpec.model_validate(row.snapshot)
-            return executor.chat(identifier, spec, body)
+            try:
+                return executor.chat(identifier, spec, body)
+            except ExecutorError:
+                if isinstance(executor, RunpodDeploymentExecutor):
+                    self.action(identifier, "stop")
+                raise
+
+    def stream_chat(self, identifier: UUID, body: ChatRequest) -> Generator[bytes]:
+        executor = self.executor_for(identifier)
+        with claim(self.factory, identifier) as acquired:
+            if not acquired:
+                raise SourceError(409, "Another deployment operation is in progress")
+            with self.factory() as session:
+                row = self.row(session, identifier)
+                if row.status != "RUNNING" or (
+                    not row.keep_running and row.expires_at <= datetime.now(UTC)
+                ):
+                    raise SourceError(409, "The playground is not ready or its lease has expired")
+                spec = DeploymentSpec.model_validate(row.snapshot)
+            try:
+                chunks = (
+                    executor.stream_chat(identifier, spec, body)
+                    if isinstance(executor, RunpodDeploymentExecutor)
+                    else iter([executor.chat(identifier, spec, body).content])
+                )
+                try:
+                    for chunk in chunks:
+                        with self.factory() as session:
+                            row = self.row(session, identifier)
+                            if row.status != "RUNNING" or (
+                                not row.keep_running and row.expires_at <= datetime.now(UTC)
+                            ):
+                                raise ExecutorError(
+                                    "Playground stopped or expired during inference"
+                                )
+                        yield (
+                            "data: "
+                            + json.dumps({"choices": [{"delta": {"content": chunk}}]})
+                            + "\n\n"
+                        ).encode()
+                finally:
+                    close = getattr(chunks, "close", None)
+                    if close:
+                        close()
+                yield b"data: [DONE]\n\n"
+            except (ExecutorError, SourceError):
+                if isinstance(executor, RunpodDeploymentExecutor):
+                    self.action(identifier, "stop")
+                yield b'event: error\ndata: {"error":"Playground inference unavailable"}\n\n'
+
+    def logs(self, identifier: UUID) -> str:
+        executor = self.executor_for(identifier)
+        if not isinstance(executor, RunpodDeploymentExecutor):
+            raise SourceError(409, "Serving logs are available for Runpod targets")
+        with claim(self.factory, identifier) as acquired:
+            if not acquired:
+                raise SourceError(409, "Another deployment operation is in progress")
+            with self.factory() as session:
+                spec = DeploymentSpec.model_validate(self.row(session, identifier).snapshot)
+            return executor.logs(identifier, spec)
 
     def tick(self, role: str) -> None:
         if self.executor is None and self.targets is None:
@@ -287,6 +387,16 @@ class DeploymentService:
                     )
                 )
             )
+        if role == "reconciler":
+            with self.factory() as session:
+                pending = list(
+                    session.scalars(
+                        select(RunpodResource.owner_id).where(
+                            RunpodResource.kind == "deployment", RunpodResource.state != "RELEASED"
+                        )
+                    )
+                )
+            ids = list(dict.fromkeys([*ids, *pending]))
         for identifier in ids:
             try:
                 self.process(identifier, role)
@@ -301,9 +411,11 @@ class DeploymentService:
                 return
             with self.factory() as session:
                 row = self.row(session, identifier, lock=True)
-                if row.status in TERMINAL:
-                    return
                 spec = DeploymentSpec.model_validate(row.snapshot)
+                if row.status in TERMINAL:
+                    if isinstance(executor, RunpodDeploymentExecutor):
+                        executor.stop(identifier, spec)
+                    return
                 if not row.keep_running and row.expires_at <= datetime.now(UTC):
                     row.status = "STOP_REQUESTED"
                     session.commit()
@@ -339,6 +451,13 @@ class DeploymentService:
                 ):
                     executor.stop(identifier, spec)
                     self.update(identifier, "LOST" if observed.state == "LOST" else "FAILED", None)
+                elif (
+                    status == "RUNNING"
+                    and observed.state == "STARTING"
+                    and isinstance(executor, RunpodDeploymentExecutor)
+                ):
+                    executor.stop(identifier, spec)
+                    self.update(identifier, "FAILED", None)
                 else:
                     self.update(identifier, observed.state, observed.endpoint)
 

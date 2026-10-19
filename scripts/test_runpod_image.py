@@ -2,7 +2,9 @@
 
 import argparse
 import hashlib
+import json
 import os
+import secrets
 import shutil
 import subprocess
 import tempfile
@@ -10,6 +12,7 @@ import time
 from pathlib import Path
 from uuid import uuid4
 
+import httpx
 import paramiko
 
 from app.executors.base import ExecutorError
@@ -66,10 +69,98 @@ def generate_fixture(root: Path) -> Path:
     return bundle
 
 
+def validate_serving(root: Path, bundle: Path, transport: SshTransport, name: str) -> None:
+    identifier = uuid4()
+    workspace = root / str(identifier)
+    workspace.mkdir()
+    shutil.copytree(bundle / "model", workspace / "model")
+    key = secrets.token_urlsafe(32)
+    (workspace / "inference.key").write_text(key)
+    (workspace / "serving.json").write_text(
+        json.dumps(
+            {
+                "dtype": "half",
+                "max_model_len": 256,
+                "adapter": False,
+                "remaining_seconds": 240,
+                "expires_at": time.time() + 240,
+            }
+        )
+    )
+    manifest = {
+        p.relative_to(workspace).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in workspace.rglob("*")
+        if p.is_file()
+    }
+    data = json.dumps(manifest).encode()
+    (workspace / "manifest.json").write_bytes(data)
+    remote = "/home/runner/jobs/" + str(identifier)
+    transport.upload(workspace, remote)
+    result = transport.command(
+        ["python3", "/runner/runpod_serving.py", "launch", remote, hashlib.sha256(data).hexdigest()]
+    )
+    if result.returncode:
+        raise RuntimeError("Direct serving launch failed")
+    port = (
+        subprocess.check_output(["docker", "port", name, "8000"], text=True)
+        .strip()
+        .rsplit(":", 1)[1]
+    )
+    endpoint = "http://127.0.0.1:" + port
+    deadline = time.monotonic() + 180
+    with httpx.Client(timeout=15, trust_env=False) as client:
+        while True:
+            if transport.read(remote + "/exit.json", 1024, missing_ok=True):
+                print(
+                    transport.read(remote + "/server.log", 65536)
+                    .decode(errors="replace")
+                    .replace(key, "[REDACTED]")
+                )
+                raise RuntimeError("Direct serving process failed")
+            try:
+                response = client.get(
+                    endpoint + "/v1/models", headers={"Authorization": "Bearer " + key}
+                )
+                if response.status_code == 200:
+                    break
+            except httpx.HTTPError:
+                pass
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Local serving readiness exceeded deadline")
+            time.sleep(2)
+        for route in ("/v1/models", "/tokenize", "/invocations", "/metrics"):
+            assert client.get(endpoint + route).status_code == 401
+        body = {
+            "model": "playground",
+            "messages": [{"role": "user", "content": "Hello"}],
+            "max_tokens": 16,
+            "temperature": 0,
+        }
+        response = client.post(
+            endpoint + "/v1/chat/completions", headers={"Authorization": "Bearer " + key}, json=body
+        )
+        assert response.status_code == 200 and isinstance(
+            response.json()["choices"][0]["message"]["content"], str
+        )
+        with client.stream(
+            "POST",
+            endpoint + "/v1/chat/completions",
+            headers={"Authorization": "Bearer " + key},
+            json={**body, "stream": True},
+        ) as response:
+            assert response.status_code == 200 and "[DONE]" in response.read().decode()
+    print("Local FP16 Runpod serving: SSH/SFTP, authentication and both inference modes passed")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gpu", action="store_true")
+    parser.add_argument(
+        "--serving", action="store_true", help="Local FP16 serving image check (requires --gpu)"
+    )
     args = parser.parse_args()
+    if args.serving and not args.gpu:
+        parser.error("--serving requires --gpu")
     name = "kitchensoup-runpod-image-" + uuid4().hex
     with tempfile.TemporaryDirectory(prefix="kitchensoup-runpod-image-") as directory:
         root = Path(directory)
@@ -99,8 +190,11 @@ def main() -> None:
                     "PUBLIC_KEY",
                     "--env",
                     "KITCHENSOUP_SSH_HOST_KEY",
+                    *(["--publish", "127.0.0.1::8000"] if args.serving else []),
                     *(["--gpus", "all"] if args.gpu else []),
-                    "kitchensoup-runpod-trainer:local",
+                    "kitchensoup-runpod-vllm:local"
+                    if args.serving
+                    else "kitchensoup-runpod-trainer:local",
                 ],
                 env=environment,
                 check=True,
@@ -134,6 +228,9 @@ def main() -> None:
                     if time.monotonic() >= deadline:
                         raise
                     time.sleep(1)
+            if args.serving:
+                validate_serving(root, bundle, transport, name)
+                return
             run = RunnerInput.model_validate_json((bundle / "run.json").read_bytes())
             workspace = root / str(run.run_id)
             shutil.copytree(bundle, workspace / "input")
