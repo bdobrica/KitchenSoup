@@ -1,5 +1,8 @@
-# Optional host-application development access; default Compose publishes no database port.
+# Optional host-application development access; default Compose publishes no database or queue port.
 services:
   postgres:
     ports:
       - "127.0.0.1:5432:5432"
+  valkey:
+    ports:
+      - "127.0.0.1:6379:6379"

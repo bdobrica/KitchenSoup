@@ -11,6 +11,7 @@ from app.executors import local_docker, materialize
 from app.executors.base import ExecutorError
 from app.executors.local_docker import LocalDockerTrainingExecutor
 from app.executors.materialize import RegisteredInputMaterializer
+from app.jobs.processor import JobProcessor
 from app.main import create_app
 from app.services.runs import RunCreate, TrainingRunService
 from app.services.training import TrainingPlanService
@@ -58,14 +59,29 @@ def test_saved_plan_to_run_api_status_logs_cancel_cleanup_and_restart(
         response = client.post("/api/v1/training-runs", json={"plan_id": str(plan.id)})
         assert response.status_code == 201, response.text
         run = response.json()
-        assert run["status"] == "RUNNING" and run["plan_sha256"] == plan.sha256
+        assert run["status"] == "QUEUED" and run["plan_sha256"] == plan.sha256
+        assert not any(c[0] == "create" for c in backend.calls)
+        processor = JobProcessor(service)
+        processor.tick("worker")
+        processor.tick("reconciler")
         identifier = run["id"]
         base = f"/api/v1/training-runs/{identifier}"
         assert client.get(base).headers["cache-control"] == "no-store"
+        assert client.post(base + "/clone").status_code == 409
+        assert client.get(base + "/events?after=-2").status_code == 422
+        assert client.get(base + "/events", headers={"Last-Event-ID": "invalid"}).status_code == 422
+        assert client.get(f"/api/v1/training-runs/{uuid4()}/events").status_code == 404
         assert client.get(base + "/logs").json() == {"text": "", "cursor": 0}
         assert client.get(base + "/logs?cursor=-1").status_code == 422
-        assert client.delete(base + "/container").status_code == 503
-        assert client.post(base + "/cancel").json()["status"] == "CANCELED"
+        assert client.delete(base + "/container").status_code == 409
+        assert client.post(base + "/cancel").json()["status"] == "CANCEL_REQUESTED"
+        processor.tick("worker")
+        assert client.get(base).json()["status"] == "CANCELED"
+        events = client.get(base + "/events")
+        assert events.headers["content-type"].startswith("text/event-stream")
+        assert "event: transition" in events.text and '"status":"CANCELED"' in events.text
+        replay = client.get(base + "/events", headers={"Last-Event-ID": "4"})
+        assert "id: 5" in replay.text and "id: 4" not in replay.text
         assert client.delete(base + "/container").status_code == 204
         assert client.get(base).json()["status"] == "CANCELED"
         assert client.get("/training-runs/" + identifier).status_code == 200
@@ -95,6 +111,8 @@ def test_preparation_failure_retains_attempt_and_does_not_launch(
 
     monkeypatch.setattr(materialize, "download_model", fail)
     run = service.create(RunCreate(plan_id=plan.id))
+    JobProcessor(service).tick("worker")
+    run = service.get(run.id)
     assert run.status == "FAILED" and run.external_id
     assert "sensitive" not in run.model_dump_json()
     assert service.get(run.id).status == "FAILED"
@@ -133,7 +151,8 @@ def test_uploaded_model_and_exact_dataset_bytes_are_materialized(
     service, backend = setup_service(versions, tmp_path, monkeypatch)
     plan = service.plans.create(spec)
     run = service.create(RunCreate(plan_id=plan.id))
-    assert run.status == "RUNNING"
+    JobProcessor(service).tick("worker")
+    assert service.get(run.id).status == "SUBMITTED"
     assert any(c[0] == "create" for c in backend.calls)
     # Mutating object bytes cannot change the registered hash or enter a subsequent run.
     with artifacts.factory() as session:
@@ -144,5 +163,6 @@ def test_uploaded_model_and_exact_dataset_bytes_are_materialized(
         artifacts.store.put(row.object_key, BytesIO(b"tampered"))
     backend.calls.clear()
     failed = service.create(RunCreate(plan_id=plan.id))
-    assert failed.status == "FAILED"
+    JobProcessor(service).tick("worker")
+    assert service.get(failed.id).status == "FAILED"
     assert not any(c[0] == "create" for c in backend.calls)

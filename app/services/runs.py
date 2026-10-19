@@ -1,4 +1,4 @@
-"""Explicit local submission and on-demand observation; durable dispatch comes later."""
+"""Immutable submission and PostgreSQL-authoritative lifecycle operations."""
 
 from datetime import datetime
 from typing import Literal
@@ -9,10 +9,13 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app.db.models import ExecutionTarget, TrainingRun
-from app.executors.base import ExecutorError, JobStatus, LogChunk, TrainingExecutor
+from app.db.models import ExecutionTarget, JobEvent, TrainingRun
+from app.executors.base import JobStatus, LogChunk, TrainingExecutor
 from app.executors.local_docker import container_name
 from app.ingestion.sources import SourceError
+from app.jobs.locking import claim
+from app.jobs.queue import JobQueue
+from app.jobs.states import TERMINAL, JobState, validate_transition
 from app.services.training import TrainingPlanService
 from app.training.schemas import PlanPreview
 
@@ -29,13 +32,35 @@ class RunView(BaseModel):
     plan_sha256: str
     image_digest: str
     external_id: str
-    status: str
+    status: JobState
     observation: JobStatus | None = None
 
 
+class RunEvent(BaseModel):
+    sequence: int
+    status: JobState
+    created_at: datetime
+    message: str | None
+
+
 class TrainingRunService:
-    def __init__(self, plans: TrainingPlanService, executor: TrainingExecutor) -> None:
+    def __init__(
+        self, plans: TrainingPlanService, executor: TrainingExecutor, queue: JobQueue | None = None
+    ) -> None:
         self.plans, self.executor, self.factory = plans, executor, plans.factory
+        self.queue = queue
+
+    def notify(self, identifier: UUID) -> None:
+        if self.queue is not None:
+            self.queue.wake(identifier)
+            self.queue.publish(identifier)
+
+    @staticmethod
+    def transition(session: Session, row: TrainingRun, state: JobState) -> None:
+        validate_transition(row.status, state)
+        row.status = state
+        # PostgreSQL atomically appends the event, even for direct SQL writers.
+        session.flush()
 
     @staticmethod
     def view(row: TrainingRun, observation: JobStatus | None = None) -> RunView:
@@ -46,7 +71,7 @@ class TrainingRunService:
             plan_sha256=row.sha256,
             image_digest=row.resolved_config["image_digest"],
             external_id=row.external_id or "",
-            status=row.status,
+            status=JobState(row.status),
             observation=observation,
         )
 
@@ -89,47 +114,59 @@ class TrainingRunService:
                     "plan": plan.model_dump(mode="json", by_alias=True),
                 },
                 sha256=plan.sha256,
-                status="PREPARING",
+                status="QUEUED",
                 external_id=name,
             )
             session.add(row)
             session.commit()
-        # Persist the deterministic identity before any engine side effects.
-        try:
-            external_id = self.executor.submit(identifier, plan, image)
-            if external_id != name:
-                raise ExecutorError("Executor returned an unexpected container identity")
-        except ExecutorError as error:
-            # A start timeout may occur after Docker accepted the launch. Observe before
-            # declaring failure; an unavailable daemon leaves the attempt recoverable.
-            try:
-                observation = self.executor.status(name, image)
-                if observation.state == "MISSING":
-                    observation = JobStatus(state="FAILED")
-            except ExecutorError:
-                observation = JobStatus(state="PREPARING")
-            observation.message = str(error)
-            with self.factory() as session:
-                row = self.row(session, identifier)
-                row.status = observation.state
-                session.commit()
-                return self.view(row, observation)
+        self.notify(identifier)
         return self.get(identifier)
 
     def get(self, identifier: UUID) -> RunView:
         with self.factory() as session:
-            row = self.row(session, identifier)
-            observation = self.executor.status(
-                row.external_id or "", row.resolved_config["image_digest"]
+            return self.view(self.row(session, identifier))
+
+    def events(self, identifier: UUID, after: int = -1) -> list[RunEvent]:
+        with self.factory() as session:
+            self.row(session, identifier)
+            return [
+                RunEvent(
+                    sequence=e.sequence,
+                    status=JobState(e.status),
+                    created_at=e.created_at,
+                    message=e.message,
+                )
+                for e in session.scalars(
+                    select(JobEvent)
+                    .where(JobEvent.training_run_id == identifier, JobEvent.sequence > after)
+                    .order_by(JobEvent.sequence)
+                    .limit(100)
+                )
+            ]
+
+    def clone(self, identifier: UUID) -> RunView:
+        with self.factory() as session:
+            original = self.row(session, identifier)
+            if original.status not in TERMINAL:
+                raise SourceError(409, "Only a terminal run can be retried")
+            new_id = uuid4()
+            row = TrainingRun(
+                id=new_id,
+                base_model_version_id=original.base_model_version_id,
+                dataset_version_id=original.dataset_version_id,
+                execution_target_id=original.execution_target_id,
+                evaluation_suite_id=original.evaluation_suite_id,
+                appspec_version=original.appspec_version,
+                appspec=original.appspec,
+                resolved_config=original.resolved_config,
+                sha256=original.sha256,
+                status="QUEUED",
+                external_id=container_name(new_id),
             )
-            # Never rewrite retained terminal results when containers have been removed.
-            if (
-                row.status not in ("SUCCEEDED", "FAILED", "CANCELED")
-                and observation.state != "MISSING"
-            ):
-                row.status = observation.state
+            session.add(row)
             session.commit()
-            return self.view(row, observation)
+        self.notify(new_id)
+        return self.get(new_id)
 
     def list_runs(self) -> list[RunView]:
         with self.factory() as session:
@@ -152,16 +189,22 @@ class TrainingRunService:
     def cancel(self, identifier: UUID) -> RunView:
         with self.factory() as session:
             row = self.row(session, identifier)
-            observation = self.executor.cancel(
-                row.external_id or "", row.resolved_config["image_digest"]
-            )
-            if observation.state != "MISSING":
-                row.status = observation.state
+            if row.status == JobState.QUEUED:
+                self.transition(session, row, JobState.CANCELED)
+            elif row.status in (JobState.PREPARING, JobState.SUBMITTED, JobState.RUNNING):
+                self.transition(session, row, JobState.CANCEL_REQUESTED)
             session.commit()
-            return self.view(row, observation)
+            result = self.view(row)
+        self.notify(identifier)
+        return result
 
     def cleanup(self, identifier: UUID) -> None:
-        self.get(identifier)  # Retain final observation before removing the container.
-        with self.factory() as session:
-            row = self.row(session, identifier)
-            self.executor.cleanup(row.external_id or "", row.resolved_config["image_digest"])
+        # Coordinate with background external effects using the same database claim.
+        with claim(self.factory, identifier) as acquired:
+            if not acquired:
+                raise SourceError(409, "Training operation in progress; refresh shortly")
+            with self.factory() as session:
+                row = self.row(session, identifier)
+                if row.status not in TERMINAL:
+                    raise SourceError(409, "Wait for a terminal run before removing its container")
+                self.executor.cleanup(row.external_id or "", row.resolved_config["image_digest"])

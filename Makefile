@@ -89,7 +89,7 @@ migration: local-env ## Generate a reviewed migration (MESSAGE="describe change"
 migration-check: ## Detect schema drift between the migrated database and ORM metadata
 	$(COMPOSE) run --rm --no-deps web python -m alembic check
 
-test-integration: ## Run integration tests using disposable PostgreSQL and RustFS
+test-integration: ## Run integration tests using disposable PostgreSQL, RustFS and Valkey
 	$(VENV_PYTHON) scripts/test_database.py
 
 storage-init: local-env ## Configure the local artifact bucket and browser CORS
@@ -132,8 +132,15 @@ test-local-training: build-soup ## Exercise real Docker lifecycle with offline C
 test-gpu: build-soup gpu-check ## Tiny end-to-end local Docker training smoke (PRECISION=bf16 or fp16)
 	$(VENV_PYTHON) scripts/test_local_training.py --gpu --precision $(PRECISION)
 
-training-infra: local-env ## Expose local PostgreSQL for the opt-in host training application
-	$(COMPOSE) -f docker-compose.yml -f docker-compose.training.yml up --detach --wait postgres rustfs
+training-infra: local-env ## Start loopback infrastructure for the opt-in host training processes
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.training.yml up --detach --wait postgres valkey rustfs
 
 dev-training: ## Serve the host application with local Docker training enabled
 	$(VENV_PYTHON) scripts/dev_training.py
+
+.PHONY: worker-training reconcile-training
+worker-training: ## Run the host training command worker (separate terminal)
+	$(VENV_PYTHON) scripts/dev_training.py --role worker
+
+reconcile-training: ## Run the host training reconciler (separate terminal)
+	$(VENV_PYTHON) scripts/dev_training.py --role reconciler

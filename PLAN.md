@@ -920,6 +920,7 @@ stateDiagram-v2
 
     QUEUED --> CANCELED
     PREPARING --> FAILED
+    PREPARING --> CANCEL_REQUESTED
     SUBMITTED --> FAILED
     RUNNING --> FAILED
     POSTPROCESSING --> FAILED
@@ -927,6 +928,9 @@ stateDiagram-v2
     SUBMITTED --> CANCEL_REQUESTED
     RUNNING --> CANCEL_REQUESTED
     CANCEL_REQUESTED --> CANCELED
+    CANCEL_REQUESTED --> FAILED
+    CANCEL_REQUESTED --> LOST
+    CANCEL_REQUESTED --> POSTPROCESSING
 
     SUBMITTED --> LOST
     RUNNING --> LOST
@@ -1580,7 +1584,9 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 13: queue, worker, reconciler and job state.
+The current implementation frontier is Milestone 14: model registration and lineage.
+Durable training dispatch, reconciliation and live progress are documented in
+[docs/jobs.md](docs/jobs.md).
 The opt-in local Docker executor is documented in [docs/local-training.md](docs/local-training.md).
 The standalone pinned Soup runner and translation contracts are documented in [docs/soup-training.md](docs/soup-training.md).
 Milestone 12 FP16 GPU validation is complete; see [validation evidence](docs/evidence/fp16-training.md).

@@ -1,4 +1,4 @@
-"""Run integration tests in disposable, loopback-only PostgreSQL/RustFS containers."""
+"""Run integration tests in disposable, loopback-only PostgreSQL/RustFS/Valkey containers."""
 
 import os
 import secrets
@@ -12,6 +12,7 @@ from uuid import uuid4
 def main() -> int:
     name = f"kitchensoup-db-test-{uuid4().hex[:12]}"
     storage_name = f"{name}-s3"
+    queue_name = f"{name}-queue"
     environment = os.environ.copy()
     environment["POSTGRES_PASSWORD"] = secrets.token_hex(24)
     try:
@@ -129,10 +130,45 @@ def main() -> int:
                 "KITCHENSOUP_S3_BUCKET": "kitchensoup-test",
             }
         )
+        subprocess.run(
+            [
+                "docker",
+                "run",
+                "--detach",
+                "--rm",
+                "--name",
+                queue_name,
+                "--publish",
+                "127.0.0.1::6379",
+                "valkey/valkey:9.1.1-alpine3.24",
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL,
+        )
+        queue_port = (
+            subprocess.check_output(["docker", "port", queue_name, "6379"], text=True)
+            .strip()
+            .rsplit(":", 1)[1]
+        )
+        environment["KITCHENSOUP_VALKEY_URL"] = f"redis://127.0.0.1:{queue_port}/0"
+        for _ in range(60):
+            result = subprocess.run(
+                ["docker", "exec", queue_name, "valkey-cli", "ping"], capture_output=True, text=True
+            )
+            if result.returncode == 0 and result.stdout.strip() == "PONG":
+                break
+            time.sleep(1)
+        else:
+            raise RuntimeError("Disposable Valkey did not become ready")
         return subprocess.call(
             [sys.executable, "-m", "pytest", "tests/integration"], env=environment
         )
     finally:
+        subprocess.run(
+            ["docker", "rm", "--force", queue_name],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         subprocess.run(
             ["docker", "rm", "--force", storage_name],
             stdout=subprocess.DEVNULL,

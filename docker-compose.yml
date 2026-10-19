@@ -27,7 +27,7 @@ x-storage-env: &storage-env
   KITCHENSOUP_S3_ALLOWED_ORIGINS: http://127.0.0.1:${KITCHENSOUP_PORT:-8000},http://localhost:${KITCHENSOUP_PORT:-8000}
 
 x-background-health: &background-health
-  test: ["CMD", "python", "-c", "import pathlib,time; p=pathlib.Path('/tmp/kitchensoup-heartbeat'); assert p.exists() and time.time()-p.stat().st_mtime < 20"]
+  test: ["CMD", "python", "-c", "import os,pathlib,time; p=pathlib.Path('/tmp/kitchensoup-'+os.environ['KITCHENSOUP_BACKGROUND_ROLE']+'-heartbeat'); assert p.exists() and time.time()-p.stat().st_mtime < 20"]
   interval: 10s
   timeout: 5s
   retries: 3
@@ -162,11 +162,17 @@ services:
 
   worker:
     <<: *app
+    environment:
+      <<: *app-env
+      KITCHENSOUP_BACKGROUND_ROLE: worker
     command: ["python", "-m", "app.background", "worker"]
     healthcheck: *background-health
 
   reconciler:
     <<: *app
+    environment:
+      <<: *app-env
+      KITCHENSOUP_BACKGROUND_ROLE: reconciler
     command: ["python", "-m", "app.background", "reconciler"]
     healthcheck: *background-health
 

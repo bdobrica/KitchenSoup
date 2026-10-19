@@ -383,30 +383,32 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 ## Milestone 13 — Queue, worker, reconciler, and job state
 
-- [ ] Define normalized job-state enum.
-- [ ] Enforce valid transitions.
-- [ ] Append every transition to `job_events`.
-- [ ] Add lightweight Valkey queue.
-- [ ] Implement worker command dispatch.
-- [ ] Implement reconciler loop.
-- [ ] Add claim/idempotency locking.
-- [ ] Poll non-terminal jobs.
-- [ ] Normalize executor status.
-- [ ] Detect lost jobs.
-- [ ] Implement cancel-request lifecycle.
-- [ ] Add retry-by-clone.
-- [ ] Keep submitted run immutable.
-- [ ] Add SSE endpoint.
-- [ ] Publish transient status updates through Valkey.
-- [ ] Add run progress UI.
-- [ ] Add logs UI.
-- [ ] Add state-machine unit tests.
+- [x] Define normalized job-state enum.
+- [x] Enforce valid transitions.
+- [x] Append every transition to `job_events`.
+- [x] Add lightweight Valkey queue.
+- [x] Implement worker command dispatch.
+- [x] Implement reconciler loop.
+- [x] Add claim/idempotency locking.
+- [x] Poll non-terminal jobs.
+- [x] Normalize executor status.
+- [x] Detect lost jobs.
+- [x] Implement cancel-request lifecycle.
+- [x] Add retry-by-clone.
+- [x] Keep submitted run immutable.
+- [x] Add SSE endpoint.
+- [x] Publish transient status updates through Valkey.
+- [x] Add run progress UI.
+- [x] Add logs UI.
+- [x] Add state-machine unit tests.
 
 **Acceptance criteria**
 
-- [ ] Long-running training survives web-process restart.
-- [ ] PostgreSQL always contains authoritative current state.
-- [ ] Browser receives live-ish progress without WebSockets.
+- [x] Long-running training survives web-process restart.
+- [x] PostgreSQL always contains authoritative current state.
+- [x] Browser receives live-ish progress without WebSockets.
+
+See [Milestone 13 evidence](docs/evidence/milestone-13.md).
 
 ---
 

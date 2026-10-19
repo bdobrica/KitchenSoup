@@ -2,7 +2,9 @@
 
 The local executor submits a saved [training plan](training-plans.md), materializes
 its registered inputs and runs the pinned [Soup image](soup-training.md). It supports
-status, private stdout/stderr, cancellation and stopped-container cleanup.
+durable queued submission, live progress, private stdout/stderr, cancellation
+and stopped-container cleanup. See [job lifecycle](jobs.md) for worker/reconciler
+operation and recovery.
 Training requires a CUDA GPU: select FP16 in advanced plan parameters on older
 cards such as RTX 20 series or GTX 1660 Ti; BF16 remains the default on native-BF16
 hardware. SageMaker execution is a later adapter.
@@ -20,23 +22,27 @@ make storage-init
 make catalog-sync
 make build-soup
 make gpu-check PRECISION=fp16 # use bf16 for native-BF16 hardware
-make training-infra         # adds loopback PostgreSQL port 5432; retains volumes
+make training-infra         # loopback PostgreSQL/Valkey/RustFS; retains volumes
 # If the Compose web service is running, free its port first:
 docker compose stop web
 make dev-training           # http://127.0.0.1:8000
+# Separate terminals, same checkout/settings/user:
+make worker-training
+make reconcile-training
 ```
 
 `dev-training` reads existing `.env` credentials without displaying them and uses
-local PostgreSQL/RustFS ports 5432/9000. The optional
-`docker-compose.training.yml` only adds loopback database access. Adjust these
+local PostgreSQL/Valkey/RustFS ports 5432/6379/9000. The optional
+`docker-compose.training.yml` adds loopback database and queue access. Adjust these
 operator settings if local ports differ. The host mode does not expose the private
 Soup document-ingestion sidecar; prepare document versions through the regular
 Compose application first. Conversation upload/versioning works in host mode.
 
 Register an uploaded model or public ungated model with an exact commit, prepare
 a dataset version, save a reviewed plan, then choose **Start local training**.
-Follow the resulting run page for status and logs. **Cancel run** stops its
-container. **Remove stopped container** retains the local inputs, outputs and logs.
+Follow the resulting run page for status and logs. **Cancel run** durably requests
+cancellation for the worker. **Remove stopped container** retains the local inputs,
+outputs and logs.
 Runs are also accessible at `/training-runs` after a failed or interrupted request.
 
 Environment settings (prefix `KITCHENSOUP_`):
@@ -75,36 +81,30 @@ Existing AppSpec, plan and runner schemas are unchanged.
 | --- | --- |
 | `POST /api/v1/training-runs` | `{ "plan_id": "UUID" }`; creates a new attempt, returns 201 |
 | `GET /api/v1/training-runs` | Retained run summaries, newest first |
-| `GET /api/v1/training-runs/{id}` | Observe Docker and update retained state |
+| `GET /api/v1/training-runs/{id}` | Read authoritative PostgreSQL state |
 | `GET /api/v1/training-runs/{id}/logs?stream=stdout&cursor=0` | Up to 64 KiB and next byte cursor; stderr also supported |
-| `POST /api/v1/training-runs/{id}/cancel` | Stop the identified container; repeatable |
+| `POST /api/v1/training-runs/{id}/cancel` | Persist cancel request; repeatable |
 | `DELETE /api/v1/training-runs/{id}/container` | Remove stopped container; 204; retain workspace |
 
 Responses use `Cache-Control: no-store`; disabled/unavailable executor returns 503.
-A confirmed preparation/launch failure after creating the row returns its FAILED
-run with a safe initial observation. Ambiguous launch errors are inspected first;
-Docker unavailability leaves PREPARING for later observation. Refresh may only show generic failure/absence diagnostics.
-No raw Docker/Hub errors are returned. Logs can contain training diagnostics and
-are available only through the trusted local application's run API.
+Submission commits QUEUED before worker preparation. Logs can contain training
+diagnostics and are available through the trusted local application's run API.
+Clone and SSE routes, normalized states, cancellation and recovery semantics are
+specified in [job lifecycle](jobs.md).
 
 `TrainingRun.resolved_config` uses the internal `kitchensoup.local-run/v1` envelope:
 `plan_id`, `image_digest`, and complete `plan` (PlanPreview shape). The run retains
 the plan SHA-256, immutable AppSpec and relational model/dataset/target IDs. The
 external ID is `kitchensoup-training-{run UUID}`, committed before Docker effects.
-Launch metadata remains in the stable private workspace. No table/migration changes.
+Launch metadata remains in the stable private workspace. The job-state migration
+adds transition guards and automatic events without changing the immutable snapshot.
 
-States currently observed are PREPARING, RUNNING, SUCCEEDED, FAILED, CANCELED and
-MISSING. MISSING is an observation, not a replacement for retained state. A stopped
-exit-zero container is FAILED unless the matching successful manifest and required
-adapter hashes verify. Validation-only output is never SUCCEEDED. Output
-registration and durable state-machine/event semantics are later milestones.
-
-Submission is synchronous and holds a per-run lock during materialization; retry
-cancel after preparation finishes. Repeated submission creates another run. If a
-request is lost, inspect the run list before retrying. There is no automatic queue,
-reconciler or GPU allocation yet. A process crash can leave a PREPARING run without
-a container. Keep the workspace/image stable across restarts and retain output
-before cleaning up host files. Do not run competing applications against this target.
+The web process reads retained state; the independent reconciler observes Docker.
+A stopped exit-zero container is FAILED unless the matching successful manifest
+and required adapter hashes verify. Validation-only output is never SUCCEEDED.
+Keep the workspace/image stable across restarts and retain output before cleaning
+up host files. Retry terminal attempts by clone; abandoned preparation is never
+replayed on the same workspace. Model registration remains Milestone 14.
 
 ## Verification
 

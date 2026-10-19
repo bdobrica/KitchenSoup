@@ -1225,6 +1225,22 @@
         "title": "HuggingFaceImport",
         "type": "object"
       },
+      "JobState": {
+        "enum": [
+          "QUEUED",
+          "PREPARING",
+          "SUBMITTED",
+          "RUNNING",
+          "POSTPROCESSING",
+          "SUCCEEDED",
+          "FAILED",
+          "CANCEL_REQUESTED",
+          "CANCELED",
+          "LOST"
+        ],
+        "title": "JobState",
+        "type": "string"
+      },
       "JobStatus": {
         "additionalProperties": false,
         "properties": {
@@ -1858,8 +1874,7 @@
             "type": "string"
           },
           "status": {
-            "title": "Status",
-            "type": "string"
+            "$ref": "#/components/schemas/JobState"
           }
         },
         "required": [
@@ -4333,6 +4348,49 @@
         ]
       }
     },
+    "/api/v1/training-runs/{run_id}/clone": {
+      "post": {
+        "operationId": "clone_run_api_v1_training_runs__run_id__clone_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Clone Run",
+        "tags": [
+          "training runs"
+        ]
+      }
+    },
     "/api/v1/training-runs/{run_id}/container": {
       "delete": {
         "operationId": "cleanup_run_api_v1_training_runs__run_id__container_delete",
@@ -4364,6 +4422,73 @@
           }
         },
         "summary": "Cleanup Run",
+        "tags": [
+          "training runs"
+        ]
+      }
+    },
+    "/api/v1/training-runs/{run_id}/events": {
+      "get": {
+        "operationId": "run_events_api_v1_training_runs__run_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "default": -1,
+              "maximum": 2147483647,
+              "minimum": -1,
+              "title": "After",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "last-event-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Last-Event-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Events",
         "tags": [
           "training runs"
         ]

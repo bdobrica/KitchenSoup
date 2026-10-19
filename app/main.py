@@ -33,6 +33,7 @@ from app.executors.base import ExecutorError
 from app.executors.local_docker import LocalDockerTrainingExecutor
 from app.executors.materialize import RegisteredInputMaterializer
 from app.ingestion.sources import SourceError
+from app.jobs.queue import JobQueue
 from app.providers.credentials import LocalCredentialResolver
 from app.providers.openai_compatible import OpenAICompatibleProvider
 from app.providers.schemas import ProviderError
@@ -70,6 +71,7 @@ def create_app(
         await asyncio.to_thread(check_dependencies, settings)
         engine = None
         store = None
+        queue = None
         try:
             app.state.artifact_service = artifact_service
             if artifact_service is None and settings.storage_enabled:
@@ -132,11 +134,14 @@ def create_app(
                     cpus=settings.training_cpus,
                     timeout=settings.training_timeout,
                 )
+                queue = JobQueue(settings.valkey_url)
                 app.state.training_run_service = TrainingRunService(
-                    app.state.training_plan_service, executor
+                    app.state.training_plan_service, executor, queue
                 )
             yield
         finally:
+            if queue is not None:
+                queue.close()
             if store is not None:
                 store.close()
             if engine is not None:

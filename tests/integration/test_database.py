@@ -194,7 +194,8 @@ def seed_graph(session: Session) -> tuple[TrainingRun, DatasetVersion, JobEvent]
         [imported, run, Document(source_id=source.id, title="Fixture", media_type="text/plain")]
     )
     session.flush()
-    event = JobEvent(training_run_id=run.id, sequence=0, status="QUEUED")
+    event = session.scalar(select(JobEvent).where(JobEvent.training_run_id == run.id))
+    assert event is not None
     session.add(
         TrainingPlan(
             base_model_version_id=base.id,
@@ -207,7 +208,6 @@ def seed_graph(session: Session) -> tuple[TrainingRun, DatasetVersion, JobEvent]
     )
     session.add_all(
         [
-            event,
             Conversation(
                 import_id=imported.id,
                 source_conversation_id="source-1",

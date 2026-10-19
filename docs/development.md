@@ -14,7 +14,7 @@ bounded public Hugging Face metadata requests and in-process HTTP tests.
 Development uses pytest, Ruff for linting/formatting, and mypy for strict types. Hatchling builds the Python package, including
 its templates and static assets. Psycopg supplies the authenticated PostgreSQL
 startup query; redis-py supplies the Valkey PING probe. These small clients will
-also support database and future queue operations. SQLAlchemy owns ORM mappings
+also support database and queue operations. SQLAlchemy owns ORM mappings
 and transactions; Alembic manages PostgreSQL schema changes. RustFS readiness uses
 Python’s standard HTTP client. Boto3 provides S3 signing and managed multipart
 transfers behind the ArtifactStore port; boto3-stubs supplies development types.
@@ -143,10 +143,10 @@ continuous dependency readiness. `make check-dependencies` re-runs the probes
 inside web. RustFS readiness verifies HTTP service availability, not S3
 credential authorization or object read/write capability.
 
-Worker and reconciler are explicitly idle placeholders. After successful
-startup checks they update an ephemeral heartbeat every five seconds; their
-container probes reject a heartbeat older than twenty seconds. SIGTERM/SIGINT
-stops them cleanly. They neither consume jobs nor mutate application state.
+Worker and reconciler run independent dispatch/reconciliation loops. Local training
+remains disabled in ordinary Compose, with no Docker socket. Use the opt-in host
+[training job workflow](jobs.md) to run the web, worker and reconciler together.
+Background health checks use a per-role heartbeat, including during preparation.
 
 ### Operations and verification
 
@@ -160,7 +160,7 @@ stops them cleanly. They neither consume jobs nor mutate application state.
   confirmation flag it fails before running Docker; it never prunes other projects.
 
 Normal `make verify` remains service-free. CI additionally runs `make compose-check`
-and `make test-integration` against isolated PostgreSQL and RustFS containers.
+and `make test-integration` against isolated PostgreSQL, RustFS and Valkey containers.
 For live validation, run `make up`, `make check-dependencies`, visit `/` and
 `/healthz`, run `make restart`, then `make down`. The full stack is not part
 of the unit-test gate.
