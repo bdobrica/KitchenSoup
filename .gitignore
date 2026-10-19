@@ -25,3 +25,5 @@ docker-compose.override.yml
 .local-deployments/
 
 .local-transformations/
+
+.ssh-staging/

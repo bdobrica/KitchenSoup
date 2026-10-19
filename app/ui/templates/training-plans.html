@@ -2,7 +2,7 @@
 {% block content %}
 <p><a href="/">Home</a> · <a href="/training-plans">Training plans</a></p>
 <h1>Prepare a training plan</h1>
-<p>Choose what you want to teach, a registered model and a frozen dataset version. Review and save your plan, then submit it to the configured local GPU.</p>
+<p>Choose what you want to teach, a registered model and a frozen dataset version. Review and save your plan, then submit it to the selected compute target.</p>
 <p id="plan-status" role="status" aria-live="polite"></p>
 <form id="plan-form">
   <label>What would you like to do?
@@ -40,7 +40,9 @@
   <details><summary>Inspect AppSpec and resolved parameters</summary><pre id="plan-json"></pre></details>
   <label>Optional evaluation suite <select id="plan-evaluation-suite"><option value="">No evaluation</option></select></label>
   <p><a href="/evaluations" target="_blank" rel="noopener">Create 3–10 test prompts before training</a>. Reload this saved plan after creating a suite.</p>
-  <button id="plan-run" type="button" hidden>Start local training</button>
+  <label>Compute target <select id="plan-target"><option value="">Local Docker</option></select></label>
+  <p><a href="/settings/execution-targets">Configure an SSH GPU host</a>. Paired evaluation currently runs locally.</p>
+  <button id="plan-run" type="button" hidden>Start training</button>
   <p><a href="/training-runs">View training runs</a></p>
   <button id="plan-save" type="button">Save reviewed plan</button>
 </section>

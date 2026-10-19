@@ -104,3 +104,6 @@ Upstream compatibility references:
 Merged FP16/BF16 and internally generated AWQ artifacts can be selected explicitly
 in the playground representation selector. The default remains LoRA for trained
 models; AWQ uses FP16. See [model representations](representations.md).
+
+SSH targets support the same lease and chat workflow through a private SSH channel.
+See [Docker-over-SSH setup](ssh-execution.md).

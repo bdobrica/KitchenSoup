@@ -89,15 +89,21 @@ class LocalDockerTrainingExecutor:
             finally:
                 fcntl.flock(lock, fcntl.LOCK_UN)
 
+    def docker(self, arguments: list[str]) -> subprocess.CompletedProcess[str]:
+        return docker(arguments)
+
+    def identity(self) -> tuple[int, int]:
+        return os.getuid(), os.getgid()
+
     def image_identity(self) -> str:
-        result = docker(["image", "inspect", self.image, "--format", "{{.Id}}"])
+        result = self.docker(["image", "inspect", self.image, "--format", "{{.Id}}"])
         identity = result.stdout.strip()
         if result.returncode or not re.fullmatch(r"sha256:[0-9a-f]{64}", identity):
             raise ExecutorError("Build the pinned Soup trainer image before submitting")
         return identity
 
     def submit(self, run_id: UUID, plan: PlanPreview, image: str) -> str:
-        if os.getuid() == 0:
+        if self.identity()[0] == 0:
             raise ExecutorError("Run the local training application as a non-root host user")
         if not re.fullmatch(r"sha256:[0-9a-f]{64}", image):
             raise ExecutorError("A content-addressed image is required")
@@ -166,7 +172,7 @@ class LocalDockerTrainingExecutor:
                     "--log-opt",
                     "max-file=2",
                     "--user",
-                    f"{os.getuid()}:{os.getgid()}",
+                    f"{self.identity()[0]}:{self.identity()[1]}",
                     "--mount",
                     f"type=bind,src={inputs},dst=/input,readonly",
                     "--mount",
@@ -178,11 +184,11 @@ class LocalDockerTrainingExecutor:
                     str(self.timeout),
                 ]
                 (workspace / "command.json").write_text(json.dumps(args))
-                if docker(args).returncode:
+                if self.docker(args).returncode:
                     raise ExecutorError(
                         "Docker could not create container; check GPU runtime and resources"
                     )
-                if docker(["start", name]).returncode:
+                if self.docker(["start", name]).returncode:
                     raise ExecutorError(
                         "Docker could not start training; check GPU runtime and resources"
                     )
@@ -196,7 +202,7 @@ class LocalDockerTrainingExecutor:
 
     def inspect(self, external_id: str, image: str) -> dict[str, Any] | None:
         workspace = self.workspace(external_id)
-        result = docker(["container", "inspect", external_id])
+        result = self.docker(["container", "inspect", external_id])
         if result.returncode:
             if "No such container" in result.stderr or "No such object" in result.stderr:
                 return None
@@ -288,7 +294,7 @@ class LocalDockerTrainingExecutor:
             status = self.status(external_id, image)
             if status.state in ("RUNNING", "PREPARING"):
                 (workspace / "canceled").touch()
-                if docker(["stop", "--time", "10", external_id]).returncode:
+                if self.docker(["stop", "--time", "10", external_id]).returncode:
                     raise ExecutorError("Docker cancellation failed; refresh before retrying")
                 return self.status(external_id, image)
             return status
@@ -303,7 +309,7 @@ class LocalDockerTrainingExecutor:
                 and not (self.workspace(external_id) / "canceled").exists()
             ):
                 raise ExecutorError("Cancel the run before cleaning up its container")
-            if docker(["rm", external_id]).returncode:
+            if self.docker(["rm", external_id]).returncode:
                 raise ExecutorError("Docker container cleanup failed")
 
     @contextmanager

@@ -23,6 +23,7 @@ from app.services.artifacts import ArtifactService
 from app.services.deployments import DeploymentService
 from app.services.evaluations import EvaluationService
 from app.services.runs import TrainingRunService
+from app.services.targets import TargetService
 from app.services.training import TrainingPlanService
 from app.services.transformations import TransformationService
 from app.storage.s3 import S3ArtifactStore
@@ -42,17 +43,19 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
         signal.signal(sig, lambda *_: stopped.set())
     settings = settings if settings is not None else Settings()
     if (
-        settings.local_training_enabled
+        settings.ssh_execution_enabled
+        or settings.local_training_enabled
         or settings.local_deployment_enabled
         or settings.local_transformations_enabled
     ) and not settings.storage_enabled:
-        raise ValueError("Local GPU execution requires artifact storage")
+        raise ValueError("GPU execution requires artifact storage")
     check_dependencies(settings)
     engine = create_database_engine(settings)
     store = (
         S3ArtifactStore(settings)
         if (
-            settings.local_training_enabled
+            settings.ssh_execution_enabled
+            or settings.local_training_enabled
             or settings.local_deployment_enabled
             or settings.local_transformations_enabled
         )
@@ -72,6 +75,7 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
             max_bytes=settings.upload_max_bytes,
             url_ttl=settings.storage_url_ttl,
         )
+        targets = TargetService(artifacts, settings)
         if settings.local_transformations_enabled:
             transformations = TransformationService(
                 artifacts,
@@ -81,31 +85,42 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
                     settings.transformation_image,
                 ),
             )
-        if settings.local_deployment_enabled:
+        if settings.local_deployment_enabled or settings.ssh_execution_enabled:
             deployments = DeploymentService(
                 artifacts,
                 LocalDockerDeploymentExecutor(
                     Path(settings.deployment_workspace),
                     DeploymentMaterializer(RegisteredInputMaterializer(artifacts)),
                     image=settings.deployment_image,
-                ),
+                )
+                if settings.local_deployment_enabled
+                else None,
+                targets,
             )
-        if settings.local_training_enabled:
-            executor = LocalDockerTrainingExecutor(
-                Path(settings.training_workspace),
-                RegisteredInputMaterializer(artifacts),
-                image=settings.training_image,
-                memory_gib=settings.training_memory_gib,
-                cpus=settings.training_cpus,
-                timeout=settings.training_timeout,
+        if settings.local_training_enabled or settings.ssh_execution_enabled:
+            executor = (
+                LocalDockerTrainingExecutor(
+                    Path(settings.training_workspace),
+                    RegisteredInputMaterializer(artifacts),
+                    image=settings.training_image,
+                    memory_gib=settings.training_memory_gib,
+                    cpus=settings.training_cpus,
+                    timeout=settings.training_timeout,
+                )
+                if settings.local_training_enabled
+                else None
             )
             processor = JobProcessor(
-                TrainingRunService(TrainingPlanService(factory), executor, queue, artifacts)
+                TrainingRunService(
+                    TrainingPlanService(factory), executor, queue, artifacts, targets
+                )
             )
-            evaluations = EvaluationService(
-                artifacts, LocalInferenceRunner(executor, RegisteredInputMaterializer(artifacts))
-            )
-    logging.info("%s ready; local training enabled=%s", role, processor is not None)
+            if executor is not None:
+                evaluations = EvaluationService(
+                    artifacts,
+                    LocalInferenceRunner(executor, RegisteredInputMaterializer(artifacts)),
+                )
+    logging.info("%s ready; training dispatch enabled=%s", role, processor is not None)
 
     def heartbeat() -> None:
         while not stopped.is_set():

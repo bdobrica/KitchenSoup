@@ -18,6 +18,7 @@ class StrictModel(BaseModel):
 
 class DeploymentCreate(StrictModel):
     model_version_id: UUID
+    execution_target_id: UUID | None = None
     artifact_id: UUID | None = None
     precision: Literal["fp16", "bf16"] = "fp16"
     lease_minutes: int = Field(default=30, ge=1, le=1440)
@@ -44,6 +45,7 @@ class DeploymentSpec(StrictModel):
 class DeploymentView(StrictModel):
     id: UUID
     model_version_id: UUID
+    execution_target_id: UUID | None = None
     artifact_id: UUID
     status: State
     external_id: str

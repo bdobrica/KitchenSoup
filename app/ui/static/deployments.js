@@ -43,7 +43,7 @@
     if (busy) return;
     const button = event.submitter; button.disabled = true;
     try {
-      const row = await api('/deployments', 'POST', {model_version_id: el('deployment-model').value, artifact_id: el('deployment-artifact').value || null, precision: el('deployment-precision').value, lease_minutes: Number(el('deployment-lease').value)});
+      const row = await api('/deployments', 'POST', {execution_target_id: el('deployment-target').value || null, model_version_id: el('deployment-model').value, artifact_id: el('deployment-artifact').value || null, precision: el('deployment-precision').value, lease_minutes: Number(el('deployment-lease').value)});
       current = row.id; messages = []; history();
       window.history.replaceState({}, '', '/deployments/' + current);
       el('deployment-error').textContent = ''; await refresh();
@@ -67,6 +67,9 @@
   (async () => {
     try {
       const models = await api('/models');
+      for (const target of await api('/execution-targets')) {
+        el('deployment-target').append(new Option(target.name, target.id));
+      }
       for (const model of models) for (const version of model.versions) {
         if (!version.training_run_id && !version.sources.some(source => source.kind === 'upload')) continue;
         const option = document.createElement('option'); option.value = version.id; option.textContent = `${model.name} · version ${version.version}`; el('deployment-model').append(option);

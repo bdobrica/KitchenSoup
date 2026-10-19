@@ -518,30 +518,32 @@ See [Milestone 17 evidence](docs/evidence/milestone-17.md).
 
 ## Milestone 18 — Docker-over-SSH executor
 
-- [ ] Implement SSH credential reference support.
-- [ ] Add `aws-profile://` parsing only if useful here or defer to SageMaker milestone.
-- [ ] Add SSH execution target model/config.
-- [ ] Implement connection test.
-- [ ] Implement remote Docker availability test.
-- [ ] Implement remote NVIDIA capability test.
-- [ ] Implement default SSH/SFTP artifact transfer mode.
-- [ ] Create remote run workspace.
-- [ ] Upload run inputs.
-- [ ] Start Soup container remotely.
-- [ ] Implement remote status via Docker inspect.
-- [ ] Implement remote logs.
-- [ ] Implement remote cancellation.
-- [ ] Download output artifacts.
-- [ ] Clean remote workspace according to policy.
-- [ ] Add optional direct-presigned-object transfer mode later.
-- [ ] Implement SSH vLLM deployment executor.
-- [ ] Add execution target UI.
+- [x] Implement SSH credential reference support.
+- [x] Defer `aws-profile://` credential parsing to Milestone 21 (SageMaker).
+- [x] Add SSH execution target model/config.
+- [x] Implement connection test.
+- [x] Implement remote Docker availability test.
+- [x] Implement remote NVIDIA capability test.
+- [x] Implement default SSH/SFTP artifact transfer mode.
+- [x] Create remote run workspace.
+- [x] Upload run inputs.
+- [x] Start Soup container remotely.
+- [x] Implement remote status via Docker inspect.
+- [x] Implement remote logs.
+- [x] Implement remote cancellation.
+- [x] Download output artifacts.
+- [x] Clean remote workspace according to policy.
+- [x] Defer optional direct-presigned-object transfer; SFTP is the default mode.
+- [x] Implement SSH vLLM deployment executor.
+- [x] Add execution target UI.
 
 **Acceptance criteria**
 
-- [ ] Same AppSpec/dataset can run locally or on a remote SSH GPU machine.
-- [ ] Remote host does not need direct network access to local RustFS in default mode.
-- [ ] No KitchenSoup agent is installed remotely.
+- [x] Same AppSpec/dataset can run locally or on a remote SSH GPU machine.
+- [x] Remote host does not need direct network access to local RustFS in default mode.
+- [x] No KitchenSoup agent is installed remotely.
+
+See [Milestone 18 evidence](docs/evidence/milestone-18.md).
 
 ---
 

@@ -26,6 +26,7 @@ from app.api.evaluations import router as evaluation_router
 from app.api.models import router as model_router
 from app.api.providers import router as provider_router
 from app.api.runs import router as run_router
+from app.api.targets import router as target_router
 from app.api.training import router as training_router
 from app.api.transformations import router as transformation_router
 from app.api.versions import router as version_router
@@ -52,6 +53,7 @@ from app.services.evaluations import EvaluationService
 from app.services.models import ModelService
 from app.services.providers import ProviderService
 from app.services.runs import TrainingRunService
+from app.services.targets import TargetService
 from app.services.training import TrainingPlanService
 from app.services.transformations import TransformationService
 from app.storage.base import ObjectNotFound, ObjectTooLarge, StorageError
@@ -76,6 +78,7 @@ def create_app(
     evaluation_service: EvaluationService | None = None,
     deployment_service: DeploymentService | None = None,
     transformation_service: TransformationService | None = None,
+    target_service: TargetService | None = None,
 ) -> FastAPI:
     settings = settings if settings is not None else Settings()
 
@@ -135,30 +138,44 @@ def create_app(
                 app.state.training_plan_service = TrainingPlanService(
                     app.state.dataset_service.factory
                 )
+            app.state.target_service = target_service
+            if target_service is None and app.state.artifact_service is not None:
+                app.state.target_service = TargetService(app.state.artifact_service, settings)
             app.state.training_run_service = training_run_service
-            if training_run_service is None and settings.local_training_enabled:
+            if training_run_service is None and (
+                settings.local_training_enabled or settings.ssh_execution_enabled
+            ):
                 if app.state.artifact_service is None or app.state.training_plan_service is None:
-                    raise ValueError("Local training requires artifact storage and plan metadata")
-                executor = LocalDockerTrainingExecutor(
-                    Path(settings.training_workspace),
-                    RegisteredInputMaterializer(app.state.artifact_service),
-                    image=settings.training_image,
-                    memory_gib=settings.training_memory_gib,
-                    cpus=settings.training_cpus,
-                    timeout=settings.training_timeout,
+                    raise ValueError("Training requires artifact storage and plan metadata")
+                executor = (
+                    LocalDockerTrainingExecutor(
+                        Path(settings.training_workspace),
+                        RegisteredInputMaterializer(app.state.artifact_service),
+                        image=settings.training_image,
+                        memory_gib=settings.training_memory_gib,
+                        cpus=settings.training_cpus,
+                        timeout=settings.training_timeout,
+                    )
+                    if settings.local_training_enabled
+                    else None
                 )
                 queue = JobQueue(settings.valkey_url)
                 app.state.training_run_service = TrainingRunService(
-                    app.state.training_plan_service, executor, queue, app.state.artifact_service
+                    app.state.training_plan_service,
+                    executor,
+                    queue,
+                    app.state.artifact_service,
+                    app.state.target_service,
                 )
             app.state.evaluation_service = evaluation_service
             if evaluation_service is None and app.state.artifact_service is not None:
                 runs = app.state.training_run_service
                 runner = (
                     LocalInferenceRunner(
-                        runs.executor, RegisteredInputMaterializer(app.state.artifact_service)
+                        runs.local_executor, RegisteredInputMaterializer(app.state.artifact_service)
                     )
-                    if runs is not None and isinstance(runs.executor, LocalDockerTrainingExecutor)
+                    if runs is not None
+                    and isinstance(runs.local_executor, LocalDockerTrainingExecutor)
                     else None
                 )
                 app.state.evaluation_service = EvaluationService(app.state.artifact_service, runner)
@@ -174,7 +191,9 @@ def create_app(
                     if settings.local_deployment_enabled
                     else None
                 )
-                app.state.deployment_service = DeploymentService(artifacts, deployment_executor)
+                app.state.deployment_service = DeploymentService(
+                    artifacts, deployment_executor, app.state.target_service
+                )
             app.state.transformation_service = transformation_service
             if transformation_service is None and app.state.artifact_service is not None:
                 artifacts = app.state.artifact_service
@@ -200,6 +219,7 @@ def create_app(
     app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
     templates = Jinja2Templates(directory=UI_DIR / "templates")
     app.mount("/static", StaticFiles(directory=UI_DIR / "static"), name="static")
+    app.include_router(target_router)
     app.include_router(transformation_router)
     app.include_router(artifact_router)
     app.include_router(model_router)
@@ -230,6 +250,15 @@ def create_app(
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, error: RequestValidationError) -> Response:
+        if request.url.path.startswith("/api/v1/execution-targets"):
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "detail": "Invalid SSH target settings; use a credential reference, "
+                    "valid host/user and a dedicated absolute workspace"
+                },
+                headers={"Cache-Control": "no-store"},
+            )
         if request.url.path.startswith("/api/v1/llm-providers"):
             return JSONResponse(
                 status_code=422,
@@ -327,6 +356,12 @@ def create_app(
     async def version_page(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(
             request=request, name="dataset-version.html", context={"app_name": settings.app_name}
+        )
+
+    @app.get("/settings/execution-targets", response_class=HTMLResponse, include_in_schema=False)
+    async def targets_page(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request=request, name="targets.html", context={"app_name": settings.app_name}
         )
 
     @app.get("/settings/providers", response_class=HTMLResponse, include_in_schema=False)

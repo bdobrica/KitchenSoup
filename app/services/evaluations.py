@@ -111,7 +111,16 @@ class EvaluationService:
             if not acquired:
                 raise SourceError(409, "A run operation is in progress")
             with self.factory() as session:
-                self.run(session, run_id)
+                run = self.run(session, run_id)
+                from app.db.models import ExecutionTarget
+
+                target = session.get(ExecutionTarget, run.execution_target_id)
+                if target is not None and target.kind == "ssh_docker":
+                    raise SourceError(
+                        409,
+                        "Paired evaluation requires a local training run; "
+                        "use an SSH playground for this model",
+                    )
                 active = session.scalar(
                     select(EvaluationTask).where(
                         EvaluationTask.training_run_id == run_id,

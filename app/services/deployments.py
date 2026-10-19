@@ -29,20 +29,37 @@ from app.executors.base import ExecutorError
 from app.ingestion.sources import SourceError
 from app.jobs.locking import claim
 from app.services.artifacts import ArtifactService
+from app.services.targets import TargetService
 from app.training.schemas import PlanModelSource, PlanPreview
 from app.transformations.schemas import AWQ, MERGED
 
 
 class DeploymentService:
     def __init__(
-        self, artifacts: ArtifactService, executor: DeploymentExecutor | None = None
+        self,
+        artifacts: ArtifactService,
+        executor: DeploymentExecutor | None = None,
+        targets: TargetService | None = None,
     ) -> None:
         self.artifacts, self.factory, self.executor = artifacts, artifacts.factory, executor
+        self.targets = targets
 
-    def enabled(self) -> DeploymentExecutor:
+    def enabled(self, target_id: UUID | None = None) -> DeploymentExecutor:
+        if target_id is not None:
+            if self.targets is None:
+                raise SourceError(503, "SSH serving is not configured")
+            return self.targets.deployment(target_id)
         if self.executor is None:
             raise SourceError(503, "Local deployment is disabled; enable the host serving executor")
         return self.executor
+
+    def executor_for(self, identifier: UUID) -> DeploymentExecutor:
+        with self.factory() as session:
+            row = self.row(session, identifier)
+            target = session.get(ExecutionTarget, row.execution_target_id)
+            if target is None or target.kind not in ("ssh_docker", "local_docker_deployment"):
+                raise SourceError(503, "The retained serving target is not supported")
+            return self.enabled(target.id if target.kind == "ssh_docker" else None)
 
     @staticmethod
     def row(session: Session, identifier: UUID, *, lock: bool = False) -> Deployment:
@@ -58,6 +75,7 @@ class DeploymentService:
         return DeploymentView(
             id=row.id,
             model_version_id=row.model_version_id,
+            execution_target_id=row.execution_target_id,
             artifact_id=row.artifact_id,
             status=row.status,
             external_id=row.external_id or container_name(row.id),
@@ -84,7 +102,7 @@ class DeploymentService:
             ]
 
     def create(self, body: DeploymentCreate) -> DeploymentView:
-        executor = self.enabled()
+        executor = self.enabled(body.execution_target_id)
         with self.factory() as session:
             version = session.get(ModelVersion, body.model_version_id)
             if version is None:
@@ -172,18 +190,30 @@ class DeploymentService:
                 representation="awq" if chosen.format == AWQ else "full",
                 precision=body.precision,
             )
-            session.execute(
-                insert(ExecutionTarget)
-                .values(
-                    id=uuid4(), name="local-vllm", kind="local_docker_deployment", configuration={}
+            if body.execution_target_id is None:
+                session.execute(
+                    insert(ExecutionTarget)
+                    .values(
+                        id=uuid4(),
+                        name="local-vllm",
+                        kind="local_docker_deployment",
+                        configuration={},
+                    )
+                    .on_conflict_do_nothing(index_elements=[ExecutionTarget.name])
                 )
-                .on_conflict_do_nothing(index_elements=[ExecutionTarget.name])
-            )
-            target = session.scalar(
-                select(ExecutionTarget).where(ExecutionTarget.name == "local-vllm")
-            )
-            if target is None or target.kind != "local_docker_deployment" or target.configuration:
-                raise SourceError(409, "Local serving target configuration conflict")
+                target = session.scalar(
+                    select(ExecutionTarget).where(ExecutionTarget.name == "local-vllm")
+                )
+                if (
+                    target is None
+                    or target.kind != "local_docker_deployment"
+                    or target.configuration
+                ):
+                    raise SourceError(409, "Local serving target configuration conflict")
+            else:
+                target = session.get(ExecutionTarget, body.execution_target_id)
+                if target is None or target.kind != "ssh_docker":
+                    raise SourceError(404, "SSH execution target not found")
             identifier = uuid4()
             session.add(
                 Deployment(
@@ -203,7 +233,7 @@ class DeploymentService:
         return self.get(identifier)
 
     def action(self, identifier: UUID, action: str, minutes: int = 30) -> DeploymentView:
-        self.enabled()
+        self.executor_for(identifier)
         with self.factory() as session:
             row = self.row(session, identifier, lock=True)
             if row.status in TERMINAL or row.status == "STOP_REQUESTED":
@@ -228,7 +258,7 @@ class DeploymentService:
         return self.get(identifier)
 
     def chat(self, identifier: UUID, body: ChatRequest) -> ChatResponse:
-        executor = self.enabled()
+        executor = self.executor_for(identifier)
         with claim(self.factory, identifier) as acquired:
             if not acquired:
                 raise SourceError(409, "Another deployment operation is in progress; retry shortly")
@@ -242,7 +272,7 @@ class DeploymentService:
             return executor.chat(identifier, spec, body)
 
     def tick(self, role: str) -> None:
-        if self.executor is None:
+        if self.executor is None and self.targets is None:
             return
         with self.factory() as session:
             ids = list(
@@ -256,12 +286,12 @@ class DeploymentService:
         for identifier in ids:
             try:
                 self.process(identifier, role)
-            except ExecutorError:
+            except (ExecutorError, SourceError):
                 # Daemon/identity/cleanup failures never falsely record a stopped GPU.
                 continue
 
     def process(self, identifier: UUID, role: str) -> None:
-        executor = self.enabled()
+        executor = self.executor_for(identifier)
         with claim(self.factory, identifier) as acquired:
             if not acquired:
                 return
@@ -284,7 +314,7 @@ class DeploymentService:
             elif status == "QUEUED" and role == "worker":
                 try:
                     executor.deploy(identifier, spec)
-                except ExecutorError:
+                except (ExecutorError, SourceError):
                     executor.stop(identifier, spec)
                     self.update(identifier, "FAILED", None)
                     return

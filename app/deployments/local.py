@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 from ipaddress import IPv4Address, IPv4Network
 from pathlib import Path
 from typing import Any
@@ -36,8 +37,14 @@ class LocalDockerDeploymentExecutor:
         self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.materializer, self.image = materializer, image
 
+    def docker(self, arguments: list[str]) -> subprocess.CompletedProcess[str]:
+        return docker(arguments)
+
+    def identity(self) -> tuple[int, int]:
+        return os.getuid(), os.getgid()
+
     def image_identity(self) -> str:
-        result = docker(["image", "inspect", self.image, "--format", "{{.Id}}"])
+        result = self.docker(["image", "inspect", self.image, "--format", "{{.Id}}"])
         identity = result.stdout.strip()
         if result.returncode or not re.fullmatch(r"sha256:[0-9a-f]{64}", identity):
             raise ExecutorError("Build the pinned vLLM image before deploying")
@@ -50,7 +57,7 @@ class LocalDockerDeploymentExecutor:
         return path
 
     def inspect(self, identifier: UUID, spec: DeploymentSpec) -> dict[str, Any] | None:
-        result = docker(["container", "inspect", container_name(identifier)])
+        result = self.docker(["container", "inspect", container_name(identifier)])
         if result.returncode:
             if "No such" in result.stderr:
                 return None
@@ -67,13 +74,13 @@ class LocalDockerDeploymentExecutor:
 
     def network(self, identifier: UUID, *, create: bool = False) -> bool:
         name = container_name(identifier)
-        found = docker(["network", "inspect", name])
+        found = self.docker(["network", "inspect", name])
         if found.returncode:
             if "No such" not in found.stderr and "not found" not in found.stderr:
                 raise ExecutorError("Deployment network inspection unavailable")
             if not create:
                 return False
-            if docker(
+            if self.docker(
                 [
                     "network",
                     "create",
@@ -93,7 +100,7 @@ class LocalDockerDeploymentExecutor:
         return True
 
     def deploy(self, identifier: UUID, spec: DeploymentSpec) -> None:
-        if os.getuid() == 0:
+        if self.identity()[0] == 0:
             raise ExecutorError("Run local serving as a non-root host user")
         path = self.workspace(identifier)
         if path.exists() or self.inspect(identifier, spec) is not None:
@@ -143,7 +150,7 @@ class LocalDockerDeploymentExecutor:
             "--log-opt",
             "max-file=2",
             "--user",
-            f"{os.getuid()}:{os.getgid()}",
+            f"{self.identity()[0]}:{self.identity()[1]}",
             "--mount",
             f"type=bind,src={path},dst=/models,readonly",
             spec.image_digest,
@@ -183,7 +190,7 @@ class LocalDockerDeploymentExecutor:
                     "tuned=/models/adapter",
                 ]
             )
-        if docker(args).returncode or docker(["start", name]).returncode:
+        if self.docker(args).returncode or self.docker(["start", name]).returncode:
             raise ExecutorError(
                 "Serving container could not start; check vLLM image and GPU capacity"
             )
@@ -215,18 +222,35 @@ class LocalDockerDeploymentExecutor:
         self.network(identifier)
         endpoint = self.endpoint(info, container_name(identifier))
         try:
-            with httpx.Client(timeout=2, trust_env=False, follow_redirects=False) as client:
-                healthy = client.get(endpoint + "/health").status_code == 200
-        except httpx.HTTPError:
+            self.request(endpoint, "GET", "/health", None, 2)
+            healthy = True
+        except ExecutorError:
             healthy = False
         return DeploymentStatus("RUNNING" if healthy else "STARTING", endpoint)
 
+    def request(
+        self, endpoint: str, method: str, path: str, payload: dict[str, Any] | None, timeout: int
+    ) -> bytes:
+        try:
+            with httpx.Client(timeout=timeout, trust_env=False, follow_redirects=False) as client:
+                with client.stream(method, endpoint + path, json=payload) as response:
+                    if response.status_code != 200:
+                        raise ExecutorError("Inference unavailable; check model/GPU compatibility")
+                    body = bytearray()
+                    for chunk in response.iter_bytes(65536):
+                        body.extend(chunk)
+                        if len(body) > 1024**2:
+                            raise ExecutorError("Serving response exceeded the playground limit")
+                    return bytes(body)
+        except httpx.HTTPError:
+            raise ExecutorError("Playground inference unavailable") from None
+
     def stop(self, identifier: UUID, spec: DeploymentSpec) -> None:
         if self.inspect(identifier, spec) is not None:
-            if docker(["rm", "--force", container_name(identifier)]).returncode:
+            if self.docker(["rm", "--force", container_name(identifier)]).returncode:
                 raise ExecutorError("Deployment stop failed; will retry")
         if self.network(identifier):
-            if docker(["network", "rm", container_name(identifier)]).returncode:
+            if self.docker(["network", "rm", container_name(identifier)]).returncode:
                 raise ExecutorError("Deployment network cleanup failed; will retry")
         try:
             path = self.workspace(identifier)
@@ -242,27 +266,19 @@ class LocalDockerDeploymentExecutor:
         self.network(identifier)
         endpoint = self.endpoint(info, container_name(identifier))
         try:
-            with httpx.Client(timeout=120, trust_env=False, follow_redirects=False) as client:
-                with client.stream(
-                    "POST",
-                    endpoint + "/v1/chat/completions",
-                    json={
-                        "model": "tuned" if spec.adapter else "playground",
-                        "messages": [m.model_dump() for m in body.messages],
-                        "stream": False,
-                        "max_tokens": 128,
-                        "temperature": 0,
-                    },
-                ) as response:
-                    if response.status_code != 200:
-                        raise ExecutorError(
-                            "Chat failed; shorten the conversation or check model/GPU compatibility"
-                        )
-                    payload = bytearray()
-                    for chunk in response.iter_bytes(65536):
-                        payload.extend(chunk)
-                        if len(payload) > 1024**2:
-                            raise ExecutorError("Serving response exceeded the playground limit")
+            payload = self.request(
+                endpoint,
+                "POST",
+                "/v1/chat/completions",
+                {
+                    "model": "tuned" if spec.adapter else "playground",
+                    "messages": [m.model_dump() for m in body.messages],
+                    "stream": False,
+                    "max_tokens": 128,
+                    "temperature": 0,
+                },
+                120,
+            )
             result = json.loads(payload)
             return ChatResponse(content=result["choices"][0]["message"]["content"])
         except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError):

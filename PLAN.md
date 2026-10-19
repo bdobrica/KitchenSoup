@@ -1584,7 +1584,9 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 18: Docker-over-SSH execution.
+The current implementation frontier is Milestone 19: Kubernetes training.
+Docker-over-SSH training, private serving and target setup are documented in
+[docs/ssh-execution.md](docs/ssh-execution.md).
 Lazy local merge and AWQ representations are documented in
 [docs/representations.md](docs/representations.md).
 Temporary local vLLM playgrounds, leases and bounded chat are documented in

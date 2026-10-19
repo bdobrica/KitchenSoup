@@ -162,3 +162,7 @@ build-transform: ## Build the pinned offline merge/AWQ image
 
 test-transform-gpu: build-transform build-soup build-vllm ## Offline FP16 merge and AWQ GPU smoke
 	$(VENV_PYTHON) scripts/test_transform_gpu.py
+
+.PHONY: test-ssh-gpu
+test-ssh-gpu: ## Optional remote FP16 training/serving smoke (set SSH_TEST_ARGS; see docs/ssh-execution.md)
+	$(VENV_PYTHON) scripts/test_ssh_gpu.py $(SSH_TEST_ARGS)

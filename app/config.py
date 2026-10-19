@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     local_deployment_enabled: bool = False
     deployment_workspace: str = ".local-deployments"
     deployment_image: str = "kitchensoup-vllm:local"
+    ssh_execution_enabled: bool = False
+    ssh_known_hosts: str = "/run/secrets/ssh_known_hosts"
+    ssh_secret_directory: str = "/run/secrets"
+    ssh_env_names: str = ""
+    ssh_staging_workspace: str = ".ssh-staging"
     local_training_enabled: bool = False
     training_workspace: str = ".local-training"
     training_image: str = "kitchensoup-soup-trainer:local"

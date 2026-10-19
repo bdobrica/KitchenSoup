@@ -970,6 +970,18 @@
             ],
             "title": "Artifact Id"
           },
+          "execution_target_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Target Id"
+          },
           "lease_minutes": {
             "default": 30,
             "maximum": 1440.0,
@@ -1010,6 +1022,18 @@
             "format": "date-time",
             "title": "Created At",
             "type": "string"
+          },
+          "execution_target_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Target Id"
           },
           "expires_at": {
             "format": "date-time",
@@ -2377,6 +2401,18 @@
             ],
             "title": "Evaluation Suite Id"
           },
+          "execution_target_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Target Id"
+          },
           "plan_id": {
             "format": "uuid",
             "title": "Plan Id",
@@ -2407,6 +2443,18 @@
               }
             ],
             "title": "Evaluation Suite Id"
+          },
+          "execution_target_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Target Id"
           },
           "external_id": {
             "title": "External Id",
@@ -2627,6 +2675,58 @@
         "title": "SourceView",
         "type": "object"
       },
+      "SshConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "deployment_image": {
+            "default": "kitchensoup-vllm:local",
+            "maxLength": 256,
+            "title": "Deployment Image",
+            "type": "string"
+          },
+          "host": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9.-]{0,252}$",
+            "title": "Host",
+            "type": "string"
+          },
+          "port": {
+            "default": 22,
+            "maximum": 65535.0,
+            "minimum": 1.0,
+            "title": "Port",
+            "type": "integer"
+          },
+          "schema": {
+            "const": "kitchensoup.ssh-target/v1",
+            "default": "kitchensoup.ssh-target/v1",
+            "title": "Schema",
+            "type": "string"
+          },
+          "training_image": {
+            "default": "kitchensoup-soup-trainer:local",
+            "maxLength": 256,
+            "title": "Training Image",
+            "type": "string"
+          },
+          "username": {
+            "pattern": "^[a-z_][a-z0-9_-]{0,63}$",
+            "title": "Username",
+            "type": "string"
+          },
+          "workspace": {
+            "maxLength": 512,
+            "title": "Workspace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "host",
+          "username",
+          "workspace"
+        ],
+        "title": "SshConfig",
+        "type": "object"
+      },
       "SuiteCreate": {
         "additionalProperties": false,
         "properties": {
@@ -2681,6 +2781,128 @@
           "prompts"
         ],
         "title": "SuiteView",
+        "type": "object"
+      },
+      "TargetCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "configuration": {
+            "$ref": "#/components/schemas/SshConfig"
+          },
+          "credential_ref": {
+            "maxLength": 512,
+            "title": "Credential Ref",
+            "type": "string"
+          },
+          "kind": {
+            "const": "ssh_docker",
+            "default": "ssh_docker",
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "credential_ref",
+          "configuration"
+        ],
+        "title": "TargetCreate",
+        "type": "object"
+      },
+      "TargetTest": {
+        "properties": {
+          "deployment_image_digest": {
+            "title": "Deployment Image Digest",
+            "type": "string"
+          },
+          "gid": {
+            "title": "Gid",
+            "type": "integer"
+          },
+          "gpu": {
+            "title": "Gpu",
+            "type": "string"
+          },
+          "message": {
+            "default": "SSH, Docker, GPU access and runtime images verified",
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "training_image_digest": {
+            "title": "Training Image Digest",
+            "type": "string"
+          },
+          "uid": {
+            "title": "Uid",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "uid",
+          "gid",
+          "gpu",
+          "training_image_digest",
+          "deployment_image_digest"
+        ],
+        "title": "TargetTest",
+        "type": "object"
+      },
+      "TargetView": {
+        "additionalProperties": false,
+        "properties": {
+          "configuration": {
+            "$ref": "#/components/schemas/SshConfig"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "credential_ref": {
+            "maxLength": 512,
+            "title": "Credential Ref",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "ssh_docker",
+            "default": "ssh_docker",
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "credential_ref",
+          "configuration",
+          "id",
+          "created_at"
+        ],
+        "title": "TargetView",
         "type": "object"
       },
       "TaskCreate": {
@@ -5148,6 +5370,156 @@
         "summary": "Report",
         "tags": [
           "evaluations"
+        ]
+      }
+    },
+    "/api/v1/execution-targets": {
+      "get": {
+        "operationId": "list_targets_api_v1_execution_targets_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TargetView"
+                  },
+                  "title": "Response List Targets Api V1 Execution Targets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Targets",
+        "tags": [
+          "Execution targets"
+        ]
+      },
+      "post": {
+        "operationId": "create_target_api_v1_execution_targets_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TargetCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Target",
+        "tags": [
+          "Execution targets"
+        ]
+      }
+    },
+    "/api/v1/execution-targets/{identifier}": {
+      "get": {
+        "operationId": "get_target_api_v1_execution_targets__identifier__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identifier",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identifier",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Target",
+        "tags": [
+          "Execution targets"
+        ]
+      }
+    },
+    "/api/v1/execution-targets/{identifier}/test": {
+      "post": {
+        "operationId": "test_target_api_v1_execution_targets__identifier__test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identifier",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identifier",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetTest"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Test Target",
+        "tags": [
+          "Execution targets"
         ]
       }
     },

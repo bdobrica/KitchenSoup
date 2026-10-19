@@ -1,5 +1,7 @@
 # Local Docker training
 
+For remote GPU hosts, see [Docker-over-SSH execution](ssh-execution.md).
+
 The local executor submits a saved [training plan](training-plans.md), materializes
 its registered inputs and runs the pinned [Soup image](soup-training.md). It supports
 durable queued submission, live progress, private stdout/stderr, cancellation

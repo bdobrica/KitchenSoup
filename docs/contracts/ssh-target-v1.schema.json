@@ -1,0 +1,52 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "deployment_image": {
+      "default": "kitchensoup-vllm:local",
+      "maxLength": 256,
+      "title": "Deployment Image",
+      "type": "string"
+    },
+    "host": {
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9.-]{0,252}$",
+      "title": "Host",
+      "type": "string"
+    },
+    "port": {
+      "default": 22,
+      "maximum": 65535,
+      "minimum": 1,
+      "title": "Port",
+      "type": "integer"
+    },
+    "schema": {
+      "const": "kitchensoup.ssh-target/v1",
+      "default": "kitchensoup.ssh-target/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "training_image": {
+      "default": "kitchensoup-soup-trainer:local",
+      "maxLength": 256,
+      "title": "Training Image",
+      "type": "string"
+    },
+    "username": {
+      "pattern": "^[a-z_][a-z0-9_-]{0,63}$",
+      "title": "Username",
+      "type": "string"
+    },
+    "workspace": {
+      "maxLength": 512,
+      "title": "Workspace",
+      "type": "string"
+    }
+  },
+  "required": [
+    "host",
+    "username",
+    "workspace"
+  ],
+  "title": "SshConfig",
+  "type": "object"
+}

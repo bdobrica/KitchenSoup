@@ -6,8 +6,10 @@ from sqlalchemy import select
 
 from app.db.models import TrainingRun
 from app.executors.base import ExecutorError, JobStatus
+from app.ingestion.sources import SourceError
 from app.jobs.locking import claim
 from app.jobs.states import TERMINAL, JobState
+from app.services.outputs import OutputRegistrar
 from app.services.runs import TrainingRunService
 from app.storage.base import StorageError
 from app.training.schemas import PlanPreview
@@ -66,10 +68,12 @@ class JobProcessor:
                         session.commit()
                     self.service.notify(identifier)
                     try:
-                        external = self.service.executor.submit(identifier, plan, image)
+                        external = self.service.executor_for(identifier).submit(
+                            identifier, plan, image
+                        )
                         if external != name:
                             raise ExecutorError("Unexpected external identity")
-                    except (ExecutorError, StorageError):
+                    except (ExecutorError, StorageError, SourceError):
                         # Ambiguous launches are inspected; never resubmit an attempt.
                         self.recover(identifier, name, image)
                     else:
@@ -84,15 +88,19 @@ class JobProcessor:
                     self.recover(identifier, name, image)
                 elif role == "worker" and state == JobState.CANCEL_REQUESTED:
                     self.observe(
-                        identifier, self.service.executor.cancel(name, image), canceling=True
+                        identifier,
+                        self.service.executor_for(identifier).cancel(name, image),
+                        canceling=True,
                     )
                 elif role == "reconciler" and state in (
                     JobState.SUBMITTED,
                     JobState.RUNNING,
                     JobState.POSTPROCESSING,
                 ):
-                    self.observe(identifier, self.service.executor.status(name, image))
-            except (ExecutorError, StorageError):
+                    self.observe(
+                        identifier, self.service.executor_for(identifier).status(name, image)
+                    )
+            except (ExecutorError, StorageError, SourceError):
                 # Unavailability is not absence or failure; preserve durable state
                 # and retry on the next database scan. Do not persist raw diagnostics.
                 return
@@ -101,11 +109,11 @@ class JobProcessor:
                     self.service.queue.publish(identifier)
 
     def recover(self, identifier: UUID, name: str, image: str) -> None:
-        observation = self.service.executor.status(name, image)
+        observation = self.service.executor_for(identifier).status(name, image)
         if observation.state == "PREPARING":
             # A created but unstarted container cannot train by itself. Stop it
             # before failing this abandoned attempt; never replay docker start.
-            stopped = self.service.executor.cancel(name, image)
+            stopped = self.service.executor_for(identifier).cancel(name, image)
             if stopped.state in ("RUNNING", "PREPARING"):
                 return
             observation = stopped if stopped.state == "SUCCEEDED" else JobStatus(state="FAILED")
@@ -163,8 +171,13 @@ class JobProcessor:
             row = self.service.row(session, identifier)
             if row.status != JobState.POSTPROCESSING:
                 return
-            if self.service.registrar is None:
+            registrar = self.service.registrar
+            if self.service.targets is not None and self.service.artifacts is not None:
+                registrar = OutputRegistrar(
+                    self.service.artifacts, self.service.executor_for(identifier)
+                )
+            if registrar is None:
                 raise ExecutorError("Output registration requires artifact storage")
-            self.service.registrar.register(session, row)
+            registrar.register(session, row)
             self.service.transition(session, row, JobState.SUCCEEDED)
             session.commit()

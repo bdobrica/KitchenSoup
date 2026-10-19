@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/">Home</a> · <a href="/training-plans">Training plans</a> · <a href="/deployments">Playgrounds</a></p>
+<h1>SSH execution targets</h1>
+<p>Configure a trusted GPU host with Docker and NVIDIA Container Toolkit. Inputs are copied over SSH; the host does not need access to KitchenSoup storage. Target configuration is immutable: create a new target to change hosts or settings.</p>
+<p>Enable SSH execution and approve the host key and credential locations in the host application settings first. Enter a credential reference only.</p>
+<p id="target-status" role="status"></p>
+<form id="target-form">
+<label>Name <input name="name" required maxlength="200"></label>
+<label>Host <input name="host" required placeholder="gpu.example.internal"></label>
+<label>Port <input name="port" type="number" min="1" max="65535" value="22" required></label>
+<label>SSH username <input name="username" required></label>
+<label>Private key reference <input name="credential_ref" placeholder="file:///run/secrets/gpu_key" required></label>
+<label>Private remote workspace <input name="workspace" placeholder="/home/operator/.kitchensoup" required></label>
+<label>Trainer image <input name="training_image" value="kitchensoup-soup-trainer:local" required></label>
+<label>Serving image <input name="deployment_image" value="kitchensoup-vllm:local" required></label>
+<button>Create target</button>
+</form>
+<h2>Configured SSH hosts</h2><div id="target-list"></div>
+<script defer src="/static/targets.js"></script>
+{% endblock %}

@@ -25,6 +25,7 @@ from app.jobs.queue import JobQueue
 from app.jobs.states import TERMINAL, JobState, validate_transition
 from app.services.artifacts import ArtifactService
 from app.services.outputs import OutputRegistrar
+from app.services.targets import TargetService
 from app.services.training import TrainingPlanService
 from app.training.schemas import PlanPreview
 
@@ -33,6 +34,7 @@ class RunCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     plan_id: UUID
     evaluation_suite_id: UUID | None = None
+    execution_target_id: UUID | None = None
 
 
 class RunView(BaseModel):
@@ -44,6 +46,7 @@ class RunView(BaseModel):
     external_id: str
     status: JobState
     evaluation_suite_id: UUID | None = None
+    execution_target_id: UUID | None = None
     observation: JobStatus | None = None
     model_version_id: UUID | None = None
     model_id: UUID | None = None
@@ -60,13 +63,38 @@ class TrainingRunService:
     def __init__(
         self,
         plans: TrainingPlanService,
-        executor: TrainingExecutor,
+        executor: TrainingExecutor | None,
         queue: JobQueue | None = None,
         artifacts: ArtifactService | None = None,
+        targets: TargetService | None = None,
     ) -> None:
-        self.plans, self.executor, self.factory = plans, executor, plans.factory
-        self.queue = queue
-        self.registrar = OutputRegistrar(artifacts, executor) if artifacts is not None else None
+        self.plans, self.local_executor, self.factory = plans, executor, plans.factory
+        self.queue, self.targets, self.artifacts = queue, targets, artifacts
+        self.registrar = (
+            OutputRegistrar(artifacts, executor)
+            if artifacts is not None and executor is not None
+            else None
+        )
+
+    @property
+    def executor(self) -> TrainingExecutor:
+        if self.local_executor is None:
+            raise SourceError(503, "Local training is disabled")
+        return self.local_executor
+
+    def executor_for(self, identifier: UUID) -> TrainingExecutor:
+        with self.factory() as session:
+            row = self.row(session, identifier, lock=False)
+            target = session.get(ExecutionTarget, row.execution_target_id)
+            if target is not None and target.kind == "ssh_docker":
+                if self.targets is None:
+                    raise SourceError(503, "SSH execution is not configured")
+                return self.targets.training(target.id)
+            if target is None or target.kind != "local_docker":
+                raise SourceError(503, "The retained training target is not supported")
+        if self.local_executor is None:
+            raise SourceError(503, "Local training is disabled")
+        return self.executor
 
     def notify(self, identifier: UUID) -> None:
         if self.queue is not None:
@@ -99,6 +127,7 @@ class TrainingRunService:
             status=JobState(row.status),
             observation=observation,
             evaluation_suite_id=row.evaluation_suite_id,
+            execution_target_id=row.execution_target_id,
             model_version_id=version.id if version else None,
             model_id=version.model_id if version else None,
         )
@@ -113,7 +142,14 @@ class TrainingRunService:
     def create(self, body: RunCreate) -> RunView:
         saved = self.plans.get(body.plan_id)
         plan = PlanPreview(appspec=saved.appspec, resolved=saved.resolved, sha256=saved.sha256)
-        image = self.executor.image_identity()
+        executor = self.local_executor
+        if body.execution_target_id is not None:
+            if self.targets is None:
+                raise SourceError(503, "SSH execution is not configured")
+            executor = self.targets.training(body.execution_target_id)
+        if executor is None:
+            raise SourceError(503, "Choose an enabled execution target")
+        image = executor.image_identity()
         identifier = uuid4()
         name = container_name(identifier)
         with self.factory() as session:
@@ -136,16 +172,21 @@ class TrainingRunService:
                 )
                 if not 3 <= len(prompts) <= 10:
                     raise SourceError(422, "An evaluation suite requires 3–10 prompts")
-            session.execute(
-                insert(ExecutionTarget)
-                .values(id=uuid4(), name="local-docker", kind="local_docker", configuration={})
-                .on_conflict_do_nothing(index_elements=[ExecutionTarget.name])
-            )
-            target = session.scalar(
-                select(ExecutionTarget).where(ExecutionTarget.name == "local-docker")
-            )
-            if target is None or target.kind != "local_docker":
-                raise SourceError(409, "The local execution target has an incompatible kind")
+            if body.execution_target_id is None:
+                session.execute(
+                    insert(ExecutionTarget)
+                    .values(id=uuid4(), name="local-docker", kind="local_docker", configuration={})
+                    .on_conflict_do_nothing(index_elements=[ExecutionTarget.name])
+                )
+                target = session.scalar(
+                    select(ExecutionTarget).where(ExecutionTarget.name == "local-docker")
+                )
+                if target is None or target.kind != "local_docker":
+                    raise SourceError(409, "The local execution target has an incompatible kind")
+            else:
+                target = session.get(ExecutionTarget, body.execution_target_id)
+                if target is None or target.kind != "ssh_docker":
+                    raise SourceError(404, "SSH execution target not found")
             row = TrainingRun(
                 id=identifier,
                 base_model_version_id=saved.appspec.base_model_version_id,
@@ -231,7 +272,7 @@ class TrainingRunService:
     def logs(self, identifier: UUID, stream: Literal["stdout", "stderr"], cursor: int) -> LogChunk:
         with self.factory() as session:
             row = self.row(session, identifier, lock=False)
-            return self.executor.logs(row.external_id or "", stream, cursor)
+            return self.executor_for(identifier).logs(row.external_id or "", stream, cursor)
 
     def cancel(self, identifier: UUID) -> RunView:
         with self.factory() as session:
@@ -254,4 +295,6 @@ class TrainingRunService:
                 row = self.row(session, identifier)
                 if row.status not in TERMINAL:
                     raise SourceError(409, "Wait for a terminal run before removing its container")
-                self.executor.cleanup(row.external_id or "", row.resolved_config["image_digest"])
+                self.executor_for(identifier).cleanup(
+                    row.external_id or "", row.resolved_config["image_digest"]
+                )

@@ -192,3 +192,9 @@ Artifact transformations add immutable input snapshots, a unique canonical hash,
 normalized progress and an output artifact relationship. The relational migration
 is generated; separate SQL guards retain history, identity, ownership and legal
 transitions. See [ADR 0018](adr/0018-lazy-model-representations.md).
+
+SSH execution reuses `execution_targets` and existing immutable run/deployment
+foreign keys. A hand-authored SQL migration freezes SSH target configuration,
+kind, name and credential reference, including deletion, so retained jobs cannot
+be redirected. No relational schema change or new table was required.
+See [ADR 0019](adr/0019-docker-over-ssh.md).
