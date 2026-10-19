@@ -577,21 +577,23 @@ See [Milestone 19 evidence](docs/evidence/milestone-19.md).
 
 ## Milestone 20 — Kubernetes vLLM deployment
 
-- [ ] Implement Kubernetes deployment executor.
-- [ ] Generate `Deployment`.
-- [ ] Generate `Service`.
-- [ ] Request GPU resources.
-- [ ] Add init-container model download.
-- [ ] Use `emptyDir` in MVP.
-- [ ] Add readiness handling.
-- [ ] Resolve endpoint/service URL.
-- [ ] Implement stop.
-- [ ] Implement lease expiry.
-- [ ] Add example ingress/network guidance without making ingress mandatory.
+- [x] Implement Kubernetes deployment executor.
+- [x] Generate `Deployment`.
+- [x] Generate `Service`.
+- [x] Request GPU resources.
+- [x] Add init-container model download.
+- [x] Use `emptyDir` in MVP.
+- [x] Add readiness handling.
+- [x] Resolve endpoint/service URL.
+- [x] Implement stop.
+- [x] Implement lease expiry.
+- [x] Add example ingress/network guidance without making ingress mandatory.
 
 **Acceptance criteria**
 
-- [ ] Registered model can be temporarily served as vLLM on Kubernetes.
+- [x] Registered model can be temporarily served as vLLM on Kubernetes.
+
+See [Milestone 20 evidence](docs/evidence/milestone-20.md).
 
 ---
 

@@ -107,3 +107,6 @@ models; AWQ uses FP16. See [model representations](representations.md).
 
 SSH targets support the same lease and chat workflow through a private SSH channel.
 See [Docker-over-SSH setup](ssh-execution.md).
+
+Kubernetes targets with a pinned serving image support the same lease and chat
+workflow through the Kubernetes API. See [Kubernetes playgrounds](kubernetes-serving.md).

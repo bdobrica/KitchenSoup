@@ -87,7 +87,11 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
                     settings.transformation_image,
                 ),
             )
-        if settings.local_deployment_enabled or settings.ssh_execution_enabled:
+        if (
+            settings.local_deployment_enabled
+            or settings.ssh_execution_enabled
+            or settings.kubernetes_execution_enabled
+        ):
             deployments = DeploymentService(
                 artifacts,
                 LocalDockerDeploymentExecutor(

@@ -170,3 +170,7 @@ test-ssh-gpu: ## Optional remote FP16 training/serving smoke (set SSH_TEST_ARGS;
 .PHONY: test-kubernetes-gpu
 test-kubernetes-gpu: ## Optional FP16 Kubernetes Job smoke (set KUBERNETES_TEST_ARGS; see docs/kubernetes-training.md)
 	$(VENV_PYTHON) scripts/test_kubernetes_gpu.py $(KUBERNETES_TEST_ARGS)
+
+.PHONY: test-kubernetes-vllm-gpu
+test-kubernetes-vllm-gpu: ## Optional Kubernetes FP16 serving smoke (set KUBERNETES_SERVING_TEST_ARGS)
+	$(VENV_PYTHON) scripts/test_vllm_gpu.py $(KUBERNETES_SERVING_TEST_ARGS)

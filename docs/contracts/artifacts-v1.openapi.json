@@ -1675,6 +1675,18 @@
             ],
             "title": "Context"
           },
+          "deployment_image": {
+            "anyOf": [
+              {
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/:-]*@sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment Image"
+          },
           "gpu_count": {
             "default": 1,
             "maximum": 8.0,

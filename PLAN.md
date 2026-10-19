@@ -1584,7 +1584,9 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 20: Kubernetes vLLM deployment.
+The current implementation frontier is Milestone 21: SageMaker training.
+Kubernetes vLLM playgrounds and private API access are documented in
+[docs/kubernetes-serving.md](docs/kubernetes-serving.md).
 Kubernetes Job training and prepared-cluster prerequisites are documented in
 [docs/kubernetes-training.md](docs/kubernetes-training.md).
 Docker-over-SSH training, private serving and target setup are documented in

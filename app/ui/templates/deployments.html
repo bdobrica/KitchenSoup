@@ -7,7 +7,7 @@
 <form id="deployment-create">
 <label>Registered model <select id="deployment-model" required></select></label>
 <label>Compute target <select id="deployment-target"><option value="">Local Docker</option></select></label>
-<p><a href="/settings/execution-targets">Configure an SSH GPU host</a></p>
+<p><a href="/settings/execution-targets">Configure an SSH or Kubernetes GPU target</a></p>
 <label>Representation <select id="deployment-artifact"><option value="">Default</option></select></label>
 <label>Precision <select id="deployment-precision"><option value="fp16">FP16 (RTX 20 and newer)</option><option value="bf16">BF16 (native BF16 GPU required)</option></select></label>
 <label>Lease (minutes) <input id="deployment-lease" type="number" value="30" min="1" max="1440" required></label>

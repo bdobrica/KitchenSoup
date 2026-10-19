@@ -1,0 +1,17 @@
+{
+  "name": "GPU Kubernetes playground",
+  "kind": "kubernetes",
+  "credential_ref": "file:///run/secrets/kubernetes-kubeconfig",
+  "configuration": {
+    "schema": "kitchensoup.kubernetes-target/v1",
+    "namespace": "kitchensoup",
+    "training_image": "registry.example/kitchensoup-soup-trainer@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "deployment_image": "registry.example/kitchensoup-vllm@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "runtime_class": "nvidia",
+    "service_account": "trainer",
+    "gpu_count": 1,
+    "node_selector": {"nvidia.com/gpu.present": "true"},
+    "tolerations": [],
+    "workspace_gib": 32
+  }
+}

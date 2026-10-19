@@ -96,7 +96,8 @@ Select that target when submitting a saved training plan, or pass its UUID as
 `execution_target_id` to `POST /api/v1/training-runs`. Omission retains the existing
 local-Docker default. AppSpec and recipe semantics do not change; select FP16 in
 the reviewed plan for compute capability 7.5 GPUs. Native BF16 is optional validation.
-Kubernetes serving is Milestone 20; paired evaluation and transformations remain local.
+Kubernetes [serving](kubernetes-serving.md) uses the same targets with an optional
+pinned serving image; paired evaluation and transformations remain local.
 
 The controller materializes registered inputs locally, verifies their inventories,
 creates a deny-all NetworkPolicy, PVC and CPU staging Pod, then streams inputs via

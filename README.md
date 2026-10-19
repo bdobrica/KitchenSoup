@@ -78,6 +78,7 @@ lineages.
 - [Model catalog, registration, and archive requirements](docs/models.md)
 - [Docker-over-SSH targets, training and playgrounds](docs/ssh-execution.md)
 - [Kubernetes GPU training and target setup](docs/kubernetes-training.md)
+- [Kubernetes vLLM playgrounds](docs/kubernetes-serving.md)
 - [Lazy merge and AWQ representations](docs/representations.md)
 - [Temporary local model playgrounds and leases](docs/deployments.md)
 - [Artifact storage and upload API](docs/storage.md)

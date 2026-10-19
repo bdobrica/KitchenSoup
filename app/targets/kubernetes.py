@@ -83,6 +83,7 @@ class KubernetesTransport:
             self.api = client.ApiClient(configuration)
             self.core = client.CoreV1Api(self.api)
             self.batch = client.BatchV1Api(self.api)
+            self.apps = client.AppsV1Api(self.api)
             self.network = client.NetworkingV1Api(self.api)
         except Exception:
             raise ExecutorError("Kubernetes configuration could not be loaded") from None

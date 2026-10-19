@@ -68,7 +68,7 @@
     try {
       const models = await api('/models');
       for (const target of await api('/execution-targets')) {
-        if (target.kind !== 'ssh_docker') continue;
+        if (!['ssh_docker', 'kubernetes'].includes(target.kind)) continue;
         el('deployment-target').append(new Option(target.name, target.id));
       }
       for (const model of models) for (const version of model.versions) {

@@ -1,5 +1,6 @@
 """Opt-in real vLLM FP16 serving using synthetic offline base/LoRA archives."""
 
+import argparse
 import hashlib
 import json
 import os
@@ -10,17 +11,30 @@ from typing import Any
 from uuid import UUID, uuid4
 from zipfile import ZipFile
 
+from app.deployments.kubernetes import KubernetesDeploymentExecutor
 from app.deployments.local import LocalDockerDeploymentExecutor, container_name
 from app.deployments.materialize import DeploymentMaterializer
 from app.deployments.schemas import ChatRequest, DeploymentSpec
 from app.executors.local_docker import docker
 from app.executors.materialize import SUFFIXES
+from app.targets.kubernetes import KubernetesTransport
+from app.targets.kubernetes_schemas import KubernetesConfig
 from app.training.schemas import PlanModelSource
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--kubernetes-namespace")
+    parser.add_argument("--image", help="Pinned Kubernetes serving repository@sha256:digest")
+    parser.add_argument("--kubeconfig-ref")
+    parser.add_argument("--secret-directory", type=Path)
+    options = parser.parse_args()
+    if options.kubernetes_namespace and not all(
+        (options.image, options.kubeconfig_ref, options.secret_directory)
+    ):
+        parser.error("Kubernetes requires --image, --kubeconfig-ref and --secret-directory")
     with tempfile.TemporaryDirectory(prefix="kitchensoup-vllm-smoke-") as temp:
         root = Path(temp)
         bundle, adapter = root / "bundle", root / "adapter"
@@ -121,6 +135,20 @@ adapted.save_pretrained("/adapter", safe_serialization=True)
         executor = LocalDockerDeploymentExecutor(
             root / "jobs", DeploymentMaterializer(materializer)
         )
+        if options.kubernetes_namespace:
+            transport = KubernetesTransport(
+                KubernetesConfig(
+                    namespace=options.kubernetes_namespace,
+                    training_image=options.image,
+                    deployment_image=options.image,
+                ),
+                options.kubeconfig_ref,
+                options.secret_directory,
+                set(),
+            )
+            executor = KubernetesDeploymentExecutor(
+                root / "jobs", DeploymentMaterializer(materializer), transport
+            )
         image = executor.image_identity()
         source = PlanModelSource(
             source_id=uuid4(),
@@ -145,12 +173,20 @@ adapted.save_pretrained("/adapter", safe_serialization=True)
             )
             try:
                 executor.deploy(identifier, spec)
+                if isinstance(executor, KubernetesDeploymentExecutor):
+                    executor = KubernetesDeploymentExecutor(
+                        root / "jobs", DeploymentMaterializer(materializer), executor.transport
+                    )
                 deadline = time.monotonic() + 600
                 while time.monotonic() < deadline:
                     observed = executor.status(identifier, spec)
                     if observed.state == "RUNNING":
                         break
                     if observed.state in ("FAILED", "LOST"):
+                        if isinstance(executor, KubernetesDeploymentExecutor):
+                            raise RuntimeError(
+                                "Synthetic Kubernetes serving failed; inspect fixture Pod logs"
+                            )
                         # Logs contain only synthetic fixture data, never user content.
                         logs = docker(["logs", "--tail", "120", container_name(identifier)])
                         raise RuntimeError(

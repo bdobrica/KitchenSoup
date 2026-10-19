@@ -256,8 +256,8 @@ def create_app(
             return JSONResponse(
                 status_code=422,
                 content={
-                    "detail": "Invalid SSH target settings; use a credential reference, "
-                    "valid host/user and a dedicated absolute workspace"
+                    "detail": "Invalid execution target settings; use an approved credential "
+                    "reference and valid SSH or pinned Kubernetes image settings"
                 },
                 headers={"Cache-Control": "no-store"},
             )

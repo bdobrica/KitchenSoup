@@ -47,7 +47,7 @@ class DeploymentService:
     def enabled(self, target_id: UUID | None = None) -> DeploymentExecutor:
         if target_id is not None:
             if self.targets is None:
-                raise SourceError(503, "SSH serving is not configured")
+                raise SourceError(503, "Execution targets are not configured")
             return self.targets.deployment(target_id)
         if self.executor is None:
             raise SourceError(503, "Local deployment is disabled; enable the host serving executor")
@@ -57,9 +57,13 @@ class DeploymentService:
         with self.factory() as session:
             row = self.row(session, identifier)
             target = session.get(ExecutionTarget, row.execution_target_id)
-            if target is None or target.kind not in ("ssh_docker", "local_docker_deployment"):
+            if target is None or target.kind not in (
+                "ssh_docker",
+                "kubernetes",
+                "local_docker_deployment",
+            ):
                 raise SourceError(503, "The retained serving target is not supported")
-            return self.enabled(target.id if target.kind == "ssh_docker" else None)
+            return self.enabled(target.id if target.kind != "local_docker_deployment" else None)
 
     @staticmethod
     def row(session: Session, identifier: UUID, *, lock: bool = False) -> Deployment:
@@ -212,8 +216,8 @@ class DeploymentService:
                     raise SourceError(409, "Local serving target configuration conflict")
             else:
                 target = session.get(ExecutionTarget, body.execution_target_id)
-                if target is None or target.kind != "ssh_docker":
-                    raise SourceError(404, "SSH execution target not found")
+                if target is None or target.kind not in ("ssh_docker", "kubernetes"):
+                    raise SourceError(404, "Execution target not found")
             identifier = uuid4()
             session.add(
                 Deployment(

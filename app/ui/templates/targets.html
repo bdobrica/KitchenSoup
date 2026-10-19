@@ -17,9 +17,10 @@
 <label>Serving image <input name="deployment_image" value="kitchensoup-vllm:local" required></label>
 <button>Create target</button>
 </form>
-<h2>Kubernetes training target</h2>
-<p>Use a prepared GPU namespace with persistent storage and enforced NetworkPolicies. Enable Kubernetes execution and approve the kubeconfig reference in application settings first. This target runs training jobs; use local or SSH targets for playgrounds.</p>
+<h2>Kubernetes target</h2>
+<p>Use a prepared GPU namespace with enforced NetworkPolicies and persistent storage for training. Enable Kubernetes execution and approve the kubeconfig reference in application settings first. Add a pinned serving image to enable playgrounds.</p>
 <form id="kubernetes-target-form">
+<label>Serving image (optional, repository@sha256:digest) <input name="deployment_image"></label>
 <label>Name <input name="name" required maxlength="200"></label>
 <label>Kubeconfig reference <input name="credential_ref" placeholder="file:///run/secrets/kubeconfig" required></label>
 <label>Namespace <input name="namespace" value="kitchensoup" required></label>

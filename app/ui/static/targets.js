@@ -34,6 +34,7 @@
     try {
       const data = Object.fromEntries(new FormData(event.target));
       const configuration = {schema: 'kitchensoup.kubernetes-target/v1', namespace: data.namespace, training_image: data.training_image, context: data.context || null, runtime_class: data.runtime_class || null, service_account: data.service_account, gpu_count: Number(data.gpu_count), storage_class: data.storage_class || null, workspace_gib: Number(data.workspace_gib), node_selector: JSON.parse(data.node_selector), tolerations: JSON.parse(data.tolerations)};
+      if (data.deployment_image) configuration.deployment_image = data.deployment_image;
       await api('', 'POST', {name: data.name, kind: 'kubernetes', credential_ref: data.credential_ref, configuration});
       el('target-status').textContent = 'Kubernetes target created. Test it before selecting it for training.'; await load();
     } catch (e) { error(e); } finally { button.disabled = false; }

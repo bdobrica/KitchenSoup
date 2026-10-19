@@ -21,6 +21,9 @@ class KubernetesConfig(BaseModel):
     )
     namespace: str = Field(pattern=r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
     training_image: str = Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._/:-]*@sha256:[0-9a-f]{64}$")
+    deployment_image: str | None = Field(
+        default=None, pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._/:-]*@sha256:[0-9a-f]{64}$"
+    )
     context: str | None = Field(default=None, min_length=1, max_length=253)
     runtime_class: str | None = Field(default="nvidia", pattern=r"^[a-z0-9][a-z0-9.-]{0,252}$")
     service_account: str = Field(default="default", pattern=r"^[a-z0-9][a-z0-9.-]{0,252}$")

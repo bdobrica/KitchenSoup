@@ -10,6 +10,8 @@ from sqlalchemy.exc import IntegrityError
 
 from app.config import Settings
 from app.db.models import ExecutionTarget
+from app.deployments.base import DeploymentExecutor
+from app.deployments.kubernetes import KubernetesDeploymentExecutor
 from app.deployments.materialize import DeploymentMaterializer
 from app.deployments.ssh import SshDockerDeploymentExecutor
 from app.executors.base import ExecutorError, TrainingExecutor
@@ -151,7 +153,14 @@ class TargetService:
         )
         return executor
 
-    def deployment(self, identifier: UUID) -> SshDockerDeploymentExecutor:
+    def deployment(self, identifier: UUID) -> DeploymentExecutor:
+        if self.get(identifier).kind == "kubernetes":
+            self.kubernetes_enabled()
+            return KubernetesDeploymentExecutor(
+                Path(self.settings.kubernetes_staging_workspace) / str(identifier) / "deployments",
+                DeploymentMaterializer(RegisteredInputMaterializer(self.artifacts)),
+                self.kubernetes_transport(identifier),
+            )
         return SshDockerDeploymentExecutor(
             Path(self.settings.ssh_staging_workspace) / str(identifier) / "deployments",
             DeploymentMaterializer(RegisteredInputMaterializer(self.artifacts)),
