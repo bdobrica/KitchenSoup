@@ -1,6 +1,7 @@
 # KitchenSoup — Implementation TODO
 
-This checklist is ordered so it can be implemented consecutively. Each milestone should leave the repository in a working state.
+Each milestone should leave the repository in a working state. Milestone numbers
+are stable identifiers; the current implementation order is in PLAN section 47.
 
 ---
 
@@ -689,6 +690,83 @@ pending without AWS account access.
 - [ ] Add changelog/release process.
 - [ ] Validate Apache-2.0 headers/notices as appropriate.
 - [ ] Tag first MVP release.
+
+---
+
+## Milestone 25 — Runpod ephemeral GPU training
+
+Shared infrastructure in this milestone also supports Milestone 26. Implement
+25–26 before Milestone 24 release polish; existing milestone numbers are retained.
+See [Runpod execution plan](PLAN.md#49-runpod-gpu-execution).
+
+- [ ] Record the Runpod ownership, direct-execution, SSH trust and cleanup ADR.
+- [ ] Add a bounded Runpod REST API v2 client and read-only connection test.
+- [ ] Add immutable versioned target configuration, contracts and compatibility tests.
+- [ ] Resolve approved `env://` and `file://` API-key and separate SSH-key references.
+- [ ] Configure allowed GPU types, one GPU, minimum VRAM, cloud and optional data centers.
+- [ ] Discover availability/pricing and validate actual CUDA, VRAM and reviewed FP16/BF16 compatibility.
+- [ ] Build/configure a digest-pinned SSH-capable Soup image and bounded ephemeral disk.
+- [ ] Implement shared Pod creation, inspection and termination with bounded timeouts/retries.
+- [ ] Persist provisioning intent, ownership, external Pod identity and separate cleanup state.
+- [ ] Reconcile uncertain creation responses without relying on unique Pod names or blind allocation retries.
+- [ ] Enforce shared concurrent-Pod reservations, hourly GPU price and maximum run duration.
+- [ ] Implement `RunpodTrainingExecutor` through the existing training protocol.
+- [ ] Require full public-IP SSH/SFTP networking and explicit host-key verification.
+- [ ] Initialize private workspaces, stage immutable inputs and verify transferred hashes.
+- [ ] Execute Soup directly without Docker-in-Docker; collect bounded status and logs.
+- [ ] Verify output manifests/artifacts and import through existing ArtifactStore and registry lineage.
+- [ ] Integrate worker/reconciler recovery, cancellation and timeout handling.
+- [ ] Automatically terminate on completion/failure and retry pending cleanup after restart.
+- [ ] Add target selection, GPU compute estimates and pending-cleanup warnings to the UI.
+- [ ] Add mocked lifecycle, concurrent-reservation and failure-injection tests.
+- [ ] Add opt-in `make test-runpod-gpu` with the synthetic FP16 fixture and verified cleanup.
+- [ ] Document credentials, SSH trust/networking, image publication, limits and billing.
+
+**Acceptance criteria**
+
+- [ ] A reviewed plan provisions a compatible Pod and trains with immutable inputs and a pinned image.
+- [ ] Verified artifacts enter the registry; status, logs and cancellation are available in the UI.
+- [ ] Success, failure, cancellation and timeout terminate the Pod; cleanup failures remain visible and retryable.
+- [ ] Worker restart, concurrent workers and uncertain API responses do not create duplicate billable Pods.
+- [ ] No remote access to local RustFS or runtime access to long-lived control-plane credentials is required.
+- [ ] Opt-in live FP16 validation confirms termination of all temporary provider resources.
+
+---
+
+## Milestone 26 — Runpod vLLM deployment
+
+Depends on Milestone 25 shared provider, credential, ownership and cleanup support.
+
+- [ ] Record public-endpoint protection and bounded cloud-lease decisions in an ADR.
+- [ ] Implement `RunpodDeploymentExecutor` through the existing deployment protocol.
+- [ ] Reuse shared Pod lifecycle, credential references, capacity reservations and cleanup reconciliation.
+- [ ] Configure independent serving GPU/VRAM/disk settings and a separate pinned SSH-capable vLLM image.
+- [ ] Resolve registered artifacts and validate supported base, merged, LoRA/base-revision and quantized combinations.
+- [ ] Provision a dedicated inference Pod and retain deployment/model/image/Pod ownership bindings.
+- [ ] Stage and verify model artifacts, launch vLLM directly and retain resolved serving parameters.
+- [ ] Implement model-loading/readiness checks, normalized status and bounded logs/errors.
+- [ ] Derive the HTTPS proxy endpoint only from validated owned Pod identity and fixed port.
+- [ ] Protect vLLM with deployment-specific authentication and proxy inference through KitchenSoup.
+- [ ] Keep raw endpoints and provider/inference credentials out of browser responses.
+- [ ] Add bounded streaming chat as a compatible API/UI extension; preserve non-streaming behavior.
+- [ ] Handle proxy timeouts, connection errors and client disconnects without logging prompts.
+- [ ] Integrate stop, bounded lease extension, expiry and unrecoverable-failure termination.
+- [ ] Disable indefinite keep-running for Runpod while preserving other targets' lease semantics.
+- [ ] Resume orphan discovery and pending termination after restart; confirm resource release.
+- [ ] Add model-page target selection, estimated GPU compute cost and remaining lease time.
+- [ ] Add mocked compatibility, readiness, authentication, streaming and cleanup-failure tests.
+- [ ] Add opt-in `make test-runpod-vllm` through the playground proxy with verified cleanup.
+- [ ] Document supported models/images, endpoint security, cost limits and automatic shutdown.
+
+**Acceptance criteria**
+
+- [ ] A registered compatible model automatically provisions a Pod and becomes usable in the playground.
+- [ ] Authenticated OpenAI-compatible inference works through KitchenSoup, including bounded streaming.
+- [ ] Status, logs, stop and bounded lease extension work; expiry and explicit stop terminate the Pod.
+- [ ] Cleanup failures persist and are retried after application restart.
+- [ ] Training and inference use separate pinned images and independent Pod lifecycles under the shared limit.
+- [ ] Browser clients receive no provider/inference credentials or unprotected backend access.
+- [ ] Opt-in live inference validation confirms termination of all temporary provider resources.
 
 ---
 

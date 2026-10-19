@@ -1589,7 +1589,9 @@ Milestone 23 error UX and safety polish is implemented; see
 Milestone 21 SageMaker training is implemented; live AWS GPU acceptance awaits an
 approved training-instance quota. See [setup and cost controls](docs/sagemaker-training.md).
 Milestone 22 (SageMaker serving) remains unimplemented.
-The next non-AWS implementation milestone is Milestone 24: documentation and release polish.
+The next non-AWS implementation milestones are 25 (Runpod training and shared
+infrastructure) and 26 (Runpod serving), followed by Milestone 24 documentation
+and release polish. Existing milestone numbers remain stable.
 Kubernetes vLLM playgrounds and private API access are documented in
 [docs/kubernetes-serving.md](docs/kubernetes-serving.md).
 Kubernetes Job training and prepared-cluster prerequisites are documented in
@@ -1640,7 +1642,9 @@ Implementation should proceed in vertical slices:
 15. Docker-over-SSH;
 16. Kubernetes;
 17. SageMaker;
-18. production polish.
+18. Runpod training and shared Pod lifecycle;
+19. Runpod temporary vLLM serving;
+20. production polish.
 
 The corresponding detailed implementation checklist lives in `TODO.md`.
 
@@ -1665,3 +1669,138 @@ KitchenSoup's MVP is successful when a non-technical user can:
 13. repeat the same workflow on a remote Docker-over-SSH machine without changing the dataset or model definition.
 
 Kubernetes and SageMaker then prove that the executor boundaries generalize beyond the local/SSH MVP.
+
+---
+
+## 49. Runpod GPU execution
+
+Planned Milestones 25–26 add optional automatically provisioned Runpod Pods for
+Soup training and temporary vLLM playgrounds. Training and deployment remain
+separate application concepts, using `RunpodTrainingExecutor` and
+`RunpodDeploymentExecutor` through the existing executor protocols.
+
+Before implementation, record an ADR for automatic resource ownership, direct
+container execution, SSH host trust, public inference protection and bounded
+cloud leases. Preserve existing executor behavior and versioned contracts;
+streaming and target-specific lease changes need compatible API/schema updates.
+
+### 49.1 Shared infrastructure
+
+Use immutable, versioned execution targets with a Runpod kind following existing
+target naming conventions. Infrastructure stays outside AppSpec. Configuration
+covers:
+
+- approved `env://` or `file://` API-key and separate SSH-key references;
+- allowed GPU types, minimum VRAM and one GPU per Pod initially;
+- Community or Secure Cloud and optional data-center constraints;
+- ephemeral disk size and separate digest-pinned training and serving images;
+- full SSH/SFTP networking and operator-provisioned host-key trust;
+- maximum hourly GPU price, training duration and deployment lease;
+- a shared concurrent-Pod limit across training and serving, with compatible
+  per-workload GPU and storage overrides.
+
+Reuse trusted control-plane credential resolution; no long-lived API key or SSH
+private key enters the runtime, AppSpec, queue or browser. Build SSH-capable image
+variants with bounded bootstrap and non-root workloads; existing images do not
+implicitly provide an SSH daemon. Do not require Docker-in-Docker or a remote
+Docker daemon, and do not silently enroll unknown SSH host keys.
+
+Use the Runpod REST API v2 for Pod lifecycle and provider catalog metadata.
+Connection tests are read-only and do not allocate paid resources. Persist intent,
+local resource UUID, training/deployment owner, provisioning and cleanup state in
+PostgreSQL before allocation; bind the external Pod ID and launch identity when
+known. Names aid discovery but do not establish uniqueness or deletion authority.
+
+Serialize capacity reservations across workers, counting uncertain allocations
+and pending termination against the shared limit. Bound requests and safe retries;
+never blindly retry Pod creation after an ambiguous response. Reconcile against
+retained ownership evidence before adoption or another allocation; unresolved
+ambiguity remains pending with an operational warning.
+
+### 49.2 Ephemeral Soup training
+
+Validate the reviewed plan, selected image, GPU price and capacity before
+provisioning. Wait for full SSH readiness on a reachable public-IP Pod with an
+exposed SSH port and running daemon; basic proxied SSH does not support SFTP.
+Probe actual CUDA capability and VRAM before staging immutable verified inputs.
+Requested and effective precision remain bound to the plan: FP16 and native BF16
+follow the pinned Soup policy, with no automatic precision fallback.
+
+Transfer through bounded authenticated SFTP, verify input hashes and execute the
+pinned Soup runner directly. Retain the existing generated configuration, input
+and output contracts. Collect bounded logs, process status and manifest-listed
+outputs; apply common identity/hash verification and registry/lineage import.
+Provider Pod state alone cannot prove training success. No local RustFS route or
+object-store credentials are required in the Pod.
+
+Automatically terminate after verified output collection on success, and after
+failure, cancellation or timeout. Retain recoverable verified bytes locally before
+termination so registry import can resume without keeping the GPU allocated.
+Training outcome and confirmed resource cleanup are tracked separately.
+
+### 49.3 Temporary vLLM serving
+
+Provision a dedicated inference Pod with a separate pinned image. Resolve a
+registered model version and compatible artifact using existing serving rules:
+full base-model archives, merged models, LoRA with its exact base revision, and
+supported quantized representations. Hub-only registrations still require an
+artifact; arbitrary formats and quantizers are not implied to be supported.
+
+Validate model/image/VRAM compatibility before allocation where possible, stage
+and hash-check model bytes, then start vLLM directly. Retain image, artifact,
+adapter/base identity and resolved settings. Mark ready only after model-loading
+and inference health checks; normalize provider state and expose bounded logs.
+
+Derive the HTTPS proxy endpoint from a verified owned Pod and fixed serving port
+(initially 8000), never an arbitrary persisted or browser-supplied URL. Protect the
+public vLLM service with a deployment-specific inference credential, resolved only
+by the trusted proxy and serving process. Keep provider and inference credentials
+and raw endpoints out of browser responses. Application access uses the existing
+trusted-user/perimeter authentication boundary.
+
+The browser uses KitchenSoup's bounded chat proxy. Preserve existing non-streaming
+clients and add streaming as an explicit compatible extension, with endpoint
+validation, bounded requests/responses, timeouts, disconnect handling and no prompt
+logging. Account for provider proxy idle/connection limits during model startup
+and generation; an obscure Pod URL is not authentication.
+
+### 49.4 Leases, cost and cleanup
+
+Use one Pod per run or deployment; never reuse training Pods for serving. Show GPU
+compute estimates and remaining lease time, including a warning that idle Pods
+remain billable and storage/other charges can increase final cost. Reject missing
+or excessive price information before allocation. Estimates and time limits are
+not account-wide spending guarantees.
+
+Runpod playgrounds always have a bounded lease, including preparation. Extension
+cannot exceed the configured limit; existing indefinite keep-running behavior is
+unavailable for this target. Other executors retain their current semantics.
+Stop, expiry and unrecoverable startup/endpoint failure initiate Pod termination,
+not merely UI shutdown or provider stop with retained billable storage.
+
+The reconciler resumes owned-resource discovery, expiry and cleanup after restart,
+including terminal runs with pending cleanup. Verify ownership before destructive
+operations and confirm termination before reporting resources released. Provider
+outages retain pending cleanup and warnings; provider-side deadlines are an
+additional safeguard only where supported, not a substitute for reconciliation.
+
+### 49.5 Validation and deferred scope
+
+Mock provider responses and inject failures for uncertain allocation, transfer,
+hash validation, process failure, readiness, stop, timeout, lease expiry and
+cleanup. Test concurrent reservations, worker restart and duplicate delivery
+against PostgreSQL. Serving tests cover authentication and streaming without
+weakening existing chat restrictions.
+
+Live GPU checks are opt-in: `make test-runpod-gpu` trains the synthetic Soup
+fixture; `make test-runpod-vllm` exercises a small compatible model through the
+application playground proxy. Each uses explicit cost/runtime limits and confirms
+all temporary provider resources are terminated, including on test failure.
+FP16 is sufficient for live acceptance; BF16 validation remains optional.
+
+Serverless/load-balanced executors, persistent network-volume caches, warm Pods,
+automatic GPU selection and autoscaling remain future work.
+
+Provider references: [REST API v2](https://docs.runpod.io/api-reference-v2/overview),
+[full SSH and SFTP](https://docs.runpod.io/pods/configuration/use-ssh),
+[HTTP proxy and port exposure](https://docs.runpod.io/pods/configuration/expose-ports).
