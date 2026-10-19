@@ -3,7 +3,7 @@
   async function api(path, method = 'GET', body) {
     const response = await fetch('/api/v1/execution-targets' + path, {method, cache: 'no-store', headers: {'Content-Type': 'application/json'}, body: body === undefined ? undefined : JSON.stringify(body)});
     const value = await response.json();
-    if (!response.ok) throw new Error(typeof value.detail === 'string' ? value.detail : 'Check the SSH target settings.');
+    if (!response.ok) throw window.kitchenSoupRequestError(value, 'Check the execution target settings.');
     return value;
   }
   const error = e => { el('target-status').textContent = e.message; };

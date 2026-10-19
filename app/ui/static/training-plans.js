@@ -14,7 +14,7 @@
     if (hash) headers['X-Plan-SHA256'] = hash;
     const response = await fetch(`/api/v1${path}`, {method, headers, body: body === undefined ? undefined : JSON.stringify(body)});
     const value = await response.json();
-    if (!response.ok) throw new Error(typeof value.detail === 'string' ? value.detail : 'Check the selected inputs and advanced parameter limits.');
+    if (!response.ok) throw window.kitchenSoupRequestError(value, 'Check the selected inputs and advanced parameter limits.');
     return value;
   }
   function invalidate() { preview = null; $('#plan-review').hidden = true; }

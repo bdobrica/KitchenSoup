@@ -39,6 +39,17 @@ class DatasetSourceView(BaseModel):
     size_bytes: int
     created_at: datetime
     documents: list[DocumentView]
+    raw_available: bool = True
+
+
+class RawDeletionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirm: bool = Field(strict=True)
+
+
+class RawDeletionView(BaseModel):
+    artifact_id: UUID
+    deleted: bool
 
 
 class DatasetView(BaseModel):

@@ -103,6 +103,15 @@ class Artifact(Entity):
     format: Mapped[str]
 
 
+class RawSourceDeletion(Base):
+    __tablename__ = "raw_source_deletions"
+    artifact_id: Mapped[UUID] = mapped_column(ForeignKey("artifacts.id"), primary_key=True)
+    requested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class ArtifactUpload(Entity):
     __tablename__ = "artifact_uploads"
     __table_args__ = (CheckConstraint("size_bytes >= 0", name="nonnegative_size"),)
@@ -112,6 +121,7 @@ class ArtifactUpload(Entity):
     size_bytes: Mapped[int] = mapped_column(BigInteger)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"), unique=True)
+    staging_cleaned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class ModelSource(Entity):

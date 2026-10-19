@@ -5,7 +5,7 @@
   async function loadDocuments() {
     const dataset = await api(`/datasets/${datasetId}`);
     const options = document.querySelector("#document-options"); options.replaceChildren();
-    for (const source of dataset.sources.filter(source => /\.(pdf|docx|md|txt)$/i.test(source.filename))) {
+    for (const source of dataset.sources.filter(source => source.raw_available && /\.(pdf|docx|md|txt)$/i.test(source.filename))) {
       const label = element("label", "");
       const box = document.createElement("input"); box.type = "checkbox"; box.checked = selected.has(source.id);
       box.addEventListener("change", () => box.checked ? selected.add(source.id) : selected.delete(source.id));

@@ -82,6 +82,7 @@ lineages.
 - [Lazy merge and AWQ representations](docs/representations.md)
 - [Temporary local model playgrounds and leases](docs/deployments.md)
 - [Artifact storage and upload API](docs/storage.md)
+- [Error explanations, safety and object retention](docs/safety-and-retention.md)
 - [Database schema and migration workflow](docs/database.md)
 - [Project design and implementation intent](PLAN.md)
 - [Remaining milestones](TODO.md)

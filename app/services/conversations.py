@@ -50,6 +50,7 @@ class ConversationService:
                 raise SourceError(422, "Choose a complete ChatGPT ZIP export source")
             raw = session.get(Artifact, source.artifact_id)
             assert raw is not None
+            artifacts.require_available(session, raw.id)
             if raw.bucket != artifacts.bucket:
                 raise SourceError(409, "Artifact belongs to a different configured store")
             import_id = uuid4()

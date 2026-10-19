@@ -100,6 +100,11 @@ storage-init: local-env ## Configure the local artifact bucket and browser CORS
 openapi: ## Regenerate versioned API and catalog schemas
 	$(VENV_PYTHON) scripts/export_openapi.py
 
+.PHONY: storage-retention
+storage-retention: ## Delete expired upload staging after a one-day grace (requires CONFIRM=1)
+	@test "$(CONFIRM)" = "1" || { echo 'Use make storage-retention CONFIRM=1 to delete expired staging objects.'; exit 1; }
+	$(COMPOSE) run --rm --no-deps web python -m app.storage.retention --confirm
+
 catalog-sync: local-env ## Synchronize the packaged catalog into the migrated database
 	$(COMPOSE) up --detach --wait postgres
 	$(COMPOSE) build catalog-init

@@ -91,6 +91,7 @@ class DocumentIngestionService:
             for source in sources:
                 raw = session.get(Artifact, source.artifact_id)
                 assert raw is not None
+                self.datasets.artifacts.require_available(session, raw.id)
                 if raw.bucket != self.datasets.artifacts.bucket:
                     raise SourceError(409, "Artifact belongs to a different configured store")
                 if raw.size_bytes > MAX_INPUT:

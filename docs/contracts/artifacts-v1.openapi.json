@@ -716,6 +716,11 @@
             ],
             "title": "License"
           },
+          "raw_available": {
+            "default": true,
+            "title": "Raw Available",
+            "type": "boolean"
+          },
           "sha256": {
             "title": "Sha256",
             "type": "string"
@@ -2334,6 +2339,39 @@
         "title": "ProviderView",
         "type": "object"
       },
+      "RawDeletionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "title": "Confirm",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "confirm"
+        ],
+        "title": "RawDeletionRequest",
+        "type": "object"
+      },
+      "RawDeletionView": {
+        "properties": {
+          "artifact_id": {
+            "format": "uuid",
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "deleted"
+        ],
+        "title": "RawDeletionView",
+        "type": "object"
+      },
       "Recipe": {
         "additionalProperties": false,
         "properties": {
@@ -3713,6 +3751,29 @@
         "title": "UploadResponse",
         "type": "object"
       },
+      "UserError": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "action"
+        ],
+        "title": "UserError",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -4622,6 +4683,69 @@
           }
         },
         "summary": "Remove Source",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/api/v1/datasets/{dataset_id}/sources/{source_id}/delete-raw": {
+      "post": {
+        "operationId": "delete_raw_source_api_v1_datasets__dataset_id__sources__source_id__delete_raw_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RawDeletionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RawDeletionView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Raw Source",
         "tags": [
           "datasets"
         ]
@@ -6695,6 +6819,57 @@
           }
         },
         "summary": "Cleanup Run",
+        "tags": [
+          "training runs"
+        ]
+      }
+    },
+    "/api/v1/training-runs/{run_id}/diagnostics": {
+      "get": {
+        "operationId": "run_diagnostics_api_v1_training_runs__run_id__diagnostics_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/UserError"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Run Diagnostics Api V1 Training Runs  Run Id  Diagnostics Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Diagnostics",
         "tags": [
           "training runs"
         ]

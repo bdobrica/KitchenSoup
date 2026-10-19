@@ -5,6 +5,10 @@ it directly to RustFS, and wait for the displayed SHA-256 before downloading.
 The page uses packaged JavaScript and needs no CDN or Node build for this flow.
 Raw uploads do not yet create datasets or import conversations.
 
+Registered objects are retained by default. See [errors and retention](safety-and-retention.md)
+for explicit raw-source deletion, pending-deletion recovery and the opt-in expired
+upload sweep (`make storage-retention CONFIRM=1`).
+
 ## Configuration
 
 Compose enables storage for web and provisions the `kitchensoup` bucket with

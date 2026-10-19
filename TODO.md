@@ -641,23 +641,27 @@ See [Milestone 20 evidence](docs/evidence/milestone-20.md).
 
 ## Milestone 23 — Error UX and safety polish
 
-- [ ] Add user-friendly error taxonomy.
-- [ ] Translate common GPU OOM failures.
-- [ ] Translate gated/Hugging Face download failures.
-- [ ] Translate storage failures.
-- [ ] Translate executor connectivity failures.
-- [ ] Keep raw error/log detail available under Advanced.
-- [ ] Add confirmation for destructive deletes.
-- [ ] Add object-retention policy.
-- [ ] Add raw-source deletion option.
-- [ ] Add external LLM data-sharing warning.
-- [ ] Add deployment endpoint exposure warning.
-- [ ] Add upload size limits.
-- [ ] Add archive bomb safeguards.
+- [x] Add user-friendly error taxonomy.
+- [x] Translate common GPU OOM failures.
+- [x] Translate gated/Hugging Face download failures.
+- [x] Translate storage failures.
+- [x] Translate executor connectivity failures.
+- [x] Keep raw error/log detail available under Advanced.
+- [x] Add confirmation for destructive deletes.
+- [x] Add object-retention policy.
+- [x] Add raw-source deletion option (unprocessed, exclusively referenced originals).
+- [x] Add external LLM data-sharing warning.
+- [x] Add deployment endpoint exposure warning.
+- [x] Add upload size limits.
+- [x] Add archive bomb safeguards.
 
 **Acceptance criteria**
 
-- [ ] Non-technical users receive actionable errors instead of raw stack traces for common failures.
+- [x] Non-technical users receive actionable errors instead of raw stack traces for common failures.
+
+See [Milestone 23 evidence](docs/evidence/milestone-23.md) and
+[errors and retention](docs/safety-and-retention.md). Milestones 21–22 remain
+pending without AWS account access.
 
 ---
 

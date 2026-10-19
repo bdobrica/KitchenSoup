@@ -67,7 +67,10 @@ that dataset, along with its placeholder Document. It retains the Artifact,
 SHA-256 and raw object, including when another dataset or model references them.
 The response includes the retained artifact UUID; the UI offers a download button
 immediately after removal. The existing artifact metadata/download APIs remain
-available by UUID after reload. Permanent raw-object deletion is deferred.
+available by UUID after reload. The separate **Delete original bytes** action is
+described in [the retention reference](safety-and-retention.md#explicit-raw-source-deletion).
+It requires explicit confirmation and preserves metadata; shared or processed
+sources remain protected.
 
 Removal returns 409 if conversation imports, canonical document artifacts, or
 any dataset version exist. Document-ingestion history also protects all sources

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from app.config import Settings
 from app.deployments.schemas import DeploymentSpec
+from app.errors import ErrorResponse
 from app.evaluation.schemas import EvaluationReport, InferenceInput, InferenceOutput
 from app.ingestion.conversations import CanonicalConversation
 from app.ingestion.documents import DocumentIngestionManifest, SoupResult
@@ -44,6 +45,7 @@ Path("docs/contracts/training-example-v1.schema.json").write_text(
 )
 
 for filename, model in (
+    ("error-response-v1", ErrorResponse),
     ("ssh-target-v1", SshConfig),
     ("kubernetes-target-v1", KubernetesConfig),
     ("deployment-v1", DeploymentSpec),

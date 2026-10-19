@@ -8,7 +8,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.db.models import Artifact, ArtifactUpload
+from app.db.models import Artifact, ArtifactUpload, RawSourceDeletion
 from app.db.session import unit_of_work
 from app.storage.base import ArtifactStore, StorageError
 from app.storage.hashing import hash_content
@@ -85,6 +85,7 @@ class ArtifactService:
             if upload is None:
                 raise UploadError(404, "Upload not found")
             if upload.artifact_id is not None:
+                self.require_available(session, upload.artifact_id)
                 artifact = session.get(Artifact, upload.artifact_id)
                 assert artifact is not None
             else:
@@ -131,8 +132,62 @@ class ArtifactService:
             return artifact
 
     def download(self, identifier: UUID) -> str:
-        artifact = self.get(identifier)
-        if artifact.bucket != self.bucket:
-            raise UploadError(409, "Artifact belongs to a different configured store")
-        self.store.stat(artifact.object_key)
-        return self.store.presign_get(artifact.object_key, self.url_ttl)
+        with self.factory() as session:
+            self.require_available(session, identifier)
+            artifact = session.get(Artifact, identifier)
+            if artifact is None:
+                raise UploadError(404, "Artifact not found")
+            if artifact.bucket != self.bucket:
+                raise UploadError(409, "Artifact belongs to a different configured store")
+            self.store.stat(artifact.object_key)
+            return self.store.presign_get(artifact.object_key, self.url_ttl)
+
+    @staticmethod
+    def require_available(session: Session, identifier: UUID) -> None:
+        # Serialize attachment/read preparation with an explicit deletion request.
+        session.scalar(select(Artifact).where(Artifact.id == identifier).with_for_update())
+        if session.get(RawSourceDeletion, identifier) is not None:
+            raise UploadError(410, "This original was explicitly deleted or is pending deletion")
+
+    def sweep_uploads(self, *, limit: int = 100) -> int:
+        """Only expired reservation-owned keys; registered artifacts never expire."""
+        if not 1 <= limit <= 1000:
+            raise ValueError("Retention batch must contain 1 to 1000 reservations")
+        cutoff = datetime.now(UTC) - timedelta(days=1)
+        count = 0
+        with self.factory() as session:
+            identifiers = list(
+                session.scalars(
+                    select(ArtifactUpload.id)
+                    .where(
+                        ArtifactUpload.expires_at < cutoff,
+                        ArtifactUpload.staging_cleaned_at.is_(None),
+                    )
+                    .order_by(ArtifactUpload.expires_at)
+                    .limit(limit)
+                )
+            )
+        for identifier in identifiers:
+            with unit_of_work(self.factory) as session:
+                upload = session.scalar(
+                    select(ArtifactUpload).where(ArtifactUpload.id == identifier).with_for_update()
+                )
+                if (
+                    upload is None
+                    or upload.expires_at >= cutoff
+                    or upload.staging_cleaned_at is not None
+                ):
+                    continue
+                self.store.delete(upload.object_key)
+                key = artifact_key(upload.id, upload.filename)
+                registered = session.scalar(
+                    select(Artifact.id).where(
+                        Artifact.bucket == self.bucket, Artifact.object_key == key
+                    )
+                )
+                if upload.artifact_id is None and registered is None:
+                    self.store.delete(key)
+                upload.staging_cleaned_at = datetime.now(UTC)
+                count += 1
+                session.commit()
+        return count

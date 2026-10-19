@@ -8,6 +8,8 @@ from app.ingestion.schemas import (
     DatasetCreate,
     DatasetSourceView,
     DatasetView,
+    RawDeletionRequest,
+    RawDeletionView,
     SourceAttach,
     SourceRemoved,
 )
@@ -57,3 +59,12 @@ def download_source(dataset_id: UUID, source_id: UUID, service: Service) -> Down
 @router.delete("/datasets/{dataset_id}/sources/{source_id}", response_model=SourceRemoved)
 def remove_source(dataset_id: UUID, source_id: UUID, service: Service) -> SourceRemoved:
     return service.remove(dataset_id, source_id)
+
+
+@router.post(
+    "/datasets/{dataset_id}/sources/{source_id}/delete-raw", response_model=RawDeletionView
+)
+def delete_raw_source(
+    dataset_id: UUID, source_id: UUID, body: RawDeletionRequest, service: Service
+) -> RawDeletionView:
+    return service.delete_raw(dataset_id, source_id, confirm=body.confirm)

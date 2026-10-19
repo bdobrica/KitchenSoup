@@ -1,0 +1,61 @@
+{
+  "$defs": {
+    "UserError": {
+      "properties": {
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "action"
+      ],
+      "title": "UserError",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "advanced_detail": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Advanced Detail"
+    },
+    "detail": {
+      "title": "Detail",
+      "type": "string"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/UserError"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "detail"
+  ],
+  "title": "ErrorResponse",
+  "type": "object"
+}

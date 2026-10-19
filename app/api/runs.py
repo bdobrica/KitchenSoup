@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Header, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from redis.exceptions import RedisError
 
+from app.errors import UserError, explain
 from app.executors.base import LogChunk
 from app.ingestion.sources import SourceError
 from app.jobs.states import TERMINAL
@@ -50,6 +51,25 @@ def run_logs(
     cursor: Annotated[int, Query(ge=0, le=8 * 1024**2)] = 0,
 ) -> LogChunk:
     return service.logs(run_id, stream, cursor)
+
+
+@router.get("/{run_id}/diagnostics", response_model=UserError | None)
+def run_diagnostics(run_id: UUID, service: Service) -> UserError | None:
+    run = service.get(run_id)
+    if run.status not in {"FAILED", "LOST"}:
+        return None
+    # Scan at most the existing 8 MiB log bound; retain only a bounded tail.
+    cursor, tail = 0, ""
+    for _ in range(128):
+        chunk = service.logs(run_id, "stderr", cursor)
+        if chunk.cursor <= cursor:
+            break
+        tail = (tail + chunk.text)[-262144:]
+        cursor = chunk.cursor
+        result = explain(tail)
+        if result.code != "operation_failed":
+            return result
+    return explain(tail)
 
 
 @router.post("/{run_id}/cancel", response_model=RunView)

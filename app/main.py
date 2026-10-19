@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, Request
-from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -35,6 +34,7 @@ from app.db.session import create_database_engine
 from app.dependencies import check_dependencies
 from app.deployments.local import LocalDockerDeploymentExecutor
 from app.deployments.materialize import DeploymentMaterializer
+from app.errors import explain
 from app.evaluation.local import LocalInferenceRunner
 from app.executors.base import ExecutorError
 from app.executors.local_docker import LocalDockerTrainingExecutor
@@ -238,8 +238,15 @@ def create_app(
 
     @app.exception_handler(ExecutorError)
     async def executor_error(request: Request, error: ExecutorError) -> JSONResponse:
+        explanation = explain(str(error))
         return JSONResponse(
-            status_code=503, content={"detail": str(error)}, headers={"Cache-Control": "no-store"}
+            status_code=503,
+            content={
+                "detail": explanation.message + " " + explanation.action,
+                "error": explanation.model_dump(),
+                "advanced_detail": str(error),
+            },
+            headers={"Cache-Control": "no-store"},
         )
 
     @app.exception_handler(ProviderError)
@@ -272,7 +279,20 @@ def create_app(
                 },
                 headers={"Cache-Control": "no-store"},
             )
-        return await request_validation_exception_handler(request, error)
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": [
+                    {
+                        "type": item["type"],
+                        "loc": list(item["loc"]),
+                        "msg": "Invalid value; check this field",
+                    }
+                    for item in error.errors()
+                ]
+            },
+            headers={"Cache-Control": "no-store"},
+        )
 
     @app.exception_handler(SourceError)
     async def source_error(request: Request, error: SourceError) -> JSONResponse:
@@ -284,6 +304,17 @@ def create_app(
 
     @app.exception_handler(RegistryError)
     async def registry_error(request: Request, error: RegistryError) -> JSONResponse:
+        explanation = explain(str(error))
+        if explanation.code == "model_download":
+            return JSONResponse(
+                status_code=error.status,
+                content={
+                    "detail": explanation.message + " " + explanation.action,
+                    "error": explanation.model_dump(),
+                    "advanced_detail": str(error),
+                },
+                headers={"Cache-Control": "no-store"},
+            )
         return JSONResponse(status_code=error.status, content={"detail": str(error)})
 
     @app.exception_handler(UploadError)
@@ -303,9 +334,29 @@ def create_app(
             if isinstance(error, ObjectTooLarge)
             else 503
         )
+        explanation = explain("", "storage_unavailable")
+        detail = (
+            "The file was not found. Check whether it was deleted or restore it from backup."
+            if status == 404
+            else "This file exceeds the size limit. Choose a smaller file or ask the operator "
+            "to review the configured limit."
+            if status == 413
+            else explanation.message + " " + explanation.action
+        )
         return JSONResponse(
             status_code=status,
-            content={"detail": str(error)},
+            content={
+                "detail": detail,
+                "error": {
+                    **explanation.model_dump(),
+                    "code": "object_missing"
+                    if status == 404
+                    else "upload_too_large"
+                    if status == 413
+                    else explanation.code,
+                    "message": detail,
+                },
+            },
             headers={"Cache-Control": "no-store"},
         )
 
@@ -314,6 +365,18 @@ def create_app(
         return JSONResponse(
             status_code=503,
             content={"detail": "Database unavailable; verify migrations and connectivity"},
+            headers={"Cache-Control": "no-store"},
+        )
+
+    @app.exception_handler(Exception)
+    async def unexpected_error(request: Request, error: Exception) -> JSONResponse:
+        explanation = explain("")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": explanation.message + " " + explanation.action,
+                "error": explanation.model_dump(),
+            },
             headers={"Cache-Control": "no-store"},
         )
 

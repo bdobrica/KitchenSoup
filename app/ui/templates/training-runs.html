@@ -6,6 +6,7 @@
 <div id="run-list"></div>
 <section id="run-detail" hidden>
   <p id="run-status" role="status" aria-live="polite"></p>
+  <p id="run-diagnosis" role="alert"></p>
   <h2>Progress</h2><ol id="run-events"></ol>
   <p><a id="run-plan">Review saved plan</a></p>
   <button id="run-refresh" type="button">Refresh status and logs</button>
@@ -13,9 +14,10 @@
   <button id="run-cleanup" type="button">Remove stopped container</button>
   <button id="run-retry" type="button">Retry as a new run</button>
   <p>Removing a stopped container retains its inputs, outputs and logs on this host.</p>
-  <details><summary>Run details</summary><pre id="run-json"></pre></details>
+  <details><summary>Advanced details and raw logs</summary><pre id="run-json"></pre>
   <h2>Standard output</h2><pre id="run-stdout"></pre>
   <h2>Standard error</h2><pre id="run-stderr"></pre>
+  </details>
 </section>
 <script defer src="{{ url_for('static', path='/training-runs.js') }}"></script>
 {% endblock %}

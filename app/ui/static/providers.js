@@ -5,7 +5,7 @@
   async function request(path, method = 'GET', body) {
     const response = await fetch(`/api/v1/llm-providers${path}`, {method, headers: {'Content-Type': 'application/json'}, body: body === undefined ? undefined : JSON.stringify(body)});
     const result = await response.json();
-    if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'Check provider settings.');
+    if (!response.ok) throw window.kitchenSoupRequestError(result, 'Check provider settings.');
     return result;
   }
   function reset() { editing = null; form.reset(); document.querySelector('#provider-form-title').textContent = 'Add provider'; }

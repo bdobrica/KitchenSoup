@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ app_name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+    <script defer src="{{ url_for('static', path='/errors.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
   </head>
   <body>
     <nav><a href="/settings/execution-targets">Execution targets</a></nav>
-    <main>{% block content %}{% endblock %}</main>
+    <main>{% block content %}{% endblock %}
+      <details id="advanced-error" hidden><summary>Advanced error details</summary><pre id="advanced-error-text"></pre></details>
+    </main>
   </body>
 </html>

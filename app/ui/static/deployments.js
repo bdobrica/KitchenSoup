@@ -6,7 +6,7 @@
   async function api(path, method = 'GET', body) {
     const response = await fetch('/api/v1' + path, {method, headers: {'Content-Type': 'application/json'}, body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store'});
     const value = await response.json();
-    if (!response.ok) throw new Error(typeof value.detail === 'string' ? value.detail : 'Check the request fields and conversation length.');
+    if (!response.ok) throw window.kitchenSoupRequestError(value, 'Check the request fields and conversation length.');
     return value;
   }
   const error = e => { el('deployment-error').textContent = e.message; };

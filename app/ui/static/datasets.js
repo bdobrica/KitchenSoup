@@ -10,7 +10,7 @@ async function api(path, body, method) {
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const result = await response.json();
-  if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : "Please check the dataset or source details.");
+  if (!response.ok) throw window.kitchenSoupRequestError(result, "Please check the dataset or source details.");
   return result;
 }
 async function busy(button, task) {
@@ -52,8 +52,10 @@ async function refresh() {
       element("p", `Source license: ${source.license || "Not specified"}`), element("p", `SHA-256: ${source.sha256}`));
     for (const document of source.documents) card.append(element("p", `Document: ${document.title} · ${document.media_type} · ${document.canonical_artifact_id ? "Processed" : "Not processed yet"}`));
     const get = element("button", "Download original");
+    get.disabled = !source.raw_available;
     get.addEventListener("click", () => busy(get, () => download(`/datasets/${datasetId}/sources/${source.id}/download`)));
     const remove = element("button", "Remove source");
+    remove.disabled = !source.raw_available;
     remove.addEventListener("click", () => {
       if (!window.confirm(`Remove ${source.filename} from this dataset? The original file will be retained.`)) return;
       busy(remove, async () => {
@@ -66,7 +68,16 @@ async function refresh() {
       });
     });
     card.append(get, remove);
-    if (source.kind === "archive" && source.filename.toLowerCase().endsWith(".zip")) {
+    const erase = element("button", source.raw_available ? "Delete original bytes" : "Retry original deletion");
+    erase.addEventListener("click", () => {
+      if (!window.confirm(`Permanently delete the original bytes of ${source.filename}? This cannot be undone. Metadata remains. Shared, processed and versioned sources are protected.`)) return;
+      busy(erase, async () => {
+        await api(`/datasets/${datasetId}/sources/${source.id}/delete-raw`, {confirm: true});
+        await refresh(); statusText.textContent = "Original bytes deleted. Source metadata is retained.";
+      });
+    });
+    card.append(erase);
+    if (source.raw_available && source.kind === "archive" && source.filename.toLowerCase().endsWith(".zip")) {
       const importButton = element("button", "Import ChatGPT conversations");
       importButton.addEventListener("click", () => busy(importButton, async () => {
         statusText.textContent = "Importing conversations…";

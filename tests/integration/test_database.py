@@ -34,6 +34,7 @@ from app.db.models import (
     ModelSource,
     ModelVersion,
     ModelVersionParent,
+    RawSourceDeletion,
     TrainingPlan,
     TrainingRun,
 )
@@ -252,11 +253,25 @@ def seed_graph(session: Session) -> tuple[TrainingRun, DatasetVersion, JobEvent]
 def test_all_core_entities_persist_and_can_be_queried(factory: sessionmaker[Session]) -> None:
     with unit_of_work(factory) as session:
         seed_graph(session)
+        deleted = Artifact(
+            bucket="fixtures",
+            object_key="deleted-original",
+            sha256="b" * 64,
+            size_bytes=0,
+            format="text/plain",
+        )
+        session.add(deleted)
+        session.flush()
+        session.add(RawSourceDeletion(artifact_id=deleted.id))
         session.commit()
     with unit_of_work(factory) as session:
         for table in Base.metadata.sorted_tables:
             row = session.execute(select(table)).first()
             assert row is not None, table.name
+            if table.name == "raw_source_deletions":
+                assert isinstance(row._mapping["artifact_id"], UUID)
+                assert row._mapping["requested_at"].tzinfo is not None
+                continue
             assert isinstance(row._mapping["id"], UUID)
             assert row._mapping["created_at"].tzinfo is not None
         artifact = session.scalar(select(Artifact).where(Artifact.object_key == "output"))

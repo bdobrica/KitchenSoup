@@ -11,7 +11,7 @@ async function api(path, body) {
   });
   const result = await response.json();
   if (!response.ok) {
-    throw new Error(typeof result.detail === "string" ? result.detail : "Please check the file details.");
+    throw window.kitchenSoupRequestError(result, "Please check the file details.");
   }
   return result;
 }

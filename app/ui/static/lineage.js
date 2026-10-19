@@ -2,7 +2,7 @@
 window.showLineage = async function (container, path, title) {
   const response = await fetch(path);
   const graph = await response.json();
-  if (!response.ok) throw new Error(typeof graph.detail === 'string' ? graph.detail : 'Lineage unavailable');
+  if (!response.ok) throw window.kitchenSoupRequestError(graph, 'Lineage unavailable');
   const section = document.createElement('section'), heading = document.createElement('h4');
   heading.textContent = title; section.append(heading);
   const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');

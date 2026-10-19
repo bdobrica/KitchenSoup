@@ -8,7 +8,7 @@
     const response = await fetch(`/api/v1${path}`, {method, cache: 'no-store',
       headers: {'Content-Type': 'application/json'}, body: body === undefined ? undefined : JSON.stringify(body)});
     const value = await response.json();
-    if (!response.ok) throw new Error(typeof value.detail === 'string' ? value.detail : 'Check the evaluation inputs.');
+    if (!response.ok) throw window.kitchenSoupRequestError(value, 'Check the evaluation inputs.');
     return value;
   }
   async function show(value) {

@@ -9,7 +9,7 @@ async function api(path, body) {
     method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body),
   });
   const result = await response.json();
-  if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : "Please check the model details.");
+  if (!response.ok) throw window.kitchenSoupRequestError(result, "Please check the model details.");
   return result;
 }
 function openModel(model) { window.location.assign(`/models/${model.id}`); }

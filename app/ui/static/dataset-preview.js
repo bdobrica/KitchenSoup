@@ -7,7 +7,7 @@
   function node(tag, text) { const n = document.createElement(tag); n.textContent = text; if (tag === 'pre') { n.style.whiteSpace = 'pre-wrap'; n.style.overflowWrap = 'anywhere'; } return n; }
   async function request(url, method = 'GET') {
     const response = await fetch(url, {method}); const body = await response.json();
-    if (!response.ok) throw new Error(typeof body.detail === 'string' ? body.detail : 'Could not load this dataset version.');
+    if (!response.ok) throw window.kitchenSoupRequestError(body, 'Could not load this dataset version.');
     return body;
   }
   async function preview() {

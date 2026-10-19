@@ -9,7 +9,7 @@
     const response = await fetch(`/api/v1/training-runs${path}`, {method, cache: 'no-store'});
     if (response.status === 204) return;
     const value = await response.json();
-    if (!response.ok) throw new Error(typeof value.detail === 'string' ? value.detail : 'Training request failed');
+    if (!response.ok) throw window.kitchenSoupRequestError(value, 'Training request failed');
     return value;
   }
   async function refresh() {
@@ -29,6 +29,12 @@
       $('#run-detail').hidden = false;
       const run = await request(`/${id}`);
       $('#run-status').textContent = `Status: ${run.status}${run.observation?.message ? '. ' + run.observation.message : ''}`;
+      if (['FAILED', 'LOST'].includes(run.status) && !$('#run-diagnosis').textContent) {
+        try {
+          const diagnosis = await request(`/${id}/diagnostics`);
+          if (diagnosis) $('#run-diagnosis').textContent = `${diagnosis.message} ${diagnosis.action}`;
+        } catch (error) { $('#run-diagnosis').textContent = error.message; }
+      }
       let modelLink = $('#run-model');
       if (run.model_id && !modelLink) {
         modelLink = document.createElement('a'); modelLink.id = 'run-model';
@@ -58,6 +64,7 @@
   }
   for (const [button, action, method] of [['cancel', 'cancel', 'POST'], ['cleanup', 'container', 'DELETE']]) {
     $(`#run-${button}`).onclick = async () => {
+      if (button === 'cleanup' && !window.confirm('Remove the stopped container? Retained inputs, outputs and logs will remain.')) return;
       $(`#run-${button}`).disabled = true;
       try { await request(`/${id}/${action}`, method); await refresh(); }
       catch (error) { $('#run-message').textContent = error.message; }

@@ -3,6 +3,7 @@
 <nav><a href="/">Home</a> · <a href="/models">Models</a> · <a href="/training-runs">Runs</a></nav>
 <h1>Temporary playground</h1>
 <p>Chat with a registered model. A playground reserves your GPU until its lease expires. Avoid simultaneous training or evaluation on the same GPU.</p>
+<p><strong>Endpoint exposure:</strong> Keep model endpoints private. KitchenSoup uses its private proxy; publishing a host port, ingress or external endpoint can expose your model and prompts. Use authentication, TLS and network restrictions before granting external access.</p>
 <p id="deployment-error" role="alert"></p>
 <form id="deployment-create">
 <label>Registered model <select id="deployment-model" required></select></label>

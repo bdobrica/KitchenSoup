@@ -180,6 +180,7 @@ class ModelService:
             body.seek(0)
             inspect_archive(body)
         with unit_of_work(self.factory) as session:
+            self.artifacts.require_available(session, artifact.id)
             return self._register(
                 session,
                 request.name,

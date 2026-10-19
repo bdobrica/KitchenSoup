@@ -1584,7 +1584,10 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 21: SageMaker training.
+Milestone 23 error UX and safety polish is implemented; see
+[errors and object retention](docs/safety-and-retention.md).
+Milestones 21–22 (SageMaker) remain pending until an AWS account is available.
+The next non-AWS implementation milestone is Milestone 24: documentation and release polish.
 Kubernetes vLLM playgrounds and private API access are documented in
 [docs/kubernetes-serving.md](docs/kubernetes-serving.md).
 Kubernetes Job training and prepared-cluster prerequisites are documented in
