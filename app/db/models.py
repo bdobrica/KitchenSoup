@@ -359,3 +359,21 @@ class EvaluationTask(Entity):
     training_run_id: Mapped[UUID] = mapped_column(ForeignKey("training_runs.id"), index=True)
     status: Mapped[str] = mapped_column(default="QUEUED", server_default="QUEUED", index=True)
     report_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"))
+
+
+class ArtifactTransformation(Entity):
+    __tablename__ = "artifact_transformations"
+    __table_args__ = (
+        CheckConstraint("sha256 ~ '^[0-9a-f]{64}$'", name="valid_sha256"),
+        CheckConstraint(
+            "status IN ('QUEUED','PREPARING','RUNNING','POSTPROCESSING',"
+            "'SUCCEEDED','FAILED','LOST')",
+            name="valid_status",
+        ),
+    )
+    model_version_id: Mapped[UUID] = mapped_column(ForeignKey("model_versions.id"), index=True)
+    input_artifact_id: Mapped[UUID] = mapped_column(ForeignKey("artifacts.id"))
+    output_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"))
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    sha256: Mapped[str] = mapped_column(String(64), unique=True)
+    status: Mapped[str] = mapped_column(default="QUEUED", server_default="QUEUED", index=True)

@@ -100,3 +100,7 @@ optional. See [Milestone 16 evidence](evidence/milestone-16.md).
 Upstream compatibility references:
 [vLLM 0.10.2 GPU requirements](https://docs.vllm.ai/en/v0.10.2/getting_started/installation/gpu.html),
 [vLLM 0.10.2 CUDA platform](https://docs.vllm.ai/en/v0.10.2/api/vllm/platforms/cuda.html).
+
+Merged FP16/BF16 and internally generated AWQ artifacts can be selected explicitly
+in the playground representation selector. The default remains LoRA for trained
+models; AWQ uses FP16. See [model representations](representations.md).

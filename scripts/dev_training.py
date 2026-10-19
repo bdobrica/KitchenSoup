@@ -24,6 +24,7 @@ settings = Settings(
     s3_secret_key=local.rustfs_secret_key,
     local_training_enabled=True,
     local_deployment_enabled=local.local_deployment_enabled,
+    local_transformations_enabled=local.local_transformations_enabled,
     check_dependencies=False,
     valkey_url=(
         "redis://127.0.0.1:6379/0"

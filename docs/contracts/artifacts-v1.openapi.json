@@ -3090,6 +3090,109 @@
         "title": "TrainingPlanView",
         "type": "object"
       },
+      "TransformCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "calibration": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 128,
+            "title": "Calibration",
+            "type": "array"
+          },
+          "operation": {
+            "enum": [
+              "merge",
+              "awq"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "precision": {
+            "default": "fp16",
+            "enum": [
+              "fp16",
+              "bf16"
+            ],
+            "title": "Precision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation"
+        ],
+        "title": "TransformCreate",
+        "type": "object"
+      },
+      "TransformView": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_artifact_id": {
+            "format": "uuid",
+            "title": "Input Artifact Id",
+            "type": "string"
+          },
+          "model_version_id": {
+            "format": "uuid",
+            "title": "Model Version Id",
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "merge",
+              "awq"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "output_artifact_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Artifact Id"
+          },
+          "precision": {
+            "enum": [
+              "fp16",
+              "bf16"
+            ],
+            "title": "Precision",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "model_version_id",
+          "input_artifact_id",
+          "output_artifact_id",
+          "operation",
+          "precision",
+          "status",
+          "created_at"
+        ],
+        "title": "TransformView",
+        "type": "object"
+      },
       "UploadRequest": {
         "additionalProperties": false,
         "properties": {
@@ -3603,6 +3706,59 @@
         "summary": "Artifact Lineage",
         "tags": [
           "artifacts"
+        ]
+      }
+    },
+    "/api/v1/artifacts/{identifier}/transformations": {
+      "post": {
+        "operationId": "create_api_v1_artifacts__identifier__transformations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identifier",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identifier",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransformCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransformView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create",
+        "tags": [
+          "representations"
         ]
       }
     },
@@ -5314,6 +5470,53 @@
         ]
       }
     },
+    "/api/v1/model-versions/{identifier}/transformations": {
+      "get": {
+        "operationId": "jobs_api_v1_model_versions__identifier__transformations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identifier",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identifier",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TransformView"
+                  },
+                  "title": "Response Jobs Api V1 Model Versions  Identifier  Transformations Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Jobs",
+        "tags": [
+          "representations"
+        ]
+      }
+    },
     "/api/v1/model-versions/{version_id}/base-requirement": {
       "get": {
         "operationId": "base_model_requirement_api_v1_model_versions__version_id__base_requirement_get",
@@ -6022,6 +6225,49 @@
         "summary": "Run Logs",
         "tags": [
           "training runs"
+        ]
+      }
+    },
+    "/api/v1/transformations/{identifier}": {
+      "get": {
+        "operationId": "get_api_v1_transformations__identifier__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identifier",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identifier",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransformView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get",
+        "tags": [
+          "representations"
         ]
       }
     },

@@ -493,24 +493,26 @@ See [Milestone 16 evidence](docs/evidence/milestone-16.md).
 
 ## Milestone 17 — Merge and quantization
 
-- [ ] Define artifact-transformation job model.
-- [ ] Implement lazy LoRA + base merge.
-- [ ] Register merged BF16/FP16 artifact.
-- [ ] Implement AWQ INT4 quantization.
-- [ ] Register AWQ artifact.
-- [ ] Add artifact derivation edges.
-- [ ] Display size and format.
-- [ ] Add post-processing progress state.
-- [ ] Add UI for "Create representation".
-- [ ] Prevent duplicate identical transformations.
-- [ ] Reuse existing artifact if transform already exists.
-- [ ] Add smoke test using a small model.
+- [x] Define artifact-transformation job model.
+- [x] Implement lazy LoRA + base merge.
+- [x] Register merged BF16/FP16 artifact.
+- [x] Implement AWQ INT4 quantization.
+- [x] Register AWQ artifact.
+- [x] Add artifact derivation edges.
+- [x] Display size and format.
+- [x] Add post-processing progress state.
+- [x] Add UI for "Create representation".
+- [x] Prevent duplicate identical transformations.
+- [x] Reuse existing artifact if transform already exists.
+- [x] Add smoke test using a small model.
 
 **Acceptance criteria**
 
-- [ ] One logical model can have LoRA, merged, and AWQ representations.
-- [ ] Derivation lineage is preserved.
-- [ ] Quantization does not create a separate logical model version.
+- [x] One logical model can have LoRA, merged, and AWQ representations.
+- [x] Derivation lineage is preserved.
+- [x] Quantization does not create a separate logical model version.
+
+See [Milestone 17 evidence](docs/evidence/milestone-17.md).
 
 ---
 

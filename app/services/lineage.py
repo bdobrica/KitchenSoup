@@ -17,6 +17,7 @@ from app.db.models import (
 )
 from app.registry.inspection import RegistryError
 from app.registry.schemas import SourceView
+from app.transformations.schemas import MERGED
 
 
 class LineageNode(BaseModel):
@@ -59,16 +60,24 @@ def base_requirement(session: Session, identifier: UUID) -> BaseRequirement:
         session.scalars(select(ModelSource).where(ModelSource.model_version_id == identifier))
     )
     derived = version.training_run_id is not None
-    # A trained logical version is an adapter representation. Never interpret it
-    # as a complete Transformers source or silently train against its ancestor.
-    ready = not derived and len(sources) == 1 and not sources[0].gated
+    merged = (
+        session.scalar(
+            select(Artifact)
+            .where(Artifact.model_version_id == identifier, Artifact.format.in_(MERGED.values()))
+            .order_by(Artifact.created_at, Artifact.id)
+        )
+        if derived
+        else None
+    )
+    ready = merged is not None or (not derived and len(sources) == 1 and not sources[0].gated)
     return BaseRequirement(
         model_version_id=identifier,
         ready=ready,
-        requires_merge=derived,
-        artifact_id=sources[0].artifact_id if ready else None,
-        message="A merged model representation is required before further training. "
-        "Merge execution is planned for Milestone 17."
+        requires_merge=derived and merged is None,
+        artifact_id=merged.id if merged is not None else sources[0].artifact_id if ready else None,
+        message="Registered merged base model is available."
+        if merged is not None
+        else "Create a merged representation before further training."
         if derived
         else "Registered base model is available."
         if ready

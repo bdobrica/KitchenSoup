@@ -30,6 +30,7 @@ from app.ingestion.sources import SourceError
 from app.jobs.locking import claim
 from app.services.artifacts import ArtifactService
 from app.training.schemas import PlanModelSource, PlanPreview
+from app.transformations.schemas import AWQ, MERGED
 
 
 class DeploymentService:
@@ -103,7 +104,9 @@ class DeploymentService:
                     session.scalars(
                         select(Artifact).where(
                             Artifact.model_version_id == version.id,
-                            Artifact.format == "kitchensoup.lora-adapter+zip/v1",
+                            Artifact.format.in_(
+                                ["kitchensoup.lora-adapter+zip/v1", AWQ, *MERGED.values()]
+                            ),
                         )
                     )
                 )
@@ -134,13 +137,31 @@ class DeploymentService:
                     artifact_sha256=artifact.sha256,
                 )
                 candidates = [artifact]
-            chosen = next(
-                (a for a in candidates if body.artifact_id is None or a.id == body.artifact_id),
-                None,
-            )
-            if chosen is None or (body.artifact_id is None and len(candidates) != 1):
+            if body.artifact_id is None:
+                defaults = [
+                    a
+                    for a in candidates
+                    if not adapter or a.format == "kitchensoup.lora-adapter+zip/v1"
+                ]
+                chosen = defaults[0] if len(defaults) == 1 else None
+            else:
+                chosen = next((a for a in candidates if a.id == body.artifact_id), None)
+            if chosen is None:
                 raise SourceError(
                     422, "Select a compatible artifact belonging to this model version"
+                )
+            if chosen.format in (*MERGED.values(), AWQ):
+                if chosen.format == AWQ and body.precision != "fp16":
+                    raise SourceError(422, "AWQ serving requires FP16")
+                adapter = False
+                source = PlanModelSource(
+                    source_id=source.source_id,
+                    kind="upload",
+                    location=f"artifact:{chosen.id}",
+                    revision=None,
+                    license=source.license,
+                    artifact_id=chosen.id,
+                    artifact_sha256=chosen.sha256,
                 )
             spec = DeploymentSpec(
                 image_digest=executor.image_identity(),
@@ -148,6 +169,7 @@ class DeploymentService:
                 artifact_id=chosen.id,
                 artifact_sha256=chosen.sha256,
                 adapter=adapter,
+                representation="awq" if chosen.format == AWQ else "full",
                 precision=body.precision,
             )
             session.execute(

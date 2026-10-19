@@ -11,6 +11,7 @@ from alembic import command
 from app.db.models import (
     Artifact,
     ArtifactDerivation,
+    ArtifactTransformation,
     ArtifactUpload,
     Base,
     Conversation,
@@ -128,6 +129,20 @@ def seed_graph(session: Session) -> tuple[TrainingRun, DatasetVersion, JobEvent]
     )
     session.add_all([raw, output])
     session.flush()
+    session.add(
+        ArtifactTransformation(
+            model_version_id=child.id,
+            input_artifact_id=output.id,
+            snapshot={
+                "schema": "kitchensoup.transformation/v1",
+                "artifact_id": str(output.id),
+                "artifact_sha256": output.sha256,
+                "model_version_id": str(child.id),
+            },
+            sha256="f" * 64,
+            status="QUEUED",
+        )
+    )
     session.add(
         ArtifactUpload(
             object_key="uploads/fixture",

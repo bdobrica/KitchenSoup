@@ -46,7 +46,8 @@ async function load() {
       use.href = `/training-plans?base_model_version_id=${version.id}`;
       detail.append(use);
       const requirement = await api(`/model-versions/${version.id}/base-requirement`);
-      detail.append(element("p", requirement.message));
+      const requirementText = element("p", requirement.message);
+      detail.append(requirementText);
       if (version.training_run_id) {
         const run = element("a", "Training run"); run.href = `/training-runs/${version.training_run_id}`; detail.append(run);
         const evaluation = element("a", "Evaluate this model");
@@ -56,6 +57,61 @@ async function load() {
         if (completed) detail.append(element('p', `Evaluation: base better ${completed.summary.base_better}, fine-tuned better ${completed.summary.fine_tuned_better}, same ${completed.summary.same}, unreviewed ${completed.summary.unreviewed}.`));
       }
       await window.showLineage(detail, `/api/v1/model-versions/${version.id}/lineage`, "Model lineage");
+      const representations = element("section", "");
+      detail.append(representations);
+      const renderedArtifacts = new Set();
+      const jobStatus = element("div", "");
+      representations.append(element("h4", "Representations"), jobStatus);
+      const refreshRepresentations = async () => {
+        const jobs = await api(`/model-versions/${version.id}/transformations`);
+        jobStatus.replaceChildren();
+        for (const job of jobs) jobStatus.append(element("p", `${job.operation.toUpperCase()} ${job.precision} · ${job.status}`));
+        const pending = jobs.some(job => !["SUCCEEDED", "FAILED", "LOST"].includes(job.status));
+        for (const artifactId of version.artifact_ids) {
+          if (renderedArtifacts.has(artifactId)) continue;
+          const artifact = await api(`/artifacts/${artifactId}`);
+          renderedArtifacts.add(artifactId);
+          representations.append(element("p", `${artifact.format} · ${artifact.size_bytes.toLocaleString()} bytes · ${artifact.sha256}`));
+          const artifactLink = element("a", "View artifact and derivation history");
+          artifactLink.href = `/artifacts?artifact_id=${artifactId}`;
+          representations.append(artifactLink);
+          const merge = artifact.format === "kitchensoup.lora-adapter+zip/v1";
+          const quantize = /^kitchensoup\.merged-(fp16|bf16)\+zip\/v1$/.test(artifact.format);
+          if (!merge && !quantize) continue;
+          const form = element("form", ""); form.dataset.artifact = artifactId;
+          const select = element("select", "");
+          for (const precision of merge ? ["fp16", "bf16"] : ["fp16"]) {
+            const option = element("option", precision.toUpperCase()); option.value = precision; select.append(option);
+          }
+          const precisionLabel = element("label", "Precision "); precisionLabel.append(select); form.append(precisionLabel);
+          const calibration = element("textarea", "");
+          if (quantize) {
+            calibration.required = true; calibration.maxLength = 65536;
+            calibration.placeholder = "Calibration text: one sample per line (up to 128). Saved locally with this job; never sent externally.";
+            const label = element("label", "AWQ calibration text"); label.append(calibration); form.append(label);
+          }
+          const button = element("button", merge ? "Create representation: merged" : "Create representation: AWQ INT4"); form.append(button);
+          form.addEventListener("submit", event => {
+            event.preventDefault(); busy(button, async () => {
+              const body = {operation: merge ? "merge" : "awq", precision: select.value};
+              if (quantize) body.calibration = calibration.value.split(/\r?\n/).filter(line => line.trim());
+              await api(`/artifacts/${artifactId}/transformations`, body);
+              statusText.textContent = "Transformation queued. Identical requests reuse the existing job.";
+              await refreshRepresentations();
+            });
+          });
+          representations.append(form);
+        }
+        if (pending) setTimeout(async () => {
+          try {
+            const updated = await api(`/models/${encodeURIComponent(id)}`);
+            version.artifact_ids = updated.versions.find(item => item.id === version.id).artifact_ids;
+            requirementText.textContent = (await api(`/model-versions/${version.id}/base-requirement`)).message;
+            await refreshRepresentations();
+          } catch (error) { statusText.textContent = error.message; }
+        }, 5000);
+      };
+      await refreshRepresentations();
       for (const artifactId of version.artifact_ids) {
         const link = element("a", "View artifact and derivation history");
         link.href = `/artifacts?artifact_id=${artifactId}`; detail.append(link);

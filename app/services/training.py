@@ -21,6 +21,7 @@ from app.training.schemas import (
     ResolvedPlan,
     TrainingPlanView,
 )
+from app.transformations.schemas import MERGED
 
 
 class TrainingPlanService:
@@ -33,12 +34,6 @@ class TrainingPlanService:
         dataset = session.get(DatasetVersion, spec.dataset_version_id)
         if version is None or dataset is None:
             raise SourceError(404, "Model version or dataset version not found")
-        if version.training_run_id is not None:
-            raise SourceError(
-                409,
-                "This model requires a merged representation before further training. "
-                "Merge execution is planned for Milestone 17.",
-            )
         sources = list(
             session.scalars(select(ModelSource).where(ModelSource.model_version_id == version.id))
         )
@@ -46,6 +41,28 @@ class TrainingPlanService:
             raise SourceError(422, "Choose a model version with one registered, ungated source")
         source = sources[0]
         artifact = session.get(Artifact, source.artifact_id) if source.artifact_id else None
+        if version.training_run_id is not None:
+            artifact = session.scalar(
+                select(Artifact)
+                .where(
+                    Artifact.model_version_id == version.id, Artifact.format.in_(MERGED.values())
+                )
+                .order_by(Artifact.created_at, Artifact.id)
+            )
+            if artifact is None:
+                raise SourceError(
+                    409, "This model requires a merged representation before further training."
+                )
+            # Keep original source/license provenance; only the immutable plan uses merged bytes.
+            source = ModelSource(
+                id=source.id,
+                kind="upload",
+                location=f"artifact:{artifact.id}",
+                revision=None,
+                license=source.license,
+                artifact_id=artifact.id,
+            )
+
         if source.kind in ("catalog", "huggingface"):
             if not source.revision or not re.fullmatch(r"[0-9a-f]{40}", source.revision):
                 raise SourceError(422, "Base model must have an exact registered commit")

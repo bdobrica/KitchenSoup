@@ -35,6 +35,7 @@ class DeploymentSpec(StrictModel):
     base_source: PlanModelSource
     artifact_id: UUID
     artifact_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    representation: Literal["full", "awq"] = "full"
     adapter: bool
     precision: Literal["fp16", "bf16"]
     max_model_len: int = Field(default=2048, ge=256, le=2048)

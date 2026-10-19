@@ -27,6 +27,7 @@ from app.api.models import router as model_router
 from app.api.providers import router as provider_router
 from app.api.runs import router as run_router
 from app.api.training import router as training_router
+from app.api.transformations import router as transformation_router
 from app.api.versions import router as version_router
 from app.config import Settings
 from app.db.session import create_database_engine
@@ -52,8 +53,10 @@ from app.services.models import ModelService
 from app.services.providers import ProviderService
 from app.services.runs import TrainingRunService
 from app.services.training import TrainingPlanService
+from app.services.transformations import TransformationService
 from app.storage.base import ObjectNotFound, ObjectTooLarge, StorageError
 from app.storage.s3 import S3ArtifactStore
+from app.transformations.local import LocalTransformExecutor
 
 UI_DIR = Path(__file__).resolve().parent / "ui"
 
@@ -72,6 +75,7 @@ def create_app(
     training_run_service: TrainingRunService | None = None,
     evaluation_service: EvaluationService | None = None,
     deployment_service: DeploymentService | None = None,
+    transformation_service: TransformationService | None = None,
 ) -> FastAPI:
     settings = settings if settings is not None else Settings()
 
@@ -171,6 +175,19 @@ def create_app(
                     else None
                 )
                 app.state.deployment_service = DeploymentService(artifacts, deployment_executor)
+            app.state.transformation_service = transformation_service
+            if transformation_service is None and app.state.artifact_service is not None:
+                artifacts = app.state.artifact_service
+                app.state.transformation_service = TransformationService(
+                    artifacts,
+                    LocalTransformExecutor(
+                        Path(settings.transformation_workspace),
+                        DeploymentMaterializer(RegisteredInputMaterializer(artifacts)),
+                        settings.transformation_image,
+                    )
+                    if settings.local_transformations_enabled
+                    else None,
+                )
             yield
         finally:
             if queue is not None:
@@ -183,6 +200,7 @@ def create_app(
     app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
     templates = Jinja2Templates(directory=UI_DIR / "templates")
     app.mount("/static", StaticFiles(directory=UI_DIR / "static"), name="static")
+    app.include_router(transformation_router)
     app.include_router(artifact_router)
     app.include_router(model_router)
     app.include_router(dataset_router)

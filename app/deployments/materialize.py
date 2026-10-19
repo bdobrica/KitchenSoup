@@ -33,7 +33,7 @@ class DeploymentMaterializer:
                 source.artifact_id, source.artifact_sha256, archive, MAX_MODEL
             )
             with archive.open("rb") as stream:
-                inspect_archive(stream)
+                inspect_archive(stream, allow_awq=spec.representation == "awq")
                 with extract_zip(stream, ArchiveLimits(max_expanded_bytes=MAX_MODEL)) as root:
                     config = next(root.rglob("config.json"))
                     for path in config.parent.rglob("*"):
@@ -45,7 +45,9 @@ class DeploymentMaterializer:
         else:
             download_model(source.location, source.revision or "", model)
         config = json.loads(read_bounded(model / "config.json", 1024**2))
-        validate_structure({p.name for p in model.iterdir()}, config)
+        validate_structure(
+            {p.name for p in model.iterdir()}, config, allow_awq=spec.representation == "awq"
+        )
         for name in ("config.json", "tokenizer_config.json"):
             if json.loads(read_bounded(model / name, 1024**2)).get("auto_map"):
                 raise ExecutorError("Custom model/tokenizer code is unsupported")

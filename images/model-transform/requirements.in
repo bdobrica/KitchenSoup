@@ -1,0 +1,6 @@
+# ML dependencies are image-local. Keep the CUDA Torch stack from the pinned base.
+autoawq==0.2.9
+peft==0.17.1
+transformers==4.51.3
+tokenizers==0.21.4
+datasets==3.6.0

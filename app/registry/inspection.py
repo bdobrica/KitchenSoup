@@ -38,7 +38,7 @@ def json_object(data: bytes) -> dict[str, Any]:
     return result
 
 
-def validate_structure(names: set[str], config: dict[str, Any]) -> None:
+def validate_structure(names: set[str], config: dict[str, Any], *, allow_awq: bool = False) -> None:
     supported = {
         "qwen2": "Qwen2ForCausalLM",
         "llama": "LlamaForCausalLM",
@@ -51,7 +51,20 @@ def validate_structure(names: set[str], config: dict[str, Any]) -> None:
         or config.get("architectures") != [supported.get(model_type)]
     ):
         raise invalid("Use a native Qwen2, Llama, or Mistral causal language model")
-    if config.get("auto_map") or config.get("quantization_config"):
+    quantization = config.get("quantization_config")
+    if quantization and allow_awq:
+        if not isinstance(quantization, dict) or any(
+            quantization.get(k) != v
+            for k, v in {
+                "quant_method": "awq",
+                "bits": 4,
+                "group_size": 128,
+                "zero_point": True,
+                "version": "gemm",
+            }.items()
+        ):
+            raise invalid("Unsupported AWQ configuration")
+    if config.get("auto_map") or (quantization and not allow_awq):
         raise invalid("Custom model code and pre-quantized checkpoints are not supported yet")
     if "tokenizer_config.json" not in names or not (
         "tokenizer.json" in names
@@ -122,9 +135,9 @@ def validate_tensors(header: dict[str, Any], data_size: int) -> set[str]:
     return names
 
 
-def inspect_archive(source: BinaryIO) -> None:
+def inspect_archive(source: BinaryIO, *, allow_awq: bool = False) -> None:
     try:
-        _inspect_zip(source)
+        _inspect_zip(source, allow_awq=allow_awq)
     except ArchiveError as error:
         raise invalid(str(error)) from None
     except (
@@ -140,7 +153,7 @@ def inspect_archive(source: BinaryIO) -> None:
         raise invalid("Upload a valid, unencrypted ZIP containing a Transformers model") from None
 
 
-def _inspect_zip(source: BinaryIO) -> None:
+def _inspect_zip(source: BinaryIO, *, allow_awq: bool = False) -> None:
     started = time.monotonic()
     with validated_zip(source, ArchiveLimits(max_expanded_bytes=8 * 1024**3)) as (archive, files):
         for name in files:
@@ -200,7 +213,7 @@ def _inspect_zip(source: BinaryIO) -> None:
                     if read > entry.file_size or time.monotonic() - started > 60:
                         raise invalid("Archive inspection exceeded its resource limits")
         names = {name[len(root) :] for name in files}
-        validate_structure(names, contents["config.json"])
+        validate_structure(names, contents["config.json"], allow_awq=allow_awq)
         if contents["tokenizer_config.json"].get("auto_map"):
             raise invalid("Custom tokenizer code is unsupported")
         if "tokenizer.json" in contents and not isinstance(

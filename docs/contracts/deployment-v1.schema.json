@@ -113,6 +113,15 @@
       "title": "Precision",
       "type": "string"
     },
+    "representation": {
+      "default": "full",
+      "enum": [
+        "full",
+        "awq"
+      ],
+      "title": "Representation",
+      "type": "string"
+    },
     "schema": {
       "const": "kitchensoup.deployment/v1",
       "default": "kitchensoup.deployment/v1",

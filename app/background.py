@@ -24,7 +24,9 @@ from app.services.deployments import DeploymentService
 from app.services.evaluations import EvaluationService
 from app.services.runs import TrainingRunService
 from app.services.training import TrainingPlanService
+from app.services.transformations import TransformationService
 from app.storage.s3 import S3ArtifactStore
+from app.transformations.local import LocalTransformExecutor
 
 HEARTBEAT = Path("/tmp/kitchensoup-heartbeat")
 
@@ -40,20 +42,27 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
         signal.signal(sig, lambda *_: stopped.set())
     settings = settings if settings is not None else Settings()
     if (
-        settings.local_training_enabled or settings.local_deployment_enabled
+        settings.local_training_enabled
+        or settings.local_deployment_enabled
+        or settings.local_transformations_enabled
     ) and not settings.storage_enabled:
-        raise ValueError("Local training and serving require artifact storage")
+        raise ValueError("Local GPU execution requires artifact storage")
     check_dependencies(settings)
     engine = create_database_engine(settings)
     store = (
         S3ArtifactStore(settings)
-        if (settings.local_training_enabled or settings.local_deployment_enabled)
+        if (
+            settings.local_training_enabled
+            or settings.local_deployment_enabled
+            or settings.local_transformations_enabled
+        )
         else None
     )
     queue = JobQueue(settings.valkey_url)
     processor = None
     evaluations = None
     deployments = None
+    transformations = None
     if store is not None:
         factory = sessionmaker(engine, expire_on_commit=False)
         artifacts = ArtifactService(
@@ -63,6 +72,15 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
             max_bytes=settings.upload_max_bytes,
             url_ttl=settings.storage_url_ttl,
         )
+        if settings.local_transformations_enabled:
+            transformations = TransformationService(
+                artifacts,
+                LocalTransformExecutor(
+                    Path(settings.transformation_workspace),
+                    DeploymentMaterializer(RegisteredInputMaterializer(artifacts)),
+                    settings.transformation_image,
+                ),
+            )
         if settings.local_deployment_enabled:
             deployments = DeploymentService(
                 artifacts,
@@ -103,6 +121,8 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
                     processor.tick(role)
                 if role == "worker" and evaluations is not None:
                     evaluations.tick()
+                if transformations is not None:
+                    transformations.tick(role)
                 if deployments is not None:
                     deployments.tick(role)
             except SQLAlchemyError:

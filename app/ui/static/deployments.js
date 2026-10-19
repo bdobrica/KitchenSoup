@@ -43,7 +43,7 @@
     if (busy) return;
     const button = event.submitter; button.disabled = true;
     try {
-      const row = await api('/deployments', 'POST', {model_version_id: el('deployment-model').value, precision: el('deployment-precision').value, lease_minutes: Number(el('deployment-lease').value)});
+      const row = await api('/deployments', 'POST', {model_version_id: el('deployment-model').value, artifact_id: el('deployment-artifact').value || null, precision: el('deployment-precision').value, lease_minutes: Number(el('deployment-lease').value)});
       current = row.id; messages = []; history();
       window.history.replaceState({}, '', '/deployments/' + current);
       el('deployment-error').textContent = ''; await refresh();
@@ -73,6 +73,18 @@
       }
       const selected = new URLSearchParams(location.search).get('model_version_id');
       if (selected) el('deployment-model').value = selected;
+      const representations = async () => {
+        el('deployment-artifact').replaceChildren(new Option('Default', ''));
+        for (const model of models) for (const version of model.versions) {
+          if (version.id !== el('deployment-model').value) continue;
+          for (const id of version.artifact_ids) {
+            const artifact = await api('/artifacts/' + id);
+            el('deployment-artifact').append(new Option(`${artifact.format} · ${artifact.size_bytes.toLocaleString()} bytes`, id));
+          }
+        }
+      };
+      el('deployment-model').addEventListener('change', () => representations().catch(error));
+      await representations();
       await refresh();
     } catch (e) { error(e); }
   })();

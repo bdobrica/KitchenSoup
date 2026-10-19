@@ -15,3 +15,7 @@
 !images/soup-ingest/**
 !images/soup-trainer/
 !images/soup-trainer/**
+!images/model-transform/
+!images/model-transform/**
+!scripts/
+!scripts/check_transform_dependencies.py

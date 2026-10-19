@@ -1,0 +1,144 @@
+{
+  "$defs": {
+    "PlanModelSource": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Artifact Id"
+        },
+        "artifact_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Artifact Sha256"
+        },
+        "kind": {
+          "enum": [
+            "catalog",
+            "huggingface",
+            "upload"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "license": {
+          "title": "License",
+          "type": "string"
+        },
+        "location": {
+          "title": "Location",
+          "type": "string"
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Revision"
+        },
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "kind",
+        "location",
+        "revision",
+        "license",
+        "artifact_id",
+        "artifact_sha256"
+      ],
+      "title": "PlanModelSource",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "artifact_id": {
+      "format": "uuid",
+      "title": "Artifact Id",
+      "type": "string"
+    },
+    "artifact_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Artifact Sha256",
+      "type": "string"
+    },
+    "base_source": {
+      "$ref": "#/$defs/PlanModelSource"
+    },
+    "calibration": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 128,
+      "title": "Calibration",
+      "type": "array"
+    },
+    "image_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Image Digest",
+      "type": "string"
+    },
+    "model_version_id": {
+      "format": "uuid",
+      "title": "Model Version Id",
+      "type": "string"
+    },
+    "operation": {
+      "enum": [
+        "merge",
+        "awq"
+      ],
+      "title": "Operation",
+      "type": "string"
+    },
+    "precision": {
+      "default": "fp16",
+      "enum": [
+        "fp16",
+        "bf16"
+      ],
+      "title": "Precision",
+      "type": "string"
+    },
+    "schema": {
+      "const": "kitchensoup.transformation/v1",
+      "default": "kitchensoup.transformation/v1",
+      "title": "Schema",
+      "type": "string"
+    }
+  },
+  "required": [
+    "operation",
+    "image_digest",
+    "model_version_id",
+    "artifact_id",
+    "artifact_sha256",
+    "base_source"
+  ],
+  "title": "TransformSpec",
+  "type": "object"
+}

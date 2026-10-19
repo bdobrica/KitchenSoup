@@ -113,8 +113,9 @@ not represented by invented artifact records.
 
 **Use as base model** opens training configuration with that exact version selected.
 A LoRA-only result requires a merged representation before further training; the UI
-explains this and plan preview/save returns 409. Merge execution is deferred to
-Milestone 17. Selecting a descendant never substitutes its ancestor's weights.
+explains this and plan preview/save returns 409. Create it lazily with the
+[representation workflow](representations.md). Selecting a descendant never
+substitutes its ancestor's weights.
 
 Additions under `/api/v1`:
 

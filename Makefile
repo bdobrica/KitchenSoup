@@ -155,3 +155,10 @@ build-vllm: ## Build the separate digest-pinned vLLM playground image
 
 test-vllm-gpu: build-vllm build-soup ## Optional offline FP16 base/LoRA serving and stop smoke
 	$(VENV_PYTHON) scripts/test_vllm_gpu.py
+
+.PHONY: build-transform test-transform-gpu
+build-transform: ## Build the pinned offline merge/AWQ image
+	docker build --platform linux/amd64 -f images/model-transform/Dockerfile -t kitchensoup-model-transform:local .
+
+test-transform-gpu: build-transform build-soup build-vllm ## Offline FP16 merge and AWQ GPU smoke
+	$(VENV_PYTHON) scripts/test_transform_gpu.py

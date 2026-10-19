@@ -76,6 +76,7 @@ lineages.
 - [ChatGPT import, canonical format, and selection](docs/conversations.md)
 - [Datasets, raw sources, and archive limits](docs/datasets.md)
 - [Model catalog, registration, and archive requirements](docs/models.md)
+- [Lazy merge and AWQ representations](docs/representations.md)
 - [Temporary local model playgrounds and leases](docs/deployments.md)
 - [Artifact storage and upload API](docs/storage.md)
 - [Database schema and migration workflow](docs/database.md)

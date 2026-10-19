@@ -156,7 +156,7 @@ a loopback-only ephemeral port, and tmpfs storage. The runner waits for TCP
 readiness, tests, and removes the container even after failure. It never uses
 the development stack's database or volumes. It requires a local Docker daemon.
 
-The PostgreSQL suite covers all 24 tables, foreign keys, uniqueness, hash/reference
+The PostgreSQL suite covers all 26 tables, foreign keys, uniqueness, hash/reference
 constraints, CRUD, explicit commit and rollback, timestamps, immutable IDs,
 snapshots, event history, and downgrade/upgrade/repeated upgrade. It also compares
 the migrated schema to ORM metadata. CI runs the same Make target.
@@ -187,3 +187,8 @@ Temporary serving adds an immutable v1 deployment snapshot and mutable keep-runn
 flag. A generated relational migration and separate SQL guards preserve lifecycle
 transitions and artifact ownership; legacy rows retain their original meaning.
 See [ADR 0017](adr/0017-temporary-local-serving.md).
+
+Artifact transformations add immutable input snapshots, a unique canonical hash,
+normalized progress and an output artifact relationship. The relational migration
+is generated; separate SQL guards retain history, identity, ownership and legal
+transitions. See [ADR 0018](adr/0018-lazy-model-representations.md).

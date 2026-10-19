@@ -1584,7 +1584,9 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 17: merge and quantization.
+The current implementation frontier is Milestone 18: Docker-over-SSH execution.
+Lazy local merge and AWQ representations are documented in
+[docs/representations.md](docs/representations.md).
 Temporary local vLLM playgrounds, leases and bounded chat are documented in
 [docs/deployments.md](docs/deployments.md).
 Local paired evaluation and human preference reports are documented in
