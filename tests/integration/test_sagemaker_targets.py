@@ -1,6 +1,6 @@
 from pathlib import Path
 from unittest.mock import MagicMock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -47,6 +47,8 @@ def test_target_api_opt_in_and_sql_immutability(versions: DatasetVersionService)
             client.get(api + "/" + identifier).json()["configuration"] == payload["configuration"]
         )
         assert client.get(api).json()[0]["kind"] == "sagemaker"
+        with pytest.raises(SourceError, match="separate pinned"):
+            targets.deployment(UUID(identifier))
         payload["kind"] = "ssh_docker"
         assert client.post(api, json=payload).status_code == 422
         payload = body().model_dump(mode="json", by_alias=True)

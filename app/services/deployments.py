@@ -35,8 +35,17 @@ from app.jobs.locking import claim
 from app.services.artifacts import ArtifactService
 from app.services.targets import TargetService
 from app.targets.runpod_schemas import RunpodConfig
+from app.targets.sagemaker_schemas import SageMakerConfig
 from app.training.schemas import PlanModelSource, PlanPreview
 from app.transformations.schemas import AWQ, MERGED
+
+
+def lease_config(target: ExecutionTarget | None) -> RunpodConfig | SageMakerConfig | None:
+    if target is not None and target.kind == "runpod_pod":
+        return RunpodConfig.model_validate(target.configuration)
+    if target is not None and target.kind == "sagemaker":
+        return SageMakerConfig.model_validate(target.configuration)
+    return None
 
 
 class DeploymentService:
@@ -66,6 +75,7 @@ class DeploymentService:
                 "ssh_docker",
                 "kubernetes",
                 "runpod_pod",
+                "sagemaker",
                 "local_docker_deployment",
             ):
                 raise SourceError(503, "The retained serving target is not supported")
@@ -83,14 +93,10 @@ class DeploymentService:
         spec = DeploymentSpec.model_validate(row.snapshot)
         with self.factory() as session:
             target = session.get(ExecutionTarget, row.execution_target_id)
-            config = (
-                RunpodConfig.model_validate(target.configuration)
-                if target is not None and target.kind == "runpod_pod"
-                else None
-            )
+            config = lease_config(target)
             resource = (
                 session.scalar(select(RunpodResource).where(RunpodResource.owner_id == row.id))
-                if config
+                if isinstance(config, RunpodConfig)
                 else None
             )
         return DeploymentView(
@@ -99,7 +105,7 @@ class DeploymentService:
             maximum_compute_estimate_usd=config.max_hourly_price_usd
             * config.max_deployment_lease_minutes
             / 60
-            if config
+            if isinstance(config, RunpodConfig)
             else None,
             resource_cleanup=resource.cleanup if resource else None,
             resource_warning=resource.warning if resource else None,
@@ -242,12 +248,18 @@ class DeploymentService:
                     raise SourceError(409, "Local serving target configuration conflict")
             else:
                 target = session.get(ExecutionTarget, body.execution_target_id)
-                if target is None or target.kind not in ("ssh_docker", "kubernetes", "runpod_pod"):
+                if target is None or target.kind not in (
+                    "ssh_docker",
+                    "kubernetes",
+                    "runpod_pod",
+                    "sagemaker",
+                ):
                     raise SourceError(404, "Execution target not found")
-            if target.kind == "runpod_pod":
-                config = RunpodConfig.model_validate(target.configuration)
+            if target.kind in ("runpod_pod", "sagemaker"):
+                config = lease_config(target)
+                assert config is not None
                 if body.lease_minutes > config.max_deployment_lease_minutes:
-                    raise SourceError(422, "Lease exceeds Runpod target limit")
+                    raise SourceError(422, "Lease exceeds cloud target limit")
             identifier = uuid4()
             session.add(
                 Deployment(
@@ -280,13 +292,11 @@ class DeploymentService:
             if action != "stop" and not row.keep_running and row.expires_at <= now:
                 raise SourceError(409, "The playground lease has expired")
             target = session.get(ExecutionTarget, row.execution_target_id)
-            config = (
-                RunpodConfig.model_validate(target.configuration)
-                if target is not None and target.kind == "runpod_pod"
-                else None
-            )
+            config = lease_config(target)
             if config and action == "keep":
-                raise SourceError(422, "Runpod requires a bounded lease; extend or stop instead")
+                raise SourceError(
+                    422, "Cloud target requires a bounded lease; extend or stop instead"
+                )
             if action == "stop":
                 row.status = "STOP_REQUESTED"
             elif action == "keep":

@@ -1,6 +1,7 @@
 """Immutable execution-target configuration and executor construction."""
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -9,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.config import Settings
-from app.db.models import ExecutionTarget
+from app.db.models import Deployment, ExecutionTarget
 from app.deployments.base import DeploymentExecutor
 from app.deployments.kubernetes import KubernetesDeploymentExecutor
 from app.deployments.materialize import DeploymentMaterializer
@@ -241,7 +242,30 @@ class TargetService:
                 env_names={n.strip() for n in self.settings.ssh_env_names.split(",") if n.strip()},
             )
         if self.get(identifier).kind == "sagemaker":
-            raise SourceError(409, "SageMaker serving is not implemented; use a training target")
+            from app.deployments.sagemaker import SageMakerDeploymentExecutor
+
+            target = self.get(identifier)
+            assert isinstance(target.configuration, SageMakerConfig)
+            if not target.configuration.deployment_image:
+                raise SourceError(409, "Configure a separate pinned SageMaker serving image")
+            aws = self.training(identifier)
+            assert isinstance(aws, SageMakerTrainingExecutor)
+
+            def stop_requested(owner: UUID) -> bool:
+                with self.factory() as session:
+                    deployment = session.get(Deployment, owner)
+                    return (
+                        deployment is None
+                        or deployment.status != "PREPARING"
+                        or (deployment.expires_at <= datetime.now(UTC))
+                    )
+
+            return SageMakerDeploymentExecutor(
+                Path(self.settings.sagemaker_staging_workspace) / str(identifier) / "deployments",
+                DeploymentMaterializer(RegisteredInputMaterializer(self.artifacts)),
+                aws,
+                stop_requested=stop_requested,
+            )
         if self.get(identifier).kind == "kubernetes":
             self.kubernetes_enabled()
             return KubernetesDeploymentExecutor(

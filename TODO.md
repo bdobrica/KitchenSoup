@@ -628,20 +628,25 @@ adapter import and confirmed cleanup of all disposable AWS resources. See
 
 ## Milestone 22 — SageMaker vLLM BYOC deployment
 
-- [ ] Build/pin SageMaker-compatible vLLM image.
-- [ ] Push/configure ECR image.
-- [ ] Implement model creation.
-- [ ] Implement endpoint configuration.
-- [ ] Implement endpoint lifecycle.
-- [ ] Normalize endpoint state.
-- [ ] Add stop/delete.
-- [ ] Add playground lease semantics.
-- [ ] Add endpoint invocation adapter.
-- [ ] Record AWS resource IDs.
+- [x] Build/pin SageMaker-compatible vLLM image.
+- [x] Push/configure ECR image.
+- [x] Implement model creation.
+- [x] Implement endpoint configuration.
+- [x] Implement endpoint lifecycle.
+- [x] Normalize endpoint state.
+- [x] Add stop/delete.
+- [x] Add playground lease semantics.
+- [x] Add endpoint invocation adapter.
+- [x] Record AWS resource IDs.
 
 **Acceptance criteria**
 
-- [ ] Registered model can be launched as a temporary SageMaker endpoint and used from the KitchenSoup playground.
+- [x] Registered model can be launched as a temporary SageMaker endpoint and used from the KitchenSoup playground.
+
+Live FP16 inference passed through the playground's JSON and SSE routes on a T4.
+All disposable AWS resources were confirmed removed. See
+[setup and shutdown behavior](docs/sagemaker-serving.md) and
+[validation evidence](docs/evidence/milestone-22.md).
 
 ---
 

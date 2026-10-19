@@ -44,6 +44,8 @@
     try {
       const data = Object.fromEntries(new FormData(event.target));
       const configuration = {schema: 'kitchensoup.sagemaker-target/v1', region: data.region, role_arn: data.role_arn, training_image: data.training_image, staging_bucket: data.staging_bucket, staging_prefix: data.staging_prefix, instance_type: data.instance_type, max_runtime_seconds: Number(data.max_runtime_seconds), volume_gib: Number(data.volume_gib)};
+      configuration.deployment_image = data.deployment_image || null;
+      configuration.max_deployment_lease_minutes = Number(data.max_deployment_lease_minutes);
       await api('', 'POST', {name: data.name, kind: 'sagemaker', credential_ref: data.credential_ref, configuration});
       el('target-status').textContent = 'SageMaker target created. Check S3/ECR access and GPU quota before submitting a paid run.'; await load();
     } catch (e) { error(e); } finally { button.disabled = false; }

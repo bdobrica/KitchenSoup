@@ -135,6 +135,13 @@ test-sagemaker: build-sagemaker ## Offline CPU SageMaker filesystem/privilege-dr
 test-sagemaker-gpu: build-sagemaker ## Local FP16 GPU check of managed-training wrapper (no AWS cost)
 	$(VENV_PYTHON) scripts/test_sagemaker_runner.py --gpu
 
+.PHONY: build-sagemaker-vllm test-sagemaker-vllm
+build-sagemaker-vllm: ## Build the separately pinned managed-inference image
+	docker build --platform linux/amd64 --provenance=false --output type=docker,oci-mediatypes=false -f images/vllm/Dockerfile.sagemaker -t kitchensoup-sagemaker-vllm:local .
+
+test-sagemaker-vllm: ## Paid opt-in inference smoke (ARGS="--confirm-paid --target-config /private/target.json")
+	$(VENV_PYTHON) scripts/test_sagemaker_vllm.py $(ARGS)
+
 test-soup-gpu: build-soup ## Optional GPU training smoke (PRECISION=bf16 or fp16) (synthetic tiny model)
 	$(VENV_PYTHON) scripts/test_soup_trainer.py --gpu --precision $(PRECISION)
 

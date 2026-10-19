@@ -3044,6 +3044,19 @@
       "SageMakerConfig": {
         "additionalProperties": false,
         "properties": {
+          "deployment_image": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "pattern": "^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment Image"
+          },
           "instance_type": {
             "default": "ml.g4dn.xlarge",
             "enum": [
@@ -3053,6 +3066,13 @@
             ],
             "title": "Instance Type",
             "type": "string"
+          },
+          "max_deployment_lease_minutes": {
+            "default": 30,
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Max Deployment Lease Minutes",
+            "type": "integer"
           },
           "max_runtime_seconds": {
             "default": 600,

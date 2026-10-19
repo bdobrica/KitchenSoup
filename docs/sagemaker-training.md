@@ -144,8 +144,9 @@ During training, use the AWS console/CloudWatch references; local cursor logs be
 available after successful artifact collection. The wrapper writes bounded diagnostic
 tails (at most 64 KiB per stream) to CloudWatch, including on ordinary CLI failure.
 AWS termination can prevent a manifest/log upload. Raw logs can contain source data;
-treat AWS logs and staged data as private. Paired evaluations/merge/AWQ remain local;
-SageMaker endpoints are not available from this target.
+treat AWS logs and staged data as private. Paired evaluations/merge/AWQ remain local.
+Targets with a separate pinned serving image also support
+[leased SageMaker playgrounds](sagemaker-serving.md).
 
 ## Stop and cleanup
 

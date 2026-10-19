@@ -1,4 +1,4 @@
-"""Bounded operator configuration for managed, single-instance training."""
+"""Bounded operator configuration for managed training and leased serving."""
 
 from typing import Literal
 
@@ -25,11 +25,22 @@ class SageMakerConfig(BaseModel):
     instance_type: Literal["ml.g4dn.xlarge", "ml.g5.xlarge", "ml.g6.xlarge"] = "ml.g4dn.xlarge"
     volume_gib: int = Field(default=30, ge=20, le=100)
     max_runtime_seconds: int = Field(default=600, ge=60, le=3600)
+    deployment_image: str | None = Field(
+        default=None,
+        max_length=255,
+        pattern=r"^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$",
+    )
+    max_deployment_lease_minutes: int = Field(default=30, ge=1, le=60)
 
     @model_validator(mode="after")
     def regional_image(self) -> "SageMakerConfig":
         if f".ecr.{self.region}.amazonaws.com/" not in self.training_image:
             raise ValueError("ECR image and training job must use the same region")
+        if self.deployment_image and (
+            f".ecr.{self.region}.amazonaws.com/" not in self.deployment_image
+            or self.deployment_image == self.training_image
+        ):
+            raise ValueError("Serving requires a separate pinned regional ECR image")
         return self
 
 

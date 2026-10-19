@@ -72,6 +72,7 @@ class SageMakerTrainingExecutor(LocalDockerTrainingExecutor):
                 region_name=configuration.region,
             )
             options = Config(connect_timeout=10, read_timeout=60, retries={"total_max_attempts": 1})
+            self.session = session
             self.sm: Any = session.client("sagemaker", config=options)
             self.s3: Any = session.client("s3", config=options)
             self.ecr: Any = session.client("ecr", config=options)
@@ -96,29 +97,32 @@ class SageMakerTrainingExecutor(LocalDockerTrainingExecutor):
         self.workspace(name)  # Strict run UUID validation before remote effects.
         return self.configuration.staging_prefix + "/" + name + "/"
 
-    def preflight(self) -> None:
+    def preflight(self, image: str | None = None) -> str:
         c = self.configuration
+        selected_image = image or c.training_image
+        digest = selected_image.rsplit("@", 1)[1]
         versioning = self.call(self.s3, "get_bucket_versioning", Bucket=c.staging_bucket)
         if versioning.get("Status"):
             raise ExecutorError("SageMaker staging bucket must have versioning disabled")
         location = self.call(self.s3, "get_bucket_location", Bucket=c.staging_bucket)
         if (location.get("LocationConstraint") or "us-east-1") != c.region:
             raise ExecutorError("SageMaker staging bucket and job must use the same region")
-        registry, repository = c.training_image.split("/", 1)
+        registry, repository = selected_image.split("/", 1)
         images = self.call(
             self.ecr,
             "describe_images",
             registryId=registry.split(".")[0],
             repositoryName=repository.split("@", 1)[0],
-            imageIds=[{"imageDigest": self.image_identity()}],
+            imageIds=[{"imageDigest": digest}],
         ).get("imageDetails", [])
-        if len(images) != 1 or images[0].get("imageDigest") != self.image_identity():
+        if len(images) != 1 or images[0].get("imageDigest") != digest:
             raise ExecutorError("Pinned training image is unavailable in ECR")
         if images[0].get("imageManifestMediaType") not in (
             "application/vnd.docker.distribution.manifest.v2+json",
             "application/vnd.oci.image.manifest.v1+json",
         ):
             raise ExecutorError("Pin a single linux/amd64 image manifest, not a manifest index")
+        return str(images[0]["imageManifestMediaType"])
 
     def submit(self, run_id: UUID, plan: PlanPreview, image: str) -> str:
         if image != self.image_identity():

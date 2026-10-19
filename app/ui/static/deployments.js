@@ -37,7 +37,7 @@
       el('deployment-status').textContent = `${row.status} · ${row.keep_running ? 'Running until stopped' : remaining + ' minutes remaining'} · ${row.precision.toUpperCase()}`;
       el('deployment-keep').hidden = row.bounded_lease;
       el('deployment-warning').textContent = row.resource_warning || '';
-      el('deployment-logs').hidden = !row.bounded_lease;
+      el('deployment-logs').hidden = targets.get(row.execution_target_id)?.kind !== 'runpod_pod';
       el('chat-send').disabled = busy || row.status !== 'RUNNING' || (!row.keep_running && remaining === 0);
       for (const name of ['extend', 'keep', 'stop']) el('deployment-' + name).disabled = terminal.includes(row.status) || row.status === 'STOP_REQUESTED';
     } catch (e) { error(e); }
@@ -101,10 +101,10 @@
   });
   function estimate() {
     const target = targets.get(el('deployment-target').value);
-    const config = target?.kind === 'runpod_pod' ? target.configuration : null;
+    const config = ['runpod_pod', 'sagemaker'].includes(target?.kind) ? target.configuration : null;
     el('deployment-lease').max = config ? config.max_deployment_lease_minutes : 1440;
     if (config) el('deployment-lease').value = Math.min(Number(el('deployment-lease').value), config.max_deployment_lease_minutes);
-    el('deployment-estimate').textContent = config ? `GPU compute ceiling estimate: $${(config.max_hourly_price_usd * Number(el('deployment-lease').value) / 60).toFixed(2)}. Idle Pods remain billable; storage and other charges are additional. Automatic termination requires the reconciler.` : '';
+    el('deployment-estimate').textContent = config?.max_hourly_price_usd ? `GPU compute ceiling estimate: $${(config.max_hourly_price_usd * Number(el('deployment-lease').value) / 60).toFixed(2)}. Idle Pods remain billable; storage and other charges are additional. Automatic termination requires the reconciler.` : config ? 'SageMaker endpoints remain billable while idle. Automatic deletion requires the reconciler; the lease does not cap total AWS spending.' : '';
   }
   el('deployment-target').addEventListener('change', estimate);
   el('deployment-lease').addEventListener('input', estimate);
@@ -113,8 +113,8 @@
     try {
       const models = await api('/models');
       for (const target of await api('/execution-targets')) {
-        if (!['ssh_docker', 'kubernetes', 'runpod_pod'].includes(target.kind)) continue;
-        if (target.kind === 'runpod_pod' && !target.configuration.deployment_image) continue;
+        if (!['ssh_docker', 'kubernetes', 'runpod_pod', 'sagemaker'].includes(target.kind)) continue;
+        if (['runpod_pod', 'sagemaker'].includes(target.kind) && !target.configuration.deployment_image) continue;
         targets.set(target.id, target);
         el('deployment-target').append(new Option(target.name, target.id));
       }

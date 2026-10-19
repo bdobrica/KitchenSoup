@@ -36,14 +36,16 @@
 <label>Tolerations (JSON) <textarea name="tolerations">[]</textarea></label>
 </details><button>Create Kubernetes target</button>
 </form>
-<h2>SageMaker training target</h2>
-<p>Training on AWS uploads the selected dataset and model bytes to your configured AWS bucket and incurs charges. Provision a regional private ECR trainer image, an unversioned S3 staging bucket, an execution role and a small GPU quota first. Enable SageMaker execution and approve an AWS profile in application settings. Credentials remain on the control plane.</p>
+<h2>SageMaker target</h2>
+<p>AWS training and playgrounds incur charges and stage selected inputs in your private AWS bucket. Configure separate pinned training and serving images, an unversioned bucket, an execution role and the appropriate GPU quotas. Training and endpoint quotas are separate. Enable SageMaker execution and approve an AWS profile first. Idle endpoints remain billable; keep the reconciler running to enforce serving leases.</p>
 <form id="sagemaker-target-form">
 <label>Name <input name="name" required maxlength="200"></label>
 <label>AWS profile reference <input name="credential_ref" value="aws-profile://default" required></label>
 <label>AWS region <input name="region" value="us-east-2" required></label>
 <label>Execution role ARN <input name="role_arn" required></label>
 <label>ECR trainer image pinned by digest <input name="training_image" required></label>
+<label>Optional separate ECR serving image pinned by digest <input name="deployment_image"></label>
+<label>Maximum serving lease minutes <input name="max_deployment_lease_minutes" type="number" min="1" max="60" value="30" required></label>
 <label>Unversioned staging bucket <input name="staging_bucket" required></label>
 <details><summary>Advanced</summary>
 <label>Staging prefix <input name="staging_prefix" value="kitchensoup-training/v1" required></label>
@@ -51,7 +53,7 @@
 <label>Maximum training seconds <input name="max_runtime_seconds" type="number" min="60" max="3600" value="600" required></label>
 <label>Volume GiB <input name="volume_gib" type="number" min="20" max="100" value="30" required></label>
 </details><p>One instance per run; retries create a new paid run. Runtime limits do not cap total AWS spending. Stop unwanted jobs and clean up their staging objects after completion.</p>
-<button>Create SageMaker training target</button>
+<button>Create SageMaker target</button>
 </form>
 <h2>Runpod training target</h2>
 <p>Automatically allocates paid GPU Pods for training or leased playgrounds, then terminates them. Enable Runpod execution, approve API/SSH references and provision SSH host trust first. Operator setup: docs/runpod-training.md.</p>

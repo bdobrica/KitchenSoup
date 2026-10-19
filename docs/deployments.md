@@ -119,3 +119,6 @@ workflow through the Kubernetes API. See [Kubernetes playgrounds](kubernetes-ser
 Runpod targets with a separate pinned serving image use authenticated public HTTPS
 behind the application proxy. Their leases have an absolute target-specific ceiling
 and do not support indefinite keep-running. See [Runpod playgrounds](runpod-serving.md).
+
+SageMaker targets with a separate pinned ECR serving image use IAM-authenticated
+managed endpoints and bounded leases. See [SageMaker playgrounds](sagemaker-serving.md).

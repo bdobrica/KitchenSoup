@@ -1,0 +1,11 @@
+# Separate managed-inference adapter over the pinned, Turing-compatible engine.
+FROM vllm/vllm-openai:v0.10.2@sha256:df2607b26bdda2875de4832f4d08da0055b4b6e3570347f3a849bcc652771dd6
+ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 HF_HUB_DISABLE_IMPLICIT_TOKEN=1 \
+    HF_HUB_DISABLE_TELEMETRY=1 HF_HOME=/tmp/hf HOME=/tmp USER=runner LOGNAME=runner \
+    TORCHINDUCTOR_CACHE_DIR=/tmp/torchinductor TRITON_CACHE_DIR=/tmp/triton \
+    VLLM_CACHE_ROOT=/tmp/vllm XDG_CACHE_HOME=/tmp/cache CUDA_CACHE_PATH=/tmp/cuda \
+    VLLM_USE_V1=0 VLLM_ATTENTION_BACKEND=XFORMERS VLLM_NO_USAGE_STATS=1 \
+    DO_NOT_TRACK=1 TOKENIZERS_PARALLELISM=false OMP_NUM_THREADS=4
+COPY images/vllm/sagemaker_serve.py /runner/sagemaker_serve.py
+ENTRYPOINT ["python3", "/runner/sagemaker_serve.py"]
+CMD ["serve"]

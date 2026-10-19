@@ -1157,6 +1157,14 @@ The executor manages the SageMaker model, endpoint configuration, and endpoint l
 
 SageMaker-specific endpoint state remains normalized into the common deployment state model.
 
+The implementation uses a separate pinned ECR image, verified serving-only S3
+archives and network-isolated single-GPU endpoints. KitchenSoup invokes owned
+endpoints through IAM-authenticated AWS APIs; the browser uses the application
+proxy. Leases are bounded to the target ceiling and require a running reconciler
+to delete endpoints. Uncertain provisioning is never replayed, and cleanup remains
+pending until endpoint absence is confirmed. See [SageMaker playgrounds](docs/sagemaker-serving.md)
+and [ADR 0026](docs/adr/0026-sagemaker-serving.md).
+
 ---
 
 ## 35. UI structure
@@ -1589,7 +1597,9 @@ Milestone 23 error UX and safety polish is implemented; see
 Milestone 21 SageMaker training is implemented and validated with live FP16
 training, verified registry import and confirmed AWS cleanup. See [setup and cost controls](docs/sagemaker-training.md)
 and [validation evidence](docs/evidence/milestone-21.md).
-Milestone 22 (SageMaker serving) remains unimplemented.
+Milestone 22 SageMaker serving is implemented and validated with live FP16
+playground inference and confirmed AWS cleanup. See
+[Milestone 22 evidence](docs/evidence/milestone-22.md).
 Milestone 25 Runpod training and shared infrastructure is implemented and validated
 with live BF16 training and confirmed Pod cleanup. See [setup and limits](docs/runpod-training.md) and
 [validation evidence](docs/evidence/milestone-25.md). Milestone 26 Runpod serving is
