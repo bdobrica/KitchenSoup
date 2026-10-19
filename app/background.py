@@ -12,11 +12,13 @@ from sqlalchemy.orm import sessionmaker
 from app.config import Settings
 from app.db.session import create_database_engine
 from app.dependencies import check_dependencies
+from app.evaluation.local import LocalInferenceRunner
 from app.executors.local_docker import LocalDockerTrainingExecutor
 from app.executors.materialize import RegisteredInputMaterializer
 from app.jobs.processor import JobProcessor
 from app.jobs.queue import JobQueue
 from app.services.artifacts import ArtifactService
+from app.services.evaluations import EvaluationService
 from app.services.runs import TrainingRunService
 from app.services.training import TrainingPlanService
 from app.storage.s3 import S3ArtifactStore
@@ -41,6 +43,7 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
     store = S3ArtifactStore(settings) if settings.local_training_enabled else None
     queue = JobQueue(settings.valkey_url)
     processor = None
+    evaluations = None
     if store is not None:
         factory = sessionmaker(engine, expire_on_commit=False)
         artifacts = ArtifactService(
@@ -61,6 +64,9 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
         processor = JobProcessor(
             TrainingRunService(TrainingPlanService(factory), executor, queue, artifacts)
         )
+        evaluations = EvaluationService(
+            artifacts, LocalInferenceRunner(executor, RegisteredInputMaterializer(artifacts))
+        )
     logging.info("%s ready; local training enabled=%s", role, processor is not None)
 
     def heartbeat() -> None:
@@ -75,6 +81,8 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
             if processor is not None:
                 try:
                     processor.tick(role)
+                    if role == "worker" and evaluations is not None:
+                        evaluations.tick()
                 except SQLAlchemyError:
                     logging.warning("Job database unavailable; retrying")
             stopped.wait(2)

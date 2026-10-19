@@ -1,0 +1,27 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "input_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Input Sha256",
+      "type": "string"
+    },
+    "response": {
+      "maxLength": 65536,
+      "title": "Response",
+      "type": "string"
+    },
+    "schema": {
+      "const": "kitchensoup.inference-output/v1",
+      "default": "kitchensoup.inference-output/v1",
+      "title": "Schema",
+      "type": "string"
+    }
+  },
+  "required": [
+    "input_sha256",
+    "response"
+  ],
+  "title": "InferenceOutput",
+  "type": "object"
+}

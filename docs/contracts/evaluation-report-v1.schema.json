@@ -1,0 +1,172 @@
+{
+  "$defs": {
+    "Comparison": {
+      "additionalProperties": false,
+      "properties": {
+        "base_response": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Base Response"
+        },
+        "fine_tuned_response": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fine Tuned Response"
+        },
+        "preference": {
+          "anyOf": [
+            {
+              "enum": [
+                "base_better",
+                "fine_tuned_better",
+                "same"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Preference"
+        },
+        "prompt": {
+          "title": "Prompt",
+          "type": "string"
+        },
+        "prompt_id": {
+          "format": "uuid",
+          "title": "Prompt Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "prompt_id",
+        "prompt",
+        "base_response",
+        "fine_tuned_response",
+        "preference"
+      ],
+      "title": "Comparison",
+      "type": "object"
+    },
+    "GenerationSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "do_sample": {
+          "const": false,
+          "default": false,
+          "title": "Do Sample",
+          "type": "boolean"
+        },
+        "max_new_tokens": {
+          "const": 128,
+          "default": 128,
+          "title": "Max New Tokens",
+          "type": "integer"
+        },
+        "num_beams": {
+          "const": 1,
+          "default": 1,
+          "title": "Num Beams",
+          "type": "integer"
+        },
+        "precision": {
+          "enum": [
+            "bf16",
+            "fp16"
+          ],
+          "title": "Precision",
+          "type": "string"
+        }
+      },
+      "required": [
+        "precision"
+      ],
+      "title": "GenerationSettings",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "base_model_version_id": {
+      "format": "uuid",
+      "title": "Base Model Version Id",
+      "type": "string"
+    },
+    "comparisons": {
+      "items": {
+        "$ref": "#/$defs/Comparison"
+      },
+      "maxItems": 10,
+      "minItems": 3,
+      "title": "Comparisons",
+      "type": "array"
+    },
+    "evaluation_suite_id": {
+      "format": "uuid",
+      "title": "Evaluation Suite Id",
+      "type": "string"
+    },
+    "fine_tuned_model_version_id": {
+      "format": "uuid",
+      "title": "Fine Tuned Model Version Id",
+      "type": "string"
+    },
+    "generation": {
+      "$ref": "#/$defs/GenerationSettings"
+    },
+    "image_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Image Digest",
+      "type": "string"
+    },
+    "plan_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Plan Sha256",
+      "type": "string"
+    },
+    "schema": {
+      "const": "kitchensoup.evaluation-report/v1",
+      "default": "kitchensoup.evaluation-report/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "summary": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Summary",
+      "type": "object"
+    },
+    "training_run_id": {
+      "format": "uuid",
+      "title": "Training Run Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "training_run_id",
+    "evaluation_suite_id",
+    "base_model_version_id",
+    "fine_tuned_model_version_id",
+    "plan_sha256",
+    "image_digest",
+    "generation",
+    "comparisons",
+    "summary"
+  ],
+  "title": "EvaluationReport",
+  "type": "object"
+}

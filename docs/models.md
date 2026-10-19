@@ -153,3 +153,10 @@ object at the deterministic result key. Retrying overwrites that key and commits
 one version per run. A completed registration is never rewritten. No automatic
 orphan retention or retrospective registration of earlier terminal runs is added.
 See [ADR 0015](adr/0015-training-output-lineage.md) for the durable decision.
+
+## Evaluation summary
+
+Trained model pages show the latest successful [paired evaluation](evaluations.md)
+summary and link to side-by-side review. Select the suite before training;
+base/fine-tuned preferences and hashed report snapshots are retained separately
+from logical model and adapter identity.

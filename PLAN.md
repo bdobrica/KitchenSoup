@@ -1584,7 +1584,9 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 15: evaluation prompts.
+The current implementation frontier is Milestone 16: vLLM image and temporary playground.
+Local paired evaluation and human preference reports are documented in
+[docs/evaluations.md](docs/evaluations.md).
 Registered training outputs, source-license provenance and separate lineage graphs
 are documented in [docs/models.md](docs/models.md#trained-models-and-lineage).
 Durable training dispatch, reconciliation and live progress are documented in

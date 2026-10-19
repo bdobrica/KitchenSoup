@@ -21,6 +21,7 @@ from app.api.artifacts import router as artifact_router
 from app.api.conversations import router as conversation_router
 from app.api.datasets import router as dataset_router
 from app.api.documents import router as document_router
+from app.api.evaluations import router as evaluation_router
 from app.api.models import router as model_router
 from app.api.providers import router as provider_router
 from app.api.runs import router as run_router
@@ -29,6 +30,7 @@ from app.api.versions import router as version_router
 from app.config import Settings
 from app.db.session import create_database_engine
 from app.dependencies import check_dependencies
+from app.evaluation.local import LocalInferenceRunner
 from app.executors.base import ExecutorError
 from app.executors.local_docker import LocalDockerTrainingExecutor
 from app.executors.materialize import RegisteredInputMaterializer
@@ -41,6 +43,7 @@ from app.registry.huggingface import HuggingFaceResolver
 from app.registry.inspection import RegistryError
 from app.services.artifacts import ArtifactService, UploadError
 from app.services.datasets import DatasetService
+from app.services.evaluations import EvaluationService
 from app.services.models import ModelService
 from app.services.providers import ProviderService
 from app.services.runs import TrainingRunService
@@ -63,6 +66,7 @@ def create_app(
     provider_service: ProviderService | None = None,
     training_plan_service: TrainingPlanService | None = None,
     training_run_service: TrainingRunService | None = None,
+    evaluation_service: EvaluationService | None = None,
 ) -> FastAPI:
     settings = settings if settings is not None else Settings()
 
@@ -138,6 +142,17 @@ def create_app(
                 app.state.training_run_service = TrainingRunService(
                     app.state.training_plan_service, executor, queue, app.state.artifact_service
                 )
+            app.state.evaluation_service = evaluation_service
+            if evaluation_service is None and app.state.artifact_service is not None:
+                runs = app.state.training_run_service
+                runner = (
+                    LocalInferenceRunner(
+                        runs.executor, RegisteredInputMaterializer(app.state.artifact_service)
+                    )
+                    if runs is not None and isinstance(runs.executor, LocalDockerTrainingExecutor)
+                    else None
+                )
+                app.state.evaluation_service = EvaluationService(app.state.artifact_service, runner)
             yield
         finally:
             if queue is not None:
@@ -159,6 +174,7 @@ def create_app(
     app.include_router(provider_router)
     app.include_router(training_router)
     app.include_router(run_router)
+    app.include_router(evaluation_router)
     app.state.soup_ingestion_url = settings.soup_ingestion_url
 
     @app.exception_handler(ExecutorError)
@@ -294,6 +310,13 @@ def create_app(
     async def runs_page(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(
             request=request, name="training-runs.html", context={"app_name": settings.app_name}
+        )
+
+    @app.get("/evaluations", response_class=HTMLResponse, include_in_schema=False)
+    @app.get("/evaluations/{identifier}", response_class=HTMLResponse, include_in_schema=False)
+    async def evaluation_page(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request=request, name="evaluations.html", context={"app_name": settings.app_name}
         )
 
     return app

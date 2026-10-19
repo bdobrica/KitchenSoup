@@ -439,24 +439,26 @@ See [Milestone 14 evidence](docs/evidence/milestone-14.md).
 
 ## Milestone 15 — Evaluation prompts
 
-- [ ] Add evaluation suite creation before training.
-- [ ] Support 3–10 simple test prompts initially.
-- [ ] Associate evaluation suite with run.
-- [ ] Add base-model inference runner.
-- [ ] Add fine-tuned-model inference runner.
-- [ ] Store generated responses.
-- [ ] Show responses side by side.
-- [ ] Allow:
-  - [ ] base better
-  - [ ] fine-tuned better
-  - [ ] same
-- [ ] Store user preferences.
-- [ ] Produce simple evaluation report artifact.
-- [ ] Show evaluation summary on model page.
+- [x] Add evaluation suite creation before training.
+- [x] Support 3–10 simple test prompts initially.
+- [x] Associate evaluation suite with run.
+- [x] Add base-model inference runner.
+- [x] Add fine-tuned-model inference runner.
+- [x] Store generated responses.
+- [x] Show responses side by side.
+- [x] Allow:
+  - [x] base better
+  - [x] fine-tuned better
+  - [x] same
+- [x] Store user preferences.
+- [x] Produce simple evaluation report artifact.
+- [x] Show evaluation summary on model page.
 
 **Acceptance criteria**
 
-- [ ] User can answer "did the fine-tuned model improve my examples?" without external tooling.
+- [x] User can answer "did the fine-tuned model improve my examples?" without external tooling.
+
+See [Milestone 15 evidence](docs/evidence/milestone-15.md).
 
 ---
 

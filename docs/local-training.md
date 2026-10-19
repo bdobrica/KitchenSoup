@@ -79,7 +79,7 @@ Existing AppSpec, plan and runner schemas are unchanged.
 
 | Method/path | Behavior |
 | --- | --- |
-| `POST /api/v1/training-runs` | `{ "plan_id": "UUID" }`; creates a new attempt, returns 201 |
+| `POST /api/v1/training-runs` | `{ "plan_id": "UUID", "evaluation_suite_id": "optional UUID" }`; creates a new attempt, returns 201 |
 | `GET /api/v1/training-runs` | Retained run summaries, newest first |
 | `GET /api/v1/training-runs/{id}` | Read authoritative PostgreSQL state |
 | `GET /api/v1/training-runs/{id}/logs?stream=stdout&cursor=0` | Up to 64 KiB and next byte cursor; stderr also supported |
@@ -127,3 +127,6 @@ and verifies the success manifest and adapter bytes. Neither is a quality benchm
 See [ADR 0011](adr/0011-local-docker-training.md),
 [Docker launch options](https://docs.docker.com/reference/cli/docker/container/run/)
 and [Hub API](https://huggingface.co/docs/hub/api).
+
+Select optional [evaluation prompts](evaluations.md) on the saved plan before
+training to compare base and LoRA responses after successful registration.

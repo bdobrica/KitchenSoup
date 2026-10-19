@@ -144,3 +144,7 @@ worker-training: ## Run the host training command worker (separate terminal)
 
 reconcile-training: ## Run the host training reconciler (separate terminal)
 	$(VENV_PYTHON) scripts/dev_training.py --role reconciler
+
+.PHONY: test-evaluation-gpu
+test-evaluation-gpu: build-soup ## Tiny offline base/LoRA GPU inference smoke (PRECISION=fp16 on RTX 20)
+	$(VENV_PYTHON) scripts/test_evaluation_gpu.py --precision $(PRECISION)

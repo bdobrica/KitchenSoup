@@ -101,7 +101,8 @@ updates `updated_at` on mutable rows, including updates issued outside the ORM.
 | `training_plans` | Immutable intent, recipe and resolved review snapshot; no execution state |
 | `training_runs` | Immutable base/dataset/target/input snapshot with mutable execution status/identifier |
 | `job_events` | Append-only, per-run sequenced event history |
-| `evaluation_results` | Run/prompt/model links, response artifact, optional preference |
+| `evaluation_results` | Unique immutable run/prompt/model responses, mutable paired preference |
+| `evaluation_tasks` | Durable local evaluation attempts, status and current report artifact |
 | `deployments` | Model/artifact/target links, execution status, endpoint, expiry |
 
 Foreign-key indexes support joins; status and deployment-expiry indexes support
@@ -176,3 +177,8 @@ See [ADR 0006](adr/0006-soup-document-ingestion.md).
 Training-plan snapshots are stored separately from submitted runs. Their generated
 relational migration and immutable trigger preserve intent and resolved parameters
 without creating queue state. See [training plans](training-plans.md).
+
+Evaluation suites can now be selected before submitting training; prompts freeze
+against additions once referenced. Evaluation task persistence, response membership
+and immutable response guards are described in [ADR 0016](adr/0016-local-paired-evaluation.md)
+and [evaluation workflow](evaluations.md).

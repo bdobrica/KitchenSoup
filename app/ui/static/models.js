@@ -46,6 +46,11 @@ async function load() {
       detail.append(element("p", requirement.message));
       if (version.training_run_id) {
         const run = element("a", "Training run"); run.href = `/training-runs/${version.training_run_id}`; detail.append(run);
+        const evaluation = element("a", "Evaluate this model");
+        evaluation.href = `/evaluations?training_run_id=${version.training_run_id}`; detail.append(evaluation);
+        const evaluations = await api(`/evaluations?training_run_id=${version.training_run_id}`);
+        const completed = evaluations.find(item => item.status === 'SUCCEEDED');
+        if (completed) detail.append(element('p', `Evaluation: base better ${completed.summary.base_better}, fine-tuned better ${completed.summary.fine_tuned_better}, same ${completed.summary.same}, unreviewed ${completed.summary.unreviewed}.`));
       }
       await window.showLineage(detail, `/api/v1/model-versions/${version.id}/lineage`, "Model lineage");
       for (const artifactId of version.artifact_ids) {

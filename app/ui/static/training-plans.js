@@ -53,7 +53,7 @@
       const button = $('#plan-run'); button.hidden = false;
       button.onclick = async () => {
         button.disabled = true; status.textContent = 'Preparing inputs and submitting training…';
-        try { const run = await request('/training-runs', 'POST', {plan_id: value.id}); location.assign(`/training-runs/${run.id}`); }
+        try { const run = await request('/training-runs', 'POST', {plan_id: value.id, evaluation_suite_id: $('#plan-evaluation-suite').value || null}); location.assign(`/training-runs/${run.id}`); }
         catch (error) { status.textContent = `${error.message}. Check Training runs for a retained attempt before retrying.`; }
         finally { button.disabled = false; }
       };
@@ -100,7 +100,11 @@
     const id = location.pathname.split('/')[2];
     if (id) {
       form.hidden = true; $('#plan-history').hidden = true;
-      render(await request(`/training-plans/${id}`)); return;
+      render(await request(`/training-plans/${id}`));
+      for (const suite of await request('/evaluation-suites')) {
+        const option = node('option', suite.name); option.value = suite.id; $('#plan-evaluation-suite').append(option);
+      }
+      return;
     }
     const [loadedRecipes, models, datasets, plans] = await Promise.all([
       request('/recipes'), request('/models'), request('/datasets'), request('/training-plans')

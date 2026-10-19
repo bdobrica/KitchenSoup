@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from app.config import Settings
+from app.evaluation.schemas import EvaluationReport, InferenceInput, InferenceOutput
 from app.ingestion.conversations import CanonicalConversation
 from app.ingestion.documents import DocumentIngestionManifest, SoupResult
 from app.ingestion.versions import DatasetManifest, TrainingExample
@@ -39,6 +40,9 @@ Path("docs/contracts/training-example-v1.schema.json").write_text(
 )
 
 for filename, model in (
+    ("inference-input-v1", InferenceInput),
+    ("inference-output-v1", InferenceOutput),
+    ("evaluation-report-v1", EvaluationReport),
     ("appspec-v1", AppSpec),
     ("recipe-v1", Recipe),
     ("resolved-plan-v1", ResolvedPlan),

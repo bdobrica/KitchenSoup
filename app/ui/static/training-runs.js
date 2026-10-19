@@ -35,6 +35,11 @@
         modelLink.textContent = 'Open trained model and lineage'; $('#run-detail').prepend(modelLink);
       }
       if (modelLink && run.model_id) modelLink.href = `/models/${run.model_id}`;
+      if (run.evaluation_suite_id && !$('#run-evaluation')) {
+        const link = document.createElement('a'); link.id = 'run-evaluation';
+        link.textContent = 'Compare base and fine-tuned responses'; link.href = `/evaluations?training_run_id=${run.id}`;
+        $('#run-detail').prepend(link);
+      }
       $('#run-json').textContent = JSON.stringify(run, null, 2);
       $('#run-plan').href = `/training-plans/${run.plan_id}`;
       const active = !terminal.includes(run.status);

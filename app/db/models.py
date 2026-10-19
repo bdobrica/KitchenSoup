@@ -299,6 +299,7 @@ class JobEvent(Entity):
 
 class EvaluationResult(Entity):
     __tablename__ = "evaluation_results"
+    __table_args__ = (UniqueConstraint("training_run_id", "prompt_id", "model_version_id"),)
     training_run_id: Mapped[UUID] = mapped_column(ForeignKey("training_runs.id"), index=True)
     prompt_id: Mapped[UUID] = mapped_column(ForeignKey("evaluation_prompts.id"), index=True)
     model_version_id: Mapped[UUID] = mapped_column(ForeignKey("model_versions.id"), index=True)
@@ -344,3 +345,13 @@ class TrainingPlan(Entity):
     appspec: Mapped[dict[str, Any]] = mapped_column(JSONB)
     resolved_config: Mapped[dict[str, Any]] = mapped_column(JSONB)
     sha256: Mapped[str] = mapped_column(String(64))
+
+
+class EvaluationTask(Entity):
+    __tablename__ = "evaluation_tasks"
+    __table_args__ = (
+        CheckConstraint("status IN ('QUEUED','RUNNING','SUCCEEDED','FAILED')", name="valid_status"),
+    )
+    training_run_id: Mapped[UUID] = mapped_column(ForeignKey("training_runs.id"), index=True)
+    status: Mapped[str] = mapped_column(default="QUEUED", server_default="QUEUED", index=True)
+    report_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"))

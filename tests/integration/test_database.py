@@ -24,6 +24,7 @@ from app.db.models import (
     EvaluationPrompt,
     EvaluationResult,
     EvaluationSuite,
+    EvaluationTask,
     ExecutionTarget,
     JobEvent,
     LLMProvider,
@@ -214,6 +215,7 @@ def seed_graph(session: Session) -> tuple[TrainingRun, DatasetVersion, JobEvent]
                 title="Fixture",
                 message_count=2,
             ),
+            EvaluationTask(training_run_id=run.id, status="QUEUED"),
             EvaluationResult(
                 training_run_id=run.id,
                 prompt_id=prompt.id,

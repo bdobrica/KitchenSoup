@@ -9,7 +9,14 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app.db.models import ExecutionTarget, JobEvent, ModelVersion, TrainingRun
+from app.db.models import (
+    EvaluationPrompt,
+    EvaluationSuite,
+    ExecutionTarget,
+    JobEvent,
+    ModelVersion,
+    TrainingRun,
+)
 from app.executors.base import JobStatus, LogChunk, TrainingExecutor
 from app.executors.local_docker import container_name
 from app.ingestion.sources import SourceError
@@ -25,6 +32,7 @@ from app.training.schemas import PlanPreview
 class RunCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     plan_id: UUID
+    evaluation_suite_id: UUID | None = None
 
 
 class RunView(BaseModel):
@@ -35,6 +43,7 @@ class RunView(BaseModel):
     image_digest: str
     external_id: str
     status: JobState
+    evaluation_suite_id: UUID | None = None
     observation: JobStatus | None = None
     model_version_id: UUID | None = None
     model_id: UUID | None = None
@@ -89,6 +98,7 @@ class TrainingRunService:
             external_id=row.external_id or "",
             status=JobState(row.status),
             observation=observation,
+            evaluation_suite_id=row.evaluation_suite_id,
             model_version_id=version.id if version else None,
             model_id=version.model_id if version else None,
         )
@@ -107,6 +117,25 @@ class TrainingRunService:
         identifier = uuid4()
         name = container_name(identifier)
         with self.factory() as session:
+            if body.evaluation_suite_id is not None:
+                if (
+                    session.scalar(
+                        select(EvaluationSuite)
+                        .where(EvaluationSuite.id == body.evaluation_suite_id)
+                        .with_for_update()
+                    )
+                    is None
+                ):
+                    raise SourceError(404, "Evaluation suite not found")
+                prompts = list(
+                    session.scalars(
+                        select(EvaluationPrompt).where(
+                            EvaluationPrompt.suite_id == body.evaluation_suite_id
+                        )
+                    )
+                )
+                if not 3 <= len(prompts) <= 10:
+                    raise SourceError(422, "An evaluation suite requires 3–10 prompts")
             session.execute(
                 insert(ExecutionTarget)
                 .values(id=uuid4(), name="local-docker", kind="local_docker", configuration={})
@@ -122,6 +151,7 @@ class TrainingRunService:
                 base_model_version_id=saved.appspec.base_model_version_id,
                 dataset_version_id=saved.appspec.dataset_version_id,
                 execution_target_id=target.id,
+                evaluation_suite_id=body.evaluation_suite_id,
                 appspec_version=saved.appspec.schema_name,
                 appspec=saved.appspec.model_dump(mode="json", by_alias=True),
                 resolved_config={

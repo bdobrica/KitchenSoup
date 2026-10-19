@@ -129,3 +129,7 @@ not guessed or coerced to v1. Future versions need an explicit supported reader
 and tested conversion, leaving prior immutable snapshots intact; semantic changes
 produce a new plan and new hash. No payload conversion is needed for this first
 version. See [ADR 0009](adr/0009-training-intent-and-review-plans.md).
+
+Before starting a saved plan, optionally select a frozen [evaluation suite](evaluations.md).
+The suite belongs to the immutable submitted run; saving/reviewing the plan and
+the existing AppSpec/plan hash are unchanged.

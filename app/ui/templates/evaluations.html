@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/training-plans">Training plans</a> · <a href="/training-runs">Training runs</a></p>
+<h1>Evaluate your fine-tune</h1>
+<p id="evaluation-status" role="status" aria-live="polite"></p>
+<section id="suite-create">
+<p>Create 3–10 test prompts before starting training. Keep them separate from training examples to help assess generalization. Suites are frozen when saved; create a new suite to change prompts.</p>
+<form id="suite-form">
+<label>Suite name <input name="name" required maxlength="200"></label>
+<label>Test prompts (one per line, 3–10, up to 4000 characters each)<textarea name="prompts" rows="10" required></textarea></label>
+<button>Save evaluation suite</button>
+</form><div id="suite-list"></div>
+</section>
+<section id="evaluation-review" hidden>
+<p>Generate up to 128 tokens per answer on the local NVIDIA GPU. The base and fine-tuned model use the same prompt and greedy settings. No prompts are sent to an external provider. This uses GPU time; avoid running training simultaneously.</p>
+<button id="evaluation-start">Generate / resume missing responses</button>
+<button id="evaluation-refresh">Refresh</button>
+<p id="evaluation-summary"></p>
+<a id="evaluation-report" hidden>Download evaluation report</a>
+<div id="evaluation-comparisons"></div>
+</section>
+<script defer src="{{ url_for('static', path='/evaluations.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,72 @@
+{
+  "$defs": {
+    "RunnerFile": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "size_bytes"
+      ],
+      "title": "RunnerFile",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "adapter_files": {
+      "items": {
+        "$ref": "#/$defs/RunnerFile"
+      },
+      "maxItems": 4096,
+      "title": "Adapter Files",
+      "type": "array"
+    },
+    "max_new_tokens": {
+      "const": 128,
+      "default": 128,
+      "title": "Max New Tokens",
+      "type": "integer"
+    },
+    "prompt": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Prompt",
+      "type": "string"
+    },
+    "run_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Run Sha256",
+      "type": "string"
+    },
+    "schema": {
+      "const": "kitchensoup.inference-input/v1",
+      "default": "kitchensoup.inference-input/v1",
+      "title": "Schema",
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_sha256",
+    "prompt"
+  ],
+  "title": "InferenceInput",
+  "type": "object"
+}

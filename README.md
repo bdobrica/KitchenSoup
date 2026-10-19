@@ -16,6 +16,9 @@ and adapter with [source licenses and separate lineage graphs](docs/models.md#tr
 Local FP16 GPU training is [validated on an RTX 2070 SUPER](docs/evidence/fp16-training.md).
 See [dataset versions](docs/dataset-versions.md).
 
+Local [paired evaluation](docs/evaluations.md) compares base and LoRA responses,
+retains human preferences and exports hashed reports.
+
 ## Quick start
 
 Install Python **3.13** (including `venv`/`ensurepip`) and GNU Make. On Windows,
