@@ -92,3 +92,64 @@ checks are admission checks, not a general malware scanner or execution sandbox.
 Upstream references: [Safetensors format](https://github.com/safetensors/safetensors#format),
 [vLLM model support](https://docs.vllm.ai/en/latest/models/supported_models/), and
 [Hugging Face metadata API](https://huggingface.co/docs/hub/api).
+
+## Trained models and lineage
+
+A successful new training run registers a model version and a downloadable LoRA
+adapter ZIP. Open the model link on the run page, or find it under **Your models**.
+The detail page shows its training run, base source license and exact revision,
+model ancestry, adapter hashes/sizes and separate artifact derivations. Graphs use
+packaged SVG rendering and expose Mermaid source under details. Labels are rendered
+as text; no remote diagram service receives model metadata.
+
+Every attempt creates a new logical model, version 1, descended from its exact base
+version. Retrying registration reuses that version; retrying training creates a
+separate run and result. Source provenance is copied from the base, including
+license URLs, notes and uploaded artifact references. The adapter is a separate
+representation attached to the result version. Its artifact lineage includes any
+registered base representation, the dataset manifest and training examples, along
+with their upstream derivations. Public Hub weights are identified by source commit,
+not represented by invented artifact records.
+
+**Use as base model** opens training configuration with that exact version selected.
+A LoRA-only result requires a merged representation before further training; the UI
+explains this and plan preview/save returns 409. Merge execution is deferred to
+Milestone 17. Selecting a descendant never substitutes its ancestor's weights.
+
+Additions under `/api/v1`:
+
+| Method and path | Result |
+| --- | --- |
+| GET `/model-versions/{id}/lineage` | Model ancestor graph with source/license provenance |
+| GET `/artifacts/{id}/lineage` | Separate artifact ancestor graph with hashes, sizes and formats |
+| GET `/model-versions/{id}/base-requirement` | Readiness, merged representation requirement and explanation |
+
+Graphs contain `kind`, `root_id`, UUID-addressed `nodes`, parent-to-child `edges`
+and safe UUID-only `mermaid` text. Traversal is limited to 1000 ancestor nodes;
+oversized graphs return 422 and missing roots return 404. Model versions add
+`training_run_id`, `parent_ids` and `artifact_ids`; imported versions have no run.
+Run views add optional `model_id` and `model_version_id`, populated after commit.
+These are additive changes to the existing generated v1 HTTP contract.
+
+## Output registration and recovery
+
+Apply migrations before running the updated host web/worker/reconciler processes.
+POSTPROCESSING now commits before registration; SUCCEEDED commits with registry
+metadata. A temporary storage/executor failure leaves POSTPROCESSING for the next
+reconciler scan. No new GPU job is submitted. Run/event reads remain available
+while bytes transfer. Keep the private workspace and container until registration
+finishes; normal terminal cleanup retains both the registered object and workspace.
+
+The format `kitchensoup.lora-adapter+zip/v1` contains `output-manifest.json` and
+inventoried `adapter/` files. SHA-256/size describe the exact downloadable ZIP; the
+manifest records individual output hashes. The local executor bounds registration
+to 4096 unique files and 8 GiB of adapter bytes, rejects links/special files and
+rehashes while copying. Registration can use substantial temporary disk space.
+Only adapter inventory and its manifest are retained in this artifact, not logs,
+prepared examples, runner runtime caches or credentials.
+
+A lost storage acknowledgement or database rollback can leave an unregistered
+object at the deterministic result key. Retrying overwrites that key and commits
+one version per run. A completed registration is never rewritten. No automatic
+orphan retention or retrospective registration of earlier terminal runs is added.
+See [ADR 0015](adr/0015-training-output-lineage.md) for the durable decision.

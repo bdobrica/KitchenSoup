@@ -58,7 +58,9 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
             cpus=settings.training_cpus,
             timeout=settings.training_timeout,
         )
-        processor = JobProcessor(TrainingRunService(TrainingPlanService(factory), executor, queue))
+        processor = JobProcessor(
+            TrainingRunService(TrainingPlanService(factory), executor, queue, artifacts)
+        )
     logging.info("%s ready; local training enabled=%s", role, processor is not None)
 
     def heartbeat() -> None:

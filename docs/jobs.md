@@ -69,7 +69,9 @@ same transaction. Invalid transitions fail in Python and PostgreSQL; terminal
 states cannot change. Input snapshots remain immutable. Same-state updates do not
 append duplicate events. Success still requires the executor's verified training
 manifest and adapter hashes; a zero exit code or CPU validation alone is insufficient.
-POSTPROCESSING currently completes this verification; model registration comes later.
+POSTPROCESSING commits before [output registration](models.md#output-registration-and-recovery).
+SUCCEEDED now commits atomically with the model version, adapter metadata and lineage;
+transient registration failures remain POSTPROCESSING for reconciler retry.
 
 Each external operation uses a per-run database advisory claim. Short state updates
 also lock the run row. The claim transaction retains its connection while external

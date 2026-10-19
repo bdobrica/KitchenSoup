@@ -109,6 +109,16 @@
     for (const model of models) for (const version of model.versions) {
       const option = node('option', `${model.name} (v${version.version})`); option.value = version.id; $('#plan-model').append(option);
     }
+    const baseId = new URLSearchParams(location.search).get('base_model_version_id');
+    if ([...$('#plan-model').options].some(item => item.value === baseId)) $('#plan-model').value = baseId;
+    async function checkBase() {
+      const id = $('#plan-model').value;
+      if (!id) return;
+      const requirement = await request(`/model-versions/${id}/base-requirement`);
+      status.textContent = requirement.message;
+    }
+    $('#plan-model').addEventListener('change', () => checkBase().catch(error => { status.textContent = error.message; }));
+    await checkBase();
     const batches = await Promise.all(datasets.map(dataset => request(`/datasets/${dataset.id}/versions`)));
     versions = batches.flat();
     for (const version of versions) {

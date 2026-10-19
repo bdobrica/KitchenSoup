@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.registry.schemas import ArchiveImport, CatalogEntry, HuggingFaceImport, ModelView
+from app.services.lineage import BaseRequirement, LineageView, base_requirement, graph
 from app.services.models import ModelService
 
 router = APIRouter(prefix="/api/v1", tags=["models"])
@@ -47,3 +48,15 @@ def import_huggingface(body: HuggingFaceImport, service: Service) -> ModelView:
 @router.post("/model-imports/archive", response_model=ModelView, status_code=201)
 def import_archive(body: ArchiveImport, service: Service) -> ModelView:
     return service.import_archive(body)
+
+
+@router.get("/model-versions/{version_id}/lineage", response_model=LineageView)
+def model_lineage(version_id: UUID, service: Service) -> LineageView:
+    with service.factory() as session:
+        return graph(session, version_id, "model")
+
+
+@router.get("/model-versions/{version_id}/base-requirement", response_model=BaseRequirement)
+def base_model_requirement(version_id: UUID, service: Service) -> BaseRequirement:
+    with service.factory() as session:
+        return base_requirement(session, version_id)

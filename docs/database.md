@@ -82,12 +82,12 @@ updates `updated_at` on mutable rows, including updates issued outside the ORM.
 | --- | --- |
 | `model_catalog_entries` | Stable catalog key, repository/revision, license, compatibility details |
 | `models` | Logical model name and description |
-| `model_versions` | Positive version number unique within a model |
-| `model_version_parents` | Unique child/parent version edges; direct self-parenting rejected |
+| `model_versions` | Positive version number unique within a model; optional unique output training-run link |
+| `model_version_parents` | Append-only, acyclic child/parent version edges |
 | `model_sources` | Version source, exact revision where applicable, license provenance, optional catalog/artifact links |
 | `artifact_uploads` | Temporary upload reservation, completion deadline, and registered artifact link |
 | `artifacts` | Bucket/key location, size, format, SHA-256, optional model-version owner |
-| `artifact_derivations` | Separate unique artifact child/parent edges and operation |
+| `artifact_derivations` | Separate append-only, acyclic artifact edges and operation |
 | `datasets` | Logical dataset name, description, optional license |
 | `dataset_versions` | Immutable numbered manifest snapshot, schema label, SHA-256, optional manifest artifact |
 | `dataset_sources` | Raw artifact link, filename, source kind, optional license |
@@ -121,6 +121,7 @@ erDiagram
     datasets ||--o{ dataset_versions : snapshots
     dataset_versions ||--o{ training_runs : input
     model_versions ||--o{ training_runs : base
+    training_runs |o--o| model_versions : result
     execution_targets ||--o{ training_runs : target
     training_runs ||--o{ job_events : history
     training_runs ||--o{ evaluation_results : evaluation
@@ -142,8 +143,9 @@ them. Configuration, URLs, JSON snapshots, and event messages are not places
 for resolved secrets or sensitive runtime payloads. Concrete provider/target
 validation is deferred. Foreign keys establish existence, while deeper workflow
 consistency (such as a deployment's artifact matching its selected model,
-evaluation-suite membership, and transitive lineage cycles) belongs to later
-services and migrations. No resource API is published by this milestone.
+evaluation-suite membership) belongs to later services and migrations.
+Model and artifact lineage inserts now reject transitive cycles in PostgreSQL,
+serialize concurrent checks, and prohibit edge rewrites; see [ADR 0015](adr/0015-training-output-lineage.md). No resource API is published by this milestone.
 
 ## Verification
 

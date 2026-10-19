@@ -39,6 +39,20 @@ async function load() {
     detail.append(element("h2", model.name));
     for (const version of model.versions) {
       detail.append(element("h3", `Version ${version.version}`));
+      const use = element("a", "Use as base model");
+      use.href = `/training-plans?base_model_version_id=${version.id}`;
+      detail.append(use);
+      const requirement = await api(`/model-versions/${version.id}/base-requirement`);
+      detail.append(element("p", requirement.message));
+      if (version.training_run_id) {
+        const run = element("a", "Training run"); run.href = `/training-runs/${version.training_run_id}`; detail.append(run);
+      }
+      await window.showLineage(detail, `/api/v1/model-versions/${version.id}/lineage`, "Model lineage");
+      for (const artifactId of version.artifact_ids) {
+        const link = element("a", "View artifact and derivation history");
+        link.href = `/artifacts?artifact_id=${artifactId}`; detail.append(link);
+        await window.showLineage(detail, `/api/v1/artifacts/${artifactId}/lineage`, "Artifact lineage");
+      }
       for (const source of version.sources) {
         detail.append(licenseLink(source), element("p", `Source: ${source.kind} — ${source.location}`),
           element("p", `Exact revision: ${source.revision || "Uploaded archive (identified by artifact SHA-256)"}`),

@@ -122,10 +122,13 @@ def test_recover_abandoned_preparation_without_relaunch(
 def test_successful_completion_wins_cancel_race_and_keeps_terminal_state(
     versions: DatasetVersionService, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    service, _ = setup_service(versions, tmp_path, monkeypatch)
+    service, backend = setup_service(versions, tmp_path, monkeypatch)
     plan = service.plans.create(inputs(versions))
     run = service.create(RunCreate(plan_id=plan.id))
     JobProcessor(service).tick("worker")
+    from tests.integration.test_lineage import complete_output
+
+    complete_output(service, backend, run)
     service.cancel(run.id)
     monkeypatch.setattr(service.executor, "cancel", lambda *args: JobStatus(state="SUCCEEDED"))
     JobProcessor(service).tick("worker")

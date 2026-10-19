@@ -1,7 +1,8 @@
 """Synchronous executor port, called from application threadpool services."""
 
+from contextlib import AbstractContextManager
 from pathlib import Path
-from typing import Literal, Protocol
+from typing import BinaryIO, Literal, Protocol
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -34,6 +35,7 @@ class TrainingExecutor(Protocol):
     ) -> LogChunk: ...
     def cancel(self, external_id: str, image: str) -> JobStatus: ...
     def cleanup(self, external_id: str, image: str) -> None: ...
+    def output(self, external_id: str, image: str) -> AbstractContextManager[BinaryIO]: ...
 
 
 class InputMaterializer(Protocol):

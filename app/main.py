@@ -136,7 +136,7 @@ def create_app(
                 )
                 queue = JobQueue(settings.valkey_url)
                 app.state.training_run_service = TrainingRunService(
-                    app.state.training_plan_service, executor, queue
+                    app.state.training_plan_service, executor, queue, app.state.artifact_service
                 )
             yield
         finally:

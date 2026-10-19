@@ -104,7 +104,8 @@ A stopped exit-zero container is FAILED unless the matching successful manifest
 and required adapter hashes verify. Validation-only output is never SUCCEEDED.
 Keep the workspace/image stable across restarts and retain output before cleaning
 up host files. Retry terminal attempts by clone; abandoned preparation is never
-replayed on the same workspace. Model registration remains Milestone 14.
+replayed on the same workspace. New successful runs register their model version and adapter during POSTPROCESSING;
+see [model lineage and recovery](models.md#trained-models-and-lineage).
 
 ## Verification
 

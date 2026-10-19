@@ -11,7 +11,8 @@ Configure [LLM providers](docs/providers.md) with secret references and test the
 connections. Choose an intent and save a [reviewed training plan](docs/training-plans.md).
 An offline [Soup runner](docs/soup-training.md) is available for prepared bundles.
 The [local executor](docs/local-training.md) adds queued submission, live progress, logs and cancellation, with independent
-[worker and reconciler processes](docs/jobs.md).
+[worker and reconciler processes](docs/jobs.md). Successful new runs register a model
+and adapter with [source licenses and separate lineage graphs](docs/models.md#trained-models-and-lineage).
 Local FP16 GPU training is [validated on an RTX 2070 SUPER](docs/evidence/fp16-training.md).
 See [dataset versions](docs/dataset-versions.md).
 

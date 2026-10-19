@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.services.artifacts import ArtifactService
+from app.services.lineage import LineageView, graph
 
 router = APIRouter(prefix="/api/v1", tags=["artifacts"])
 
@@ -76,3 +77,9 @@ def get_artifact(artifact_id: UUID, service: Service) -> ArtifactResponse:
 @router.post("/artifacts/{artifact_id}/download", response_model=DownloadResponse)
 def download_artifact(artifact_id: UUID, service: Service) -> DownloadResponse:
     return DownloadResponse(url=service.download(artifact_id), expires_in=service.url_ttl)
+
+
+@router.get("/artifacts/{artifact_id}/lineage", response_model=LineageView)
+def artifact_lineage(artifact_id: UUID, service: Service) -> LineageView:
+    with service.factory() as session:
+        return graph(session, artifact_id, "artifact")

@@ -414,24 +414,26 @@ See [Milestone 13 evidence](docs/evidence/milestone-13.md).
 
 ## Milestone 14 — Model registration and lineage
 
-- [ ] Register successful training output as a model version.
-- [ ] Add model-parent relationship.
-- [ ] Retain base-model license provenance.
-- [ ] Register LoRA adapter artifact.
-- [ ] Add artifact hash/size/format.
-- [ ] Implement artifact derivation relations.
-- [ ] Add model lineage UI.
-- [ ] Add artifact lineage UI.
-- [ ] Add lineage graph visualization with Mermaid or equivalent generated data.
-- [ ] Ensure a newly fine-tuned model appears in model selection.
-- [ ] Add "use as base model" flow.
-- [ ] Add lazy merged-model requirement detection.
+- [x] Register successful training output as a model version.
+- [x] Add model-parent relationship.
+- [x] Retain base-model license provenance.
+- [x] Register LoRA adapter artifact.
+- [x] Add artifact hash/size/format.
+- [x] Implement artifact derivation relations.
+- [x] Add model lineage UI.
+- [x] Add artifact lineage UI.
+- [x] Add lineage graph visualization with Mermaid or equivalent generated data.
+- [x] Ensure a newly fine-tuned model appears in model selection.
+- [x] Add "use as base model" flow.
+- [x] Add lazy merged-model requirement detection.
 
 **Acceptance criteria**
 
-- [ ] A completed run produces a reusable registered model version.
-- [ ] Model and artifact lineage are separately queryable.
-- [ ] License provenance remains visible.
+- [x] A completed run produces a reusable registered model version.
+- [x] Model and artifact lineage are separately queryable.
+- [x] License provenance remains visible.
+
+See [Milestone 14 evidence](docs/evidence/milestone-14.md).
 
 ---
 

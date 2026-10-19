@@ -9,13 +9,15 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app.db.models import ExecutionTarget, JobEvent, TrainingRun
+from app.db.models import ExecutionTarget, JobEvent, ModelVersion, TrainingRun
 from app.executors.base import JobStatus, LogChunk, TrainingExecutor
 from app.executors.local_docker import container_name
 from app.ingestion.sources import SourceError
 from app.jobs.locking import claim
 from app.jobs.queue import JobQueue
 from app.jobs.states import TERMINAL, JobState, validate_transition
+from app.services.artifacts import ArtifactService
+from app.services.outputs import OutputRegistrar
 from app.services.training import TrainingPlanService
 from app.training.schemas import PlanPreview
 
@@ -34,6 +36,8 @@ class RunView(BaseModel):
     external_id: str
     status: JobState
     observation: JobStatus | None = None
+    model_version_id: UUID | None = None
+    model_id: UUID | None = None
 
 
 class RunEvent(BaseModel):
@@ -45,10 +49,15 @@ class RunEvent(BaseModel):
 
 class TrainingRunService:
     def __init__(
-        self, plans: TrainingPlanService, executor: TrainingExecutor, queue: JobQueue | None = None
+        self,
+        plans: TrainingPlanService,
+        executor: TrainingExecutor,
+        queue: JobQueue | None = None,
+        artifacts: ArtifactService | None = None,
     ) -> None:
         self.plans, self.executor, self.factory = plans, executor, plans.factory
         self.queue = queue
+        self.registrar = OutputRegistrar(artifacts, executor) if artifacts is not None else None
 
     def notify(self, identifier: UUID) -> None:
         if self.queue is not None:
@@ -63,7 +72,14 @@ class TrainingRunService:
         session.flush()
 
     @staticmethod
-    def view(row: TrainingRun, observation: JobStatus | None = None) -> RunView:
+    def view(
+        row: TrainingRun, observation: JobStatus | None = None, *, session: Session | None = None
+    ) -> RunView:
+        version = (
+            session.scalar(select(ModelVersion).where(ModelVersion.training_run_id == row.id))
+            if session is not None
+            else None
+        )
         return RunView(
             id=row.id,
             created_at=row.created_at,
@@ -73,12 +89,13 @@ class TrainingRunService:
             external_id=row.external_id or "",
             status=JobState(row.status),
             observation=observation,
+            model_version_id=version.id if version else None,
+            model_id=version.model_id if version else None,
         )
 
-    def row(self, session: Session, identifier: UUID) -> TrainingRun:
-        row = session.scalar(
-            select(TrainingRun).where(TrainingRun.id == identifier).with_for_update()
-        )
+    def row(self, session: Session, identifier: UUID, *, lock: bool = True) -> TrainingRun:
+        query = select(TrainingRun).where(TrainingRun.id == identifier)
+        row = session.scalar(query.with_for_update() if lock else query)
         if row is None or row.resolved_config.get("schema") != "kitchensoup.local-run/v1":
             raise SourceError(404, "Local training run not found")
         return row
@@ -124,11 +141,11 @@ class TrainingRunService:
 
     def get(self, identifier: UUID) -> RunView:
         with self.factory() as session:
-            return self.view(self.row(session, identifier))
+            return self.view(self.row(session, identifier, lock=False), session=session)
 
     def events(self, identifier: UUID, after: int = -1) -> list[RunEvent]:
         with self.factory() as session:
-            self.row(session, identifier)
+            self.row(session, identifier, lock=False)
             return [
                 RunEvent(
                     sequence=e.sequence,
@@ -171,7 +188,7 @@ class TrainingRunService:
     def list_runs(self) -> list[RunView]:
         with self.factory() as session:
             return [
-                self.view(row)
+                self.view(row, session=session)
                 for row in session.scalars(
                     select(TrainingRun)
                     .where(
@@ -183,7 +200,7 @@ class TrainingRunService:
 
     def logs(self, identifier: UUID, stream: Literal["stdout", "stderr"], cursor: int) -> LogChunk:
         with self.factory() as session:
-            row = self.row(session, identifier)
+            row = self.row(session, identifier, lock=False)
             return self.executor.logs(row.external_id or "", stream, cursor)
 
     def cancel(self, identifier: UUID) -> RunView:
@@ -194,7 +211,7 @@ class TrainingRunService:
             elif row.status in (JobState.PREPARING, JobState.SUBMITTED, JobState.RUNNING):
                 self.transition(session, row, JobState.CANCEL_REQUESTED)
             session.commit()
-            result = self.view(row)
+            result = self.view(row, session=session)
         self.notify(identifier)
         return result
 

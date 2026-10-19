@@ -1,14 +1,18 @@
 """Host-local Docker CLI adapter. No shell, remote Docker context or runner credentials."""
 
 import fcntl
+import hashlib
 import json
 import os
 import re
+import stat
 import subprocess
+import tempfile
+import zipfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, BinaryIO, Literal
 from uuid import UUID
 
 from app.executors.base import ExecutorError, InputMaterializer, JobStatus, LogChunk
@@ -301,3 +305,61 @@ class LocalDockerTrainingExecutor:
                 raise ExecutorError("Cancel the run before cleaning up its container")
             if docker(["rm", external_id]).returncode:
                 raise ExecutorError("Docker container cleanup failed")
+
+    @contextmanager
+    def output(self, external_id: str, image: str) -> Iterator[BinaryIO]:
+        """Copy only verified adapter bytes into a bounded, inert ZIP snapshot."""
+        try:
+            with self.lock(external_id) as workspace:
+                if self.status(external_id, image).state != "SUCCEEDED":
+                    raise ExecutorError("Verified training output is unavailable")
+                root = workspace / "output"
+                manifest_bytes = read_bounded(root / "output-manifest.json", 8 * 1024**2)
+                manifest = RunnerManifest.model_validate_json(manifest_bytes)
+                paths = [item.path for item in manifest.adapters]
+                if len(paths) != len(set(paths)) or len(paths) > 4096:
+                    raise ExecutorError("Invalid adapter inventory")
+                if sum(item.size_bytes for item in manifest.adapters) > 8 * 1024**3:
+                    raise ExecutorError("Adapter output exceeds registration limit")
+                with tempfile.TemporaryFile() as bundle:
+                    with zipfile.ZipFile(bundle, "w", compression=zipfile.ZIP_STORED) as archive:
+                        archive.writestr(zipfile.ZipInfo("output-manifest.json"), manifest_bytes)
+                        for item in sorted(manifest.adapters, key=lambda item: item.path):
+                            path = root / item.path
+                            if (
+                                not item.path.startswith("adapter/")
+                                or path.suffix
+                                not in {
+                                    ".json",
+                                    ".safetensors",
+                                    ".txt",
+                                    ".model",
+                                    ".jinja",
+                                    ".tiktoken",
+                                }
+                                or any(parent.is_symlink() for parent in [path, *path.parents])
+                            ):
+                                raise ExecutorError("Unsafe adapter output path")
+                            descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+                            with os.fdopen(descriptor, "rb") as source:
+                                if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
+                                    raise ExecutorError("Adapter output must be a regular file")
+                                digest, count = hashlib.sha256(), 0
+                                info = zipfile.ZipInfo(item.path)
+                                with archive.open(info, "w", force_zip64=True) as target:
+                                    while chunk := source.read(1024**2):
+                                        count += len(chunk)
+                                        if count > item.size_bytes:
+                                            raise ExecutorError(
+                                                "Adapter changed during registration"
+                                            )
+                                        digest.update(chunk)
+                                        target.write(chunk)
+                                if count != item.size_bytes or digest.hexdigest() != item.sha256:
+                                    raise ExecutorError("Adapter changed during registration")
+                    bundle.seek(0)
+                    yield bundle
+        except ExecutorError:
+            raise
+        except (OSError, ValueError):
+            raise ExecutorError("Training output could not be read safely") from None

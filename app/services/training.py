@@ -33,6 +33,12 @@ class TrainingPlanService:
         dataset = session.get(DatasetVersion, spec.dataset_version_id)
         if version is None or dataset is None:
             raise SourceError(404, "Model version or dataset version not found")
+        if version.training_run_id is not None:
+            raise SourceError(
+                409,
+                "This model requires a merged representation before further training. "
+                "Merge execution is planned for Milestone 17.",
+            )
         sources = list(
             session.scalars(select(ModelSource).where(ModelSource.model_version_id == version.id))
         )

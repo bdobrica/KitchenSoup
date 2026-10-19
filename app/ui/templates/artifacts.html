@@ -12,5 +12,6 @@
 <p id="artifact-hash"></p>
 <button id="artifact-download" type="button" hidden>Download stored file</button>
 <noscript>This upload flow requires JavaScript.</noscript>
+<script defer src="{{ url_for('static', path='/lineage.js') }}"></script>
 <script defer src="{{ url_for('static', path='/artifacts.js') }}"></script>
 {% endblock %}

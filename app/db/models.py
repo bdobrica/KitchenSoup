@@ -69,6 +69,9 @@ class ModelVersion(Entity):
         CheckConstraint("version > 0", name="positive_version"),
     )
     model_id: Mapped[UUID] = mapped_column(ForeignKey("models.id"), index=True)
+    training_run_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("training_runs.id", use_alter=True), unique=True
+    )
     version: Mapped[int]
     description: Mapped[str | None]
 

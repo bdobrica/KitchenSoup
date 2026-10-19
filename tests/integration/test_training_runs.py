@@ -40,7 +40,7 @@ def setup_service(
     executor = LocalDockerTrainingExecutor(
         tmp_path / "jobs", RegisteredInputMaterializer(versions.datasets.artifacts)
     )
-    return TrainingRunService(plans, executor), backend
+    return TrainingRunService(plans, executor, artifacts=versions.datasets.artifacts), backend
 
 
 def test_saved_plan_to_run_api_status_logs_cancel_cleanup_and_restart(

@@ -144,6 +144,47 @@
         "title": "ArtifactResponse",
         "type": "object"
       },
+      "BaseRequirement": {
+        "properties": {
+          "artifact_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Id"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "model_version_id": {
+            "format": "uuid",
+            "title": "Model Version Id",
+            "type": "string"
+          },
+          "ready": {
+            "title": "Ready",
+            "type": "boolean"
+          },
+          "requires_merge": {
+            "title": "Requires Merge",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "model_version_id",
+          "ready",
+          "requires_merge",
+          "message"
+        ],
+        "title": "BaseRequirement",
+        "type": "object"
+      },
       "CatalogEntry": {
         "additionalProperties": false,
         "properties": {
@@ -1285,6 +1326,147 @@
         "title": "JobStatus",
         "type": "object"
       },
+      "LineageEdge": {
+        "properties": {
+          "child_id": {
+            "format": "uuid",
+            "title": "Child Id",
+            "type": "string"
+          },
+          "operation": {
+            "title": "Operation",
+            "type": "string"
+          },
+          "parent_id": {
+            "format": "uuid",
+            "title": "Parent Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "parent_id",
+          "child_id",
+          "operation"
+        ],
+        "title": "LineageEdge",
+        "type": "object"
+      },
+      "LineageNode": {
+        "properties": {
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Format"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size Bytes"
+          },
+          "sources": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/SourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "LineageNode",
+        "type": "object"
+      },
+      "LineageView": {
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/LineageEdge"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "model",
+              "artifact"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "mermaid": {
+            "title": "Mermaid",
+            "type": "string"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/LineageNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "root_id": {
+            "format": "uuid",
+            "title": "Root Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "root_id",
+          "nodes",
+          "edges",
+          "mermaid"
+        ],
+        "title": "LineageView",
+        "type": "object"
+      },
       "LogChunk": {
         "properties": {
           "cursor": {
@@ -1853,6 +2035,30 @@
           "image_digest": {
             "title": "Image Digest",
             "type": "string"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "model_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version Id"
           },
           "observation": {
             "anyOf": [
@@ -2668,10 +2874,28 @@
       "VersionView": {
         "additionalProperties": false,
         "properties": {
+          "artifact_ids": {
+            "default": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Artifact Ids",
+            "type": "array"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "parent_ids": {
+            "default": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Parent Ids",
+            "type": "array"
           },
           "sources": {
             "items": {
@@ -2679,6 +2903,18 @@
             },
             "title": "Sources",
             "type": "array"
+          },
+          "training_run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Training Run Id"
           },
           "version": {
             "title": "Version",
@@ -2866,6 +3102,49 @@
           }
         },
         "summary": "Download Artifact",
+        "tags": [
+          "artifacts"
+        ]
+      }
+    },
+    "/api/v1/artifacts/{artifact_id}/lineage": {
+      "get": {
+        "operationId": "artifact_lineage_api_v1_artifacts__artifact_id__lineage_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineageView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Artifact Lineage",
         "tags": [
           "artifacts"
         ]
@@ -3933,6 +4212,92 @@
           }
         },
         "summary": "Import Huggingface",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/api/v1/model-versions/{version_id}/base-requirement": {
+      "get": {
+        "operationId": "base_model_requirement_api_v1_model_versions__version_id__base_requirement_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseRequirement"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Base Model Requirement",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/api/v1/model-versions/{version_id}/lineage": {
+      "get": {
+        "operationId": "model_lineage_api_v1_model_versions__version_id__lineage_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineageView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Model Lineage",
         "tags": [
           "models"
         ]

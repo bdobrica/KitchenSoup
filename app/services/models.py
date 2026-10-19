@@ -5,7 +5,14 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.db.models import Model, ModelCatalogEntry, ModelSource, ModelVersion
+from app.db.models import (
+    Artifact,
+    Model,
+    ModelCatalogEntry,
+    ModelSource,
+    ModelVersion,
+    ModelVersionParent,
+)
 from app.db.session import unit_of_work
 from app.registry.huggingface import ModelResolver, ResolvedModel
 from app.registry.inspection import RegistryError, inspect_archive
@@ -83,7 +90,28 @@ class ModelService:
                     .order_by(ModelSource.created_at, ModelSource.id)
                 )
             ]
-            versions.append(VersionView(id=version.id, version=version.version, sources=sources))
+            versions.append(
+                VersionView(
+                    id=version.id,
+                    version=version.version,
+                    sources=sources,
+                    training_run_id=version.training_run_id,
+                    artifact_ids=list(
+                        session.scalars(
+                            select(Artifact.id)
+                            .where(Artifact.model_version_id == version.id)
+                            .order_by(Artifact.id)
+                        )
+                    ),
+                    parent_ids=list(
+                        session.scalars(
+                            select(ModelVersionParent.parent_id)
+                            .where(ModelVersionParent.child_id == version.id)
+                            .order_by(ModelVersionParent.parent_id)
+                        )
+                    ),
+                )
+            )
         return ModelView(id=row.id, name=row.name, description=row.description, versions=versions)
 
     def choose(self, key: str) -> ModelView:
@@ -99,7 +127,11 @@ class ModelService:
                 select(Model)
                 .join(ModelVersion)
                 .join(ModelSource)
-                .where(ModelSource.catalog_entry_id == row.id, ModelSource.revision == row.revision)
+                .where(
+                    ModelSource.catalog_entry_id == row.id,
+                    ModelSource.revision == row.revision,
+                    ModelVersion.training_run_id.is_(None),
+                )
             )
             if existing is not None:
                 return self._view(session, existing)

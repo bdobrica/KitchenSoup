@@ -77,6 +77,9 @@ class VersionView(StrictModel):
     id: UUID
     version: int
     sources: list[SourceView]
+    training_run_id: UUID | None = None
+    artifact_ids: list[UUID] = []
+    parent_ids: list[UUID] = []
 
 
 class ModelView(StrictModel):

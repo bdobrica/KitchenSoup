@@ -29,6 +29,12 @@
       $('#run-detail').hidden = false;
       const run = await request(`/${id}`);
       $('#run-status').textContent = `Status: ${run.status}${run.observation?.message ? '. ' + run.observation.message : ''}`;
+      let modelLink = $('#run-model');
+      if (run.model_id && !modelLink) {
+        modelLink = document.createElement('a'); modelLink.id = 'run-model';
+        modelLink.textContent = 'Open trained model and lineage'; $('#run-detail').prepend(modelLink);
+      }
+      if (modelLink && run.model_id) modelLink.href = `/models/${run.model_id}`;
       $('#run-json').textContent = JSON.stringify(run, null, 2);
       $('#run-plan').href = `/training-plans/${run.plan_id}`;
       const active = !terminal.includes(run.status);

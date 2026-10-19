@@ -7,7 +7,7 @@ from uuid import UUID
 import pytest
 
 from app.executors import local_docker
-from app.executors.base import ExecutorError
+from app.executors.base import ExecutorError, JobStatus
 from app.executors.local_docker import LocalDockerTrainingExecutor, container_name
 from app.training.runner import execute
 from app.training.schemas import PlanPreview
@@ -182,6 +182,22 @@ def test_success_requires_manifest_identity_and_adapter_hashes(
     assert result == 0
     backend.state = "exited"
     assert executor.status(external, IMAGE).state == "SUCCEEDED"
+    with executor.output(external, IMAGE) as first:
+        first_bytes = first.read()
+    with executor.output(external, IMAGE) as second:
+        assert second.read() == first_bytes
+    original_status = executor.status
+
+    def changed_after_verification(name: str, image: str) -> JobStatus:
+        result = original_status(name, image)
+        (output / "adapter/adapter_model.safetensors").write_bytes(b"tampered")
+        return result
+
+    monkeypatch.setattr(executor, "status", changed_after_verification)
+    with pytest.raises(ExecutorError, match="changed during registration"):
+        with executor.output(external, IMAGE):
+            pytest.fail("Changed bytes escaped the verified output stream")
+    monkeypatch.setattr(executor, "status", original_status)
     (output / "adapter/adapter_model.safetensors").write_bytes(b"tampered")
     assert executor.status(external, IMAGE).state == "FAILED"
 

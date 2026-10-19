@@ -48,9 +48,17 @@ form.addEventListener("submit", async (event) => {
 
 download.addEventListener("click", async () => {
   try {
-    const result = await api(`/api/v1/artifacts/${artifactId}/download`);
+    const result = await api(`/api/v1/artifacts/${encodeURIComponent(artifactId)}/download`);
     window.location.assign(result.url);
   } catch (error) {
     statusText.textContent = error.message;
   }
 });
+
+const selectedArtifact = new URLSearchParams(location.search).get("artifact_id");
+if (selectedArtifact) {
+  artifactId = selectedArtifact;
+  download.hidden = false;
+  window.showLineage(document.querySelector("main"), `/api/v1/artifacts/${encodeURIComponent(selectedArtifact)}/lineage`, "Artifact lineage")
+    .catch(error => { statusText.textContent = error.message; });
+}

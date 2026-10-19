@@ -9,6 +9,7 @@ from app.executors.base import ExecutorError, JobStatus
 from app.jobs.locking import claim
 from app.jobs.states import TERMINAL, JobState
 from app.services.runs import TrainingRunService
+from app.storage.base import StorageError
 from app.training.schemas import PlanPreview
 
 
@@ -53,6 +54,9 @@ class JobProcessor:
                 name, image = row.external_id or "", row.resolved_config["image_digest"]
                 plan = PlanPreview.model_validate(row.resolved_config["plan"])
             try:
+                if state == JobState.POSTPROCESSING:
+                    self.finish(identifier)
+                    return
                 if role == "worker" and state == JobState.QUEUED:
                     with self.service.factory() as session:
                         row = self.service.row(session, identifier)
@@ -65,7 +69,7 @@ class JobProcessor:
                         external = self.service.executor.submit(identifier, plan, image)
                         if external != name:
                             raise ExecutorError("Unexpected external identity")
-                    except ExecutorError:
+                    except (ExecutorError, StorageError):
                         # Ambiguous launches are inspected; never resubmit an attempt.
                         self.recover(identifier, name, image)
                     else:
@@ -88,7 +92,7 @@ class JobProcessor:
                     JobState.POSTPROCESSING,
                 ):
                     self.observe(identifier, self.service.executor.status(name, image))
-            except ExecutorError:
+            except (ExecutorError, StorageError):
                 # Unavailability is not absence or failure; preserve durable state
                 # and retry on the next database scan. Do not persist raw diagnostics.
                 return
@@ -148,7 +152,19 @@ class JobProcessor:
                 if observation.state == "SUCCEEDED":
                     if row.status in (JobState.RUNNING, JobState.CANCEL_REQUESTED):
                         change(JobState.POSTPROCESSING)
-                    # The executor has verified the manifest and adapter hashes.
-                    # Registry output import is deliberately Milestone 14.
-                    change(JobState.SUCCEEDED)
+                    # Commit POSTPROCESSING before storage I/O so a restart retries
+                    # registration without resubmitting or losing external success.
+            session.commit()
+        if observation.state == "SUCCEEDED":
+            self.finish(identifier)
+
+    def finish(self, identifier: UUID) -> None:
+        with self.service.factory() as session:
+            row = self.service.row(session, identifier)
+            if row.status != JobState.POSTPROCESSING:
+                return
+            if self.service.registrar is None:
+                raise ExecutorError("Output registration requires artifact storage")
+            self.service.registrar.register(session, row)
+            self.service.transition(session, row, JobState.SUCCEEDED)
             session.commit()
