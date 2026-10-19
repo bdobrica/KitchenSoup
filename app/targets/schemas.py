@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from app.providers.schemas import ProviderConfig
 from app.targets.kubernetes_schemas import KubernetesConfig
+from app.targets.sagemaker_schemas import SageMakerConfig
 
 
 class SshConfig(BaseModel):
@@ -53,19 +54,32 @@ class SshConfig(BaseModel):
 class TargetCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str = Field(min_length=1, max_length=200, pattern=r"\S")
-    kind: Literal["ssh_docker", "kubernetes"] = "ssh_docker"
+    kind: Literal["ssh_docker", "kubernetes", "sagemaker"] = "ssh_docker"
     credential_ref: str = Field(max_length=512)
-    configuration: SshConfig | KubernetesConfig
+    configuration: SshConfig | KubernetesConfig | SageMakerConfig
 
     @model_validator(mode="after")
     def matching_kind(self) -> "TargetCreate":
-        if (self.kind == "ssh_docker") != isinstance(self.configuration, SshConfig):
+        expected = {
+            "ssh_docker": SshConfig,
+            "kubernetes": KubernetesConfig,
+            "sagemaker": SageMakerConfig,
+        }
+        if not isinstance(self.configuration, expected[self.kind]):
             raise ValueError("Target kind must match its versioned configuration")
+        if self.kind == "sagemaker" and not self.credential_ref.startswith("aws-profile://"):
+            raise ValueError("SageMaker requires an approved AWS profile reference")
+        if self.kind != "sagemaker" and self.credential_ref.startswith("aws-profile://"):
+            raise ValueError("AWS profiles are only supported for SageMaker")
         return self
 
     @field_validator("credential_ref")
     @classmethod
     def reference(cls, value: str) -> str:
+        import re
+
+        if re.fullmatch(r"aws-profile://[A-Za-z0-9_-][A-Za-z0-9_.-]{0,127}", value):
+            return value
         ProviderConfig.validate_reference(value)
         return value
 

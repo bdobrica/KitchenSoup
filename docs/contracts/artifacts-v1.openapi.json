@@ -2652,6 +2652,13 @@
             "title": "External Id",
             "type": "string"
           },
+          "external_references": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "External References",
+            "type": "object"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -2718,6 +2725,106 @@
           "status"
         ],
         "title": "RunView",
+        "type": "object"
+      },
+      "SageMakerConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "instance_type": {
+            "default": "ml.g4dn.xlarge",
+            "enum": [
+              "ml.g4dn.xlarge",
+              "ml.g5.xlarge",
+              "ml.g6.xlarge"
+            ],
+            "title": "Instance Type",
+            "type": "string"
+          },
+          "max_runtime_seconds": {
+            "default": 600,
+            "maximum": 3600.0,
+            "minimum": 60.0,
+            "title": "Max Runtime Seconds",
+            "type": "integer"
+          },
+          "region": {
+            "pattern": "^[a-z]{2}(?:-[a-z]+)+-[0-9]$",
+            "title": "Region",
+            "type": "string"
+          },
+          "role_arn": {
+            "pattern": "^arn:aws:iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_/-]+$",
+            "title": "Role Arn",
+            "type": "string"
+          },
+          "schema": {
+            "const": "kitchensoup.sagemaker-target/v1",
+            "default": "kitchensoup.sagemaker-target/v1",
+            "title": "Schema",
+            "type": "string"
+          },
+          "staging_bucket": {
+            "pattern": "^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$",
+            "title": "Staging Bucket",
+            "type": "string"
+          },
+          "staging_prefix": {
+            "default": "kitchensoup-training/v1",
+            "maxLength": 200,
+            "pattern": "^[a-zA-Z0-9_-]+(?:/[a-zA-Z0-9_-]+)*$",
+            "title": "Staging Prefix",
+            "type": "string"
+          },
+          "training_image": {
+            "maxLength": 255,
+            "pattern": "^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$",
+            "title": "Training Image",
+            "type": "string"
+          },
+          "volume_gib": {
+            "default": 30,
+            "maximum": 100.0,
+            "minimum": 20.0,
+            "title": "Volume Gib",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "region",
+          "role_arn",
+          "training_image",
+          "staging_bucket"
+        ],
+        "title": "SageMakerConfig",
+        "type": "object"
+      },
+      "SageMakerTargetTest": {
+        "properties": {
+          "gpu": {
+            "default": "Not probed; check GPU quota, job permissions and PassRole separately",
+            "title": "Gpu",
+            "type": "string"
+          },
+          "message": {
+            "default": "Regional unversioned S3 staging and pinned ECR image verified",
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "training_image_digest": {
+            "title": "Training Image Digest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "training_image_digest"
+        ],
+        "title": "SageMakerTargetTest",
         "type": "object"
       },
       "SourceAttach": {
@@ -2985,6 +3092,9 @@
               },
               {
                 "$ref": "#/components/schemas/KubernetesConfig"
+              },
+              {
+                "$ref": "#/components/schemas/SageMakerConfig"
               }
             ],
             "title": "Configuration"
@@ -2998,7 +3108,8 @@
             "default": "ssh_docker",
             "enum": [
               "ssh_docker",
-              "kubernetes"
+              "kubernetes",
+              "sagemaker"
             ],
             "title": "Kind",
             "type": "string"
@@ -3073,6 +3184,9 @@
               },
               {
                 "$ref": "#/components/schemas/KubernetesConfig"
+              },
+              {
+                "$ref": "#/components/schemas/SageMakerConfig"
               }
             ],
             "title": "Configuration"
@@ -3096,7 +3210,8 @@
             "default": "ssh_docker",
             "enum": [
               "ssh_docker",
-              "kubernetes"
+              "kubernetes",
+              "sagemaker"
             ],
             "title": "Kind",
             "type": "string"
@@ -5858,6 +5973,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/KubernetesTargetTest"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SageMakerTargetTest"
                     }
                   ],
                   "title": "Response Test Target Api V1 Execution Targets  Identifier  Test Post"

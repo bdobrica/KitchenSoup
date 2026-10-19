@@ -1,0 +1,71 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "instance_type": {
+      "default": "ml.g4dn.xlarge",
+      "enum": [
+        "ml.g4dn.xlarge",
+        "ml.g5.xlarge",
+        "ml.g6.xlarge"
+      ],
+      "title": "Instance Type",
+      "type": "string"
+    },
+    "max_runtime_seconds": {
+      "default": 600,
+      "maximum": 3600,
+      "minimum": 60,
+      "title": "Max Runtime Seconds",
+      "type": "integer"
+    },
+    "region": {
+      "pattern": "^[a-z]{2}(?:-[a-z]+)+-[0-9]$",
+      "title": "Region",
+      "type": "string"
+    },
+    "role_arn": {
+      "pattern": "^arn:aws:iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_/-]+$",
+      "title": "Role Arn",
+      "type": "string"
+    },
+    "schema": {
+      "const": "kitchensoup.sagemaker-target/v1",
+      "default": "kitchensoup.sagemaker-target/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "staging_bucket": {
+      "pattern": "^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$",
+      "title": "Staging Bucket",
+      "type": "string"
+    },
+    "staging_prefix": {
+      "default": "kitchensoup-training/v1",
+      "maxLength": 200,
+      "pattern": "^[a-zA-Z0-9_-]+(?:/[a-zA-Z0-9_-]+)*$",
+      "title": "Staging Prefix",
+      "type": "string"
+    },
+    "training_image": {
+      "maxLength": 255,
+      "pattern": "^[0-9]{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$",
+      "title": "Training Image",
+      "type": "string"
+    },
+    "volume_gib": {
+      "default": 30,
+      "maximum": 100,
+      "minimum": 20,
+      "title": "Volume Gib",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "region",
+    "role_arn",
+    "training_image",
+    "staging_bucket"
+  ],
+  "title": "SageMakerConfig",
+  "type": "object"
+}

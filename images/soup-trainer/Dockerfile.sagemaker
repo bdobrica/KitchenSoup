@@ -1,0 +1,8 @@
+ARG TRAINER_IMAGE=kitchensoup-soup-trainer:local
+FROM ${TRAINER_IMAGE}
+ARG TRAINER_ID
+LABEL org.kitchensoup.trainer.digest=${TRAINER_ID}
+USER root
+RUN ln -s /opt/ml/input/data/bundle /input && ln -s /opt/ml/output/kitchensoup /output
+COPY images/soup-trainer/sagemaker_entrypoint.py /runner/sagemaker_entrypoint.py
+ENTRYPOINT ["python", "/runner/sagemaker_entrypoint.py"]

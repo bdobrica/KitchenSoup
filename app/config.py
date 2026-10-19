@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     deployment_workspace: str = ".local-deployments"
     deployment_image: str = "kitchensoup-vllm:local"
     kubernetes_execution_enabled: bool = False
+    sagemaker_execution_enabled: bool = False
+    aws_approved_profiles: str = ""
+    sagemaker_staging_workspace: str = ".sagemaker-staging"
     kubernetes_secret_directory: str = "/run/secrets"
     kubernetes_env_names: str = ""
     kubernetes_staging_workspace: str = ".kubernetes-staging"

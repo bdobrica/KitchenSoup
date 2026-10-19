@@ -14,6 +14,8 @@ The [local executor](docs/local-training.md) adds queued submission, live progre
 [worker and reconciler processes](docs/jobs.md). Successful new runs register a model
 and adapter with [source licenses and separate lineage graphs](docs/models.md#trained-models-and-lineage).
 Local FP16 GPU training is [validated on an RTX 2070 SUPER](docs/evidence/fp16-training.md).
+An opt-in [SageMaker training adapter](docs/sagemaker-training.md) is implemented;
+live AWS GPU validation awaits an approved training quota.
 See [dataset versions](docs/dataset-versions.md).
 
 Local [paired evaluation](docs/evaluations.md) compares base and LoRA responses,

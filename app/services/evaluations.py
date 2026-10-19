@@ -115,7 +115,7 @@ class EvaluationService:
                 from app.db.models import ExecutionTarget
 
                 target = session.get(ExecutionTarget, run.execution_target_id)
-                if target is not None and target.kind in ("ssh_docker", "kubernetes"):
+                if target is not None and target.kind in ("ssh_docker", "kubernetes", "sagemaker"):
                     raise SourceError(
                         409,
                         "Paired evaluation requires a local training run; "

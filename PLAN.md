@@ -1586,7 +1586,9 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 Milestone 23 error UX and safety polish is implemented; see
 [errors and object retention](docs/safety-and-retention.md).
-Milestones 21–22 (SageMaker) remain pending until an AWS account is available.
+Milestone 21 SageMaker training is implemented; live AWS GPU acceptance awaits an
+approved training-instance quota. See [setup and cost controls](docs/sagemaker-training.md).
+Milestone 22 (SageMaker serving) remains unimplemented.
 The next non-AWS implementation milestone is Milestone 24: documentation and release polish.
 Kubernetes vLLM playgrounds and private API access are documented in
 [docs/kubernetes-serving.md](docs/kubernetes-serving.md).

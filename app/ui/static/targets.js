@@ -11,9 +11,9 @@
     const targets = await api(''); el('target-list').replaceChildren();
     for (const target of targets) {
       const row = document.createElement('p'), button = document.createElement('button'), result = document.createElement('span');
-      const location = target.kind === 'kubernetes' ? `Kubernetes · ${target.configuration.namespace}` : `${target.configuration.username}@${target.configuration.host}:${target.configuration.port}`;
+      const location = target.kind === 'sagemaker' ? `SageMaker · ${target.configuration.region} · ${target.configuration.instance_type}` : target.kind === 'kubernetes' ? `Kubernetes · ${target.configuration.namespace}` : `${target.configuration.username}@${target.configuration.host}:${target.configuration.port}`;
       row.append(document.createTextNode(`${target.name} · ${location} · ${target.id} `));
-      button.textContent = target.kind === 'kubernetes' ? 'Test namespace and GPU capacity' : 'Test SSH, Docker and GPU'; button.type = 'button';
+      button.textContent = target.kind === 'sagemaker' ? 'Check S3 and ECR (no training job)' : target.kind === 'kubernetes' ? 'Test namespace and GPU capacity' : 'Test SSH, Docker and GPU'; button.type = 'button';
       button.onclick = async () => {
         button.disabled = true; result.textContent = ' Checking…';
         try { const value = await api('/' + target.id + '/test', 'POST'); result.textContent = ` ${value.message}. ${value.gpu}`; }
@@ -37,6 +37,15 @@
       if (data.deployment_image) configuration.deployment_image = data.deployment_image;
       await api('', 'POST', {name: data.name, kind: 'kubernetes', credential_ref: data.credential_ref, configuration});
       el('target-status').textContent = 'Kubernetes target created. Test it before selecting it for training.'; await load();
+    } catch (e) { error(e); } finally { button.disabled = false; }
+  });
+  el('sagemaker-target-form').addEventListener('submit', async event => {
+    event.preventDefault(); const button = event.submitter; button.disabled = true;
+    try {
+      const data = Object.fromEntries(new FormData(event.target));
+      const configuration = {schema: 'kitchensoup.sagemaker-target/v1', region: data.region, role_arn: data.role_arn, training_image: data.training_image, staging_bucket: data.staging_bucket, staging_prefix: data.staging_prefix, instance_type: data.instance_type, max_runtime_seconds: Number(data.max_runtime_seconds), volume_gib: Number(data.volume_gib)};
+      await api('', 'POST', {name: data.name, kind: 'sagemaker', credential_ref: data.credential_ref, configuration});
+      el('target-status').textContent = 'SageMaker target created. Check S3/ECR access and GPU quota before submitting a paid run.'; await load();
     } catch (e) { error(e); } finally { button.disabled = false; }
   });
   load().catch(error);

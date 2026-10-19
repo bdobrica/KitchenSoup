@@ -17,11 +17,13 @@ from app.deployments.ssh import SshDockerDeploymentExecutor
 from app.executors.base import ExecutorError, TrainingExecutor
 from app.executors.kubernetes import KubernetesTrainingExecutor
 from app.executors.materialize import RegisteredInputMaterializer
+from app.executors.sagemaker import SageMakerTrainingExecutor
 from app.executors.ssh_docker import SshDockerTrainingExecutor
 from app.ingestion.sources import SourceError
 from app.services.artifacts import ArtifactService
 from app.targets.kubernetes import KubernetesTransport
 from app.targets.kubernetes_schemas import KubernetesConfig
+from app.targets.sagemaker_schemas import SageMakerConfig, SageMakerTargetTest
 from app.targets.schemas import SshConfig, TargetCreate, TargetTest, TargetView
 from app.targets.ssh import SshTransport
 
@@ -43,21 +45,24 @@ class TargetService:
 
     @staticmethod
     def view(row: ExecutionTarget) -> TargetView:
+        config: type[SshConfig] | type[KubernetesConfig] | type[SageMakerConfig] = SshConfig
+        if row.kind == "kubernetes":
+            config = KubernetesConfig
+        elif row.kind == "sagemaker":
+            config = SageMakerConfig
         return TargetView(
             id=row.id,
             created_at=row.created_at,
             name=row.name,
             kind=row.kind,
             credential_ref=row.credential_ref or "",
-            configuration=(
-                KubernetesConfig if row.kind == "kubernetes" else SshConfig
-            ).model_validate(row.configuration),
+            configuration=config.model_validate(row.configuration),
         )
 
     def get(self, identifier: UUID) -> TargetView:
         with self.factory() as session:
             row = session.get(ExecutionTarget, identifier)
-            if row is None or row.kind not in ("ssh_docker", "kubernetes"):
+            if row is None or row.kind not in ("ssh_docker", "kubernetes", "sagemaker"):
                 raise SourceError(404, "Execution target not found")
             return self.view(row)
 
@@ -67,13 +72,15 @@ class TargetService:
                 self.view(row)
                 for row in session.scalars(
                     select(ExecutionTarget)
-                    .where(ExecutionTarget.kind.in_(("ssh_docker", "kubernetes")))
+                    .where(ExecutionTarget.kind.in_(("ssh_docker", "kubernetes", "sagemaker")))
                     .order_by(ExecutionTarget.created_at, ExecutionTarget.id)
                 )
             ]
 
     def create(self, body: TargetCreate) -> TargetView:
-        if body.kind == "kubernetes":
+        if body.kind == "sagemaker":
+            self.sagemaker_enabled()
+        elif body.kind == "kubernetes":
             self.kubernetes_enabled()
         else:
             self.enabled()
@@ -124,6 +131,16 @@ class TargetService:
         )
 
     def training(self, identifier: UUID) -> TrainingExecutor:
+        target = self.get(identifier)
+        if isinstance(target.configuration, SageMakerConfig):
+            self.sagemaker_enabled()
+            return SageMakerTrainingExecutor(
+                Path(self.settings.sagemaker_staging_workspace) / str(identifier),
+                RegisteredInputMaterializer(self.artifacts),
+                target.configuration,
+                target.credential_ref,
+                {p.strip() for p in self.settings.aws_approved_profiles.split(",") if p.strip()},
+            )
         if self.get(identifier).kind == "kubernetes":
             self.kubernetes_enabled()
             kubernetes_executor = KubernetesTrainingExecutor(
@@ -154,6 +171,8 @@ class TargetService:
         return executor
 
     def deployment(self, identifier: UUID) -> DeploymentExecutor:
+        if self.get(identifier).kind == "sagemaker":
+            raise SourceError(409, "SageMaker serving is not implemented; use a training target")
         if self.get(identifier).kind == "kubernetes":
             self.kubernetes_enabled()
             return KubernetesDeploymentExecutor(
@@ -167,7 +186,12 @@ class TargetService:
             self.transport(identifier),
         )
 
-    def test(self, identifier: UUID) -> TargetTest | KubernetesTargetTest:
+    def test(self, identifier: UUID) -> TargetTest | KubernetesTargetTest | SageMakerTargetTest:
+        if self.get(identifier).kind == "sagemaker":
+            executor = self.training(identifier)
+            assert isinstance(executor, SageMakerTrainingExecutor)
+            executor.preflight()
+            return SageMakerTargetTest(training_image_digest=executor.image_identity())
         if self.get(identifier).kind == "kubernetes":
             kube = self.kubernetes_transport(identifier)
             # Namespace-scoped Pod view works with the documented least-privilege Role.
@@ -251,3 +275,7 @@ class TargetService:
             training_image_digest=training,
             deployment_image_digest=serving,
         )
+
+    def sagemaker_enabled(self) -> None:
+        if not self.settings.sagemaker_execution_enabled:
+            raise SourceError(503, "SageMaker execution is disabled by the operator")

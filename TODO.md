@@ -599,24 +599,29 @@ See [Milestone 20 evidence](docs/evidence/milestone-20.md).
 
 ## Milestone 21 — SageMaker training
 
-- [ ] Add AWS SDK dependency.
-- [ ] Implement `aws-profile://` credential reference.
-- [ ] Add SageMaker execution-target configuration.
-- [ ] Add ECR image configuration.
-- [ ] Add AWS S3 staging support.
-- [ ] Implement `SageMakerTrainingExecutor`.
-- [ ] Create training job.
-- [ ] Map input channels.
-- [ ] Map output location.
-- [ ] Normalize `DescribeTrainingJob` states.
-- [ ] Implement cancellation.
-- [ ] Surface CloudWatch/log references where practical.
-- [ ] Import completed model artifact into KitchenSoup registry.
-- [ ] Record SageMaker external identifiers.
+- [x] Add AWS SDK dependency (reuse the existing boto3 dependency).
+- [x] Implement `aws-profile://` credential reference.
+- [x] Add SageMaker execution-target configuration.
+- [x] Add ECR image configuration.
+- [x] Add AWS S3 staging support.
+- [x] Implement `SageMakerTrainingExecutor`.
+- [x] Create training job.
+- [x] Map input channels.
+- [x] Map output location.
+- [x] Normalize `DescribeTrainingJob` states.
+- [x] Implement cancellation.
+- [x] Surface CloudWatch/log references where practical.
+- [x] Import completed model artifact into KitchenSoup registry.
+- [x] Record SageMaker external identifiers.
 
 **Acceptance criteria**
 
 - [ ] Same logical KitchenSoup run can execute as a SageMaker Training Job.
+
+Implementation and local lifecycle/FP16 wrapper checks are complete; live AWS GPU
+acceptance awaits an approved regional training-instance quota. See
+[setup and cost controls](docs/sagemaker-training.md) and
+[validation evidence](docs/evidence/milestone-21.md).
 
 ---
 

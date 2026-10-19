@@ -36,6 +36,23 @@
 <label>Tolerations (JSON) <textarea name="tolerations">[]</textarea></label>
 </details><button>Create Kubernetes target</button>
 </form>
+<h2>SageMaker training target</h2>
+<p>Training on AWS uploads the selected dataset and model bytes to your configured AWS bucket and incurs charges. Provision a regional private ECR trainer image, an unversioned S3 staging bucket, an execution role and a small GPU quota first. Enable SageMaker execution and approve an AWS profile in application settings. Credentials remain on the control plane.</p>
+<form id="sagemaker-target-form">
+<label>Name <input name="name" required maxlength="200"></label>
+<label>AWS profile reference <input name="credential_ref" value="aws-profile://default" required></label>
+<label>AWS region <input name="region" value="us-east-2" required></label>
+<label>Execution role ARN <input name="role_arn" required></label>
+<label>ECR trainer image pinned by digest <input name="training_image" required></label>
+<label>Unversioned staging bucket <input name="staging_bucket" required></label>
+<details><summary>Advanced</summary>
+<label>Staging prefix <input name="staging_prefix" value="kitchensoup-training/v1" required></label>
+<label>Instance <select name="instance_type"><option>ml.g4dn.xlarge</option><option>ml.g5.xlarge</option><option>ml.g6.xlarge</option></select></label>
+<label>Maximum training seconds <input name="max_runtime_seconds" type="number" min="60" max="3600" value="600" required></label>
+<label>Volume GiB <input name="volume_gib" type="number" min="20" max="100" value="30" required></label>
+</details><p>One instance per run; retries create a new paid run. Runtime limits do not cap total AWS spending. Stop unwanted jobs and clean up their staging objects after completion.</p>
+<button>Create SageMaker training target</button>
+</form>
 <h2>Configured targets</h2><div id="target-list"></div>
 <script defer src="/static/targets.js"></script>
 {% endblock %}

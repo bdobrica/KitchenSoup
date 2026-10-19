@@ -9,7 +9,7 @@ and stopped-container cleanup. See [job lifecycle](jobs.md) for worker/reconcile
 operation and recovery.
 Training requires a CUDA GPU: select FP16 in advanced plan parameters on older
 cards such as RTX 20 series or GTX 1660 Ti; BF16 remains the default on native-BF16
-hardware. SageMaker execution is a later adapter.
+hardware. [SageMaker training](sagemaker-training.md) uses a separate opt-in adapter.
 
 ## Start the host application
 

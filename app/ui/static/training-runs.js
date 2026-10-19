@@ -47,6 +47,12 @@
         $('#run-detail').prepend(link);
       }
       $('#run-json').textContent = JSON.stringify(run, null, 2);
+      if (run.external_references?.training_job && !$('#run-aws')) {
+        const link = document.createElement('a'); link.id = 'run-aws';
+        link.textContent = 'Open SageMaker job and AWS diagnostics';
+        link.href = run.external_references.training_job; link.target = '_blank'; link.rel = 'noopener noreferrer';
+        $('#run-detail').prepend(link);
+      }
       $('#run-plan').href = `/training-plans/${run.plan_id}`;
       const active = !terminal.includes(run.status);
       $('#run-retry').disabled = active;
@@ -64,7 +70,7 @@
   }
   for (const [button, action, method] of [['cancel', 'cancel', 'POST'], ['cleanup', 'container', 'DELETE']]) {
     $(`#run-${button}`).onclick = async () => {
-      if (button === 'cleanup' && !window.confirm('Remove the stopped container? Retained inputs, outputs and logs will remain.')) return;
+      if (button === 'cleanup' && !window.confirm('Clean up stopped execution resources? On AWS this deletes this run’s S3 staging copies. Registered artifacts and retained local output remain.')) return;
       $(`#run-${button}`).disabled = true;
       try { await request(`/${id}/${action}`, method); await refresh(); }
       catch (error) { $('#run-message').textContent = error.message; }

@@ -146,6 +146,7 @@ def create_app(
                 settings.local_training_enabled
                 or settings.ssh_execution_enabled
                 or settings.kubernetes_execution_enabled
+                or settings.sagemaker_execution_enabled
             ):
                 if app.state.artifact_service is None or app.state.training_plan_service is None:
                     raise ValueError("Training requires artifact storage and plan metadata")

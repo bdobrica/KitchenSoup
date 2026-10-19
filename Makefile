@@ -124,6 +124,16 @@ build-soup: ## Build the pinned Soup trainer image (large CUDA dependencies)
 test-soup: build-soup ## Validate the offline trainer bundle and real Soup CLI without a GPU
 	$(VENV_PYTHON) scripts/test_soup_trainer.py
 
+.PHONY: build-sagemaker test-sagemaker test-sagemaker-gpu
+build-sagemaker: ## Build the thin managed-training adapter from the cached pinned Soup image
+	docker build --platform linux/amd64 --provenance=false --build-arg TRAINER_ID=$$(docker image inspect kitchensoup-soup-trainer:local --format '{{.Id}}') -f images/soup-trainer/Dockerfile.sagemaker -t kitchensoup-sagemaker-trainer:local .
+
+test-sagemaker: build-sagemaker ## Offline CPU SageMaker filesystem/privilege-drop check (no AWS cost)
+	$(VENV_PYTHON) scripts/test_sagemaker_runner.py
+
+test-sagemaker-gpu: build-sagemaker ## Local FP16 GPU check of managed-training wrapper (no AWS cost)
+	$(VENV_PYTHON) scripts/test_sagemaker_runner.py --gpu
+
 test-soup-gpu: build-soup ## Optional GPU training smoke (PRECISION=bf16 or fp16) (synthetic tiny model)
 	$(VENV_PYTHON) scripts/test_soup_trainer.py --gpu --precision $(PRECISION)
 

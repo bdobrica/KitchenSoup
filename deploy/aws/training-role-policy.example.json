@@ -1,0 +1,40 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:AbortMultipartUpload"],
+      "Resource": "arn:aws:s3:::replace-with-private-training-bucket/kitchensoup-training/v1/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "s3:GetBucketLocation",
+      "Resource": "arn:aws:s3:::replace-with-private-training-bucket"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::replace-with-private-training-bucket",
+      "Condition": {"StringLike": {"s3:prefix": "kitchensoup-training/v1/*"}}
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["ecr:BatchCheckLayerAvailability", "ecr:GetDownloadUrlForLayer", "ecr:BatchGetImage"],
+      "Resource": "arn:aws:ecr:us-east-2:123456789012:repository/kitchensoup-trainer"
+    },
+    {"Effect": "Allow", "Action": "ecr:GetAuthorizationToken", "Resource": "*"},
+    {
+      "Effect": "Allow",
+      "Action": "logs:CreateLogGroup",
+      "Resource": [
+        "arn:aws:logs:us-east-2:123456789012:log-group:/aws/sagemaker/TrainingJobs",
+        "arn:aws:logs:us-east-2:123456789012:log-group:/aws/sagemaker/TrainingJobs:*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": "arn:aws:logs:us-east-2:123456789012:log-group:/aws/sagemaker/TrainingJobs:log-stream:kitchensoup-training-*"
+    }
+  ]
+}

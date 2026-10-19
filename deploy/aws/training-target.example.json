@@ -1,0 +1,16 @@
+{
+  "name": "SageMaker T4 training",
+  "kind": "sagemaker",
+  "credential_ref": "aws-profile://default",
+  "configuration": {
+    "schema": "kitchensoup.sagemaker-target/v1",
+    "region": "us-east-2",
+    "role_arn": "arn:aws:iam::123456789012:role/kitchensoup-training",
+    "training_image": "123456789012.dkr.ecr.us-east-2.amazonaws.com/kitchensoup-trainer@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "staging_bucket": "replace-with-private-training-bucket",
+    "staging_prefix": "kitchensoup-training/v1",
+    "instance_type": "ml.g4dn.xlarge",
+    "volume_gib": 30,
+    "max_runtime_seconds": 600
+  }
+}

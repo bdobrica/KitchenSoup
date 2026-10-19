@@ -28,3 +28,4 @@ docker-compose.override.yml
 
 .ssh-staging/
 .kubernetes-staging/
+.sagemaker-staging/
