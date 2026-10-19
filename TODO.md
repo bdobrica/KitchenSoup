@@ -464,28 +464,30 @@ See [Milestone 15 evidence](docs/evidence/milestone-15.md).
 
 ## Milestone 16 — vLLM image and temporary playground
 
-- [ ] Create separate pinned vLLM image.
-- [ ] Implement `make build-vllm`.
-- [ ] Define `DeploymentExecutor` protocol.
-- [ ] Implement local Docker deployment executor.
-- [ ] Materialize selected model artifact.
-- [ ] Start vLLM with GPU access.
-- [ ] Persist endpoint/container identity.
-- [ ] Add deployment normalized state.
-- [ ] Add lease/`expires_at`.
-- [ ] Add reconciler handling for expired deployments.
-- [ ] Add "extend lease" action.
-- [ ] Add "keep running" action.
-- [ ] Add "stop now" action.
-- [ ] Add playground chat UI.
-- [ ] Proxy or safely expose OpenAI-compatible request path.
-- [ ] Add inference smoke test.
+- [x] Create separate pinned vLLM image.
+- [x] Implement `make build-vllm`.
+- [x] Define `DeploymentExecutor` protocol.
+- [x] Implement local Docker deployment executor.
+- [x] Materialize selected model artifact.
+- [x] Start vLLM with GPU access.
+- [x] Persist endpoint/container identity.
+- [x] Add deployment normalized state.
+- [x] Add lease/`expires_at`.
+- [x] Add reconciler handling for expired deployments.
+- [x] Add "extend lease" action.
+- [x] Add "keep running" action.
+- [x] Add "stop now" action.
+- [x] Add playground chat UI.
+- [x] Proxy or safely expose OpenAI-compatible request path.
+- [x] Add inference smoke test.
 
 **Acceptance criteria**
 
-- [ ] User can launch a temporary playground from a registered model.
-- [ ] Playground shuts down automatically when its lease expires.
-- [ ] User can interact with the fine-tuned model in the browser.
+- [x] User can launch a temporary playground from a registered model.
+- [x] Playground shuts down automatically when its lease expires.
+- [x] User can interact with the fine-tuned model in the browser.
+
+See [Milestone 16 evidence](docs/evidence/milestone-16.md).
 
 ---
 

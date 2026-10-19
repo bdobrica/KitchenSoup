@@ -1584,7 +1584,9 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 16: vLLM image and temporary playground.
+The current implementation frontier is Milestone 17: merge and quantization.
+Temporary local vLLM playgrounds, leases and bounded chat are documented in
+[docs/deployments.md](docs/deployments.md).
 Local paired evaluation and human preference reports are documented in
 [docs/evaluations.md](docs/evaluations.md).
 Registered training outputs, source-license provenance and separate lineage graphs

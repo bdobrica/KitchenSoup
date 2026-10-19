@@ -182,3 +182,8 @@ Evaluation suites can now be selected before submitting training; prompts freeze
 against additions once referenced. Evaluation task persistence, response membership
 and immutable response guards are described in [ADR 0016](adr/0016-local-paired-evaluation.md)
 and [evaluation workflow](evaluations.md).
+
+Temporary serving adds an immutable v1 deployment snapshot and mutable keep-running
+flag. A generated relational migration and separate SQL guards preserve lifecycle
+transitions and artifact ownership; legacy rows retain their original meaning.
+See [ADR 0017](adr/0017-temporary-local-serving.md).

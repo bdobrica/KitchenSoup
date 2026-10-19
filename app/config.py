@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     provider_env_names: str = "OPENAI_API_KEY,LITELLM_API_KEY"
     provider_secret_directory: str = "/run/secrets"
     soup_ingestion_url: str = ""
+    local_deployment_enabled: bool = False
+    deployment_workspace: str = ".local-deployments"
+    deployment_image: str = "kitchensoup-vllm:local"
     local_training_enabled: bool = False
     training_workspace: str = ".local-training"
     training_image: str = "kitchensoup-soup-trainer:local"

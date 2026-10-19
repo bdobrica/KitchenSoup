@@ -1,0 +1,133 @@
+{
+  "$defs": {
+    "PlanModelSource": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Artifact Id"
+        },
+        "artifact_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Artifact Sha256"
+        },
+        "kind": {
+          "enum": [
+            "catalog",
+            "huggingface",
+            "upload"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "license": {
+          "title": "License",
+          "type": "string"
+        },
+        "location": {
+          "title": "Location",
+          "type": "string"
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Revision"
+        },
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "kind",
+        "location",
+        "revision",
+        "license",
+        "artifact_id",
+        "artifact_sha256"
+      ],
+      "title": "PlanModelSource",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "adapter": {
+      "title": "Adapter",
+      "type": "boolean"
+    },
+    "artifact_id": {
+      "format": "uuid",
+      "title": "Artifact Id",
+      "type": "string"
+    },
+    "artifact_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Artifact Sha256",
+      "type": "string"
+    },
+    "base_source": {
+      "$ref": "#/$defs/PlanModelSource"
+    },
+    "image_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Image Digest",
+      "type": "string"
+    },
+    "max_model_len": {
+      "default": 2048,
+      "maximum": 2048,
+      "minimum": 256,
+      "title": "Max Model Len",
+      "type": "integer"
+    },
+    "precision": {
+      "enum": [
+        "fp16",
+        "bf16"
+      ],
+      "title": "Precision",
+      "type": "string"
+    },
+    "schema": {
+      "const": "kitchensoup.deployment/v1",
+      "default": "kitchensoup.deployment/v1",
+      "title": "Schema",
+      "type": "string"
+    }
+  },
+  "required": [
+    "image_digest",
+    "base_source",
+    "artifact_id",
+    "artifact_sha256",
+    "adapter",
+    "precision"
+  ],
+  "title": "DeploymentSpec",
+  "type": "object"
+}

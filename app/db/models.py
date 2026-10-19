@@ -309,6 +309,10 @@ class EvaluationResult(Entity):
 
 class Deployment(Entity):
     __tablename__ = "deployments"
+    snapshot: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, default=dict, server_default=text("'{}'::jsonb")
+    )
+    keep_running: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
     model_version_id: Mapped[UUID] = mapped_column(ForeignKey("model_versions.id"), index=True)
     artifact_id: Mapped[UUID] = mapped_column(ForeignKey("artifacts.id"), index=True)
     execution_target_id: Mapped[UUID] = mapped_column(

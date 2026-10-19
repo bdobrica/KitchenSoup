@@ -20,6 +20,7 @@ from starlette.responses import Response
 from app.api.artifacts import router as artifact_router
 from app.api.conversations import router as conversation_router
 from app.api.datasets import router as dataset_router
+from app.api.deployments import router as deployment_router
 from app.api.documents import router as document_router
 from app.api.evaluations import router as evaluation_router
 from app.api.models import router as model_router
@@ -30,6 +31,8 @@ from app.api.versions import router as version_router
 from app.config import Settings
 from app.db.session import create_database_engine
 from app.dependencies import check_dependencies
+from app.deployments.local import LocalDockerDeploymentExecutor
+from app.deployments.materialize import DeploymentMaterializer
 from app.evaluation.local import LocalInferenceRunner
 from app.executors.base import ExecutorError
 from app.executors.local_docker import LocalDockerTrainingExecutor
@@ -43,6 +46,7 @@ from app.registry.huggingface import HuggingFaceResolver
 from app.registry.inspection import RegistryError
 from app.services.artifacts import ArtifactService, UploadError
 from app.services.datasets import DatasetService
+from app.services.deployments import DeploymentService
 from app.services.evaluations import EvaluationService
 from app.services.models import ModelService
 from app.services.providers import ProviderService
@@ -67,6 +71,7 @@ def create_app(
     training_plan_service: TrainingPlanService | None = None,
     training_run_service: TrainingRunService | None = None,
     evaluation_service: EvaluationService | None = None,
+    deployment_service: DeploymentService | None = None,
 ) -> FastAPI:
     settings = settings if settings is not None else Settings()
 
@@ -153,6 +158,19 @@ def create_app(
                     else None
                 )
                 app.state.evaluation_service = EvaluationService(app.state.artifact_service, runner)
+            app.state.deployment_service = deployment_service
+            if deployment_service is None and app.state.artifact_service is not None:
+                artifacts = app.state.artifact_service
+                deployment_executor = (
+                    LocalDockerDeploymentExecutor(
+                        Path(settings.deployment_workspace),
+                        DeploymentMaterializer(RegisteredInputMaterializer(artifacts)),
+                        image=settings.deployment_image,
+                    )
+                    if settings.local_deployment_enabled
+                    else None
+                )
+                app.state.deployment_service = DeploymentService(artifacts, deployment_executor)
             yield
         finally:
             if queue is not None:
@@ -175,6 +193,7 @@ def create_app(
     app.include_router(training_router)
     app.include_router(run_router)
     app.include_router(evaluation_router)
+    app.include_router(deployment_router)
     app.state.soup_ingestion_url = settings.soup_ingestion_url
 
     @app.exception_handler(ExecutorError)
@@ -317,6 +336,13 @@ def create_app(
     async def evaluation_page(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(
             request=request, name="evaluations.html", context={"app_name": settings.app_name}
+        )
+
+    @app.get("/deployments", response_class=HTMLResponse, include_in_schema=False)
+    @app.get("/deployments/{identifier}", response_class=HTMLResponse, include_in_schema=False)
+    async def deployment_page(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(
+            request=request, name="deployments.html", context={"app_name": settings.app_name}
         )
 
     return app

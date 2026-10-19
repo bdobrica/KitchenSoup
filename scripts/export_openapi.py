@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from app.config import Settings
+from app.deployments.schemas import DeploymentSpec
 from app.evaluation.schemas import EvaluationReport, InferenceInput, InferenceOutput
 from app.ingestion.conversations import CanonicalConversation
 from app.ingestion.documents import DocumentIngestionManifest, SoupResult
@@ -40,6 +41,7 @@ Path("docs/contracts/training-example-v1.schema.json").write_text(
 )
 
 for filename, model in (
+    ("deployment-v1", DeploymentSpec),
     ("inference-input-v1", InferenceInput),
     ("inference-output-v1", InferenceOutput),
     ("evaluation-report-v1", EvaluationReport),

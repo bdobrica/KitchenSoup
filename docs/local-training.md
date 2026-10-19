@@ -130,3 +130,5 @@ and [Hub API](https://huggingface.co/docs/hub/api).
 
 Select optional [evaluation prompts](evaluations.md) on the saved plan before
 training to compare base and LoRA responses after successful registration.
+
+For separate temporary vLLM serving, see [playgrounds](deployments.md).

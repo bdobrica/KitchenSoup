@@ -148,3 +148,10 @@ reconcile-training: ## Run the host training reconciler (separate terminal)
 .PHONY: test-evaluation-gpu
 test-evaluation-gpu: build-soup ## Tiny offline base/LoRA GPU inference smoke (PRECISION=fp16 on RTX 20)
 	$(VENV_PYTHON) scripts/test_evaluation_gpu.py --precision $(PRECISION)
+
+.PHONY: build-vllm test-vllm-gpu
+build-vllm: ## Build the separate digest-pinned vLLM playground image
+	docker build --platform linux/amd64 -f images/vllm/Dockerfile -t kitchensoup-vllm:local .
+
+test-vllm-gpu: build-vllm build-soup ## Optional offline FP16 base/LoRA serving and stop smoke
+	$(VENV_PYTHON) scripts/test_vllm_gpu.py

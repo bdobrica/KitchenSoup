@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<nav><a href="/">Home</a> · <a href="/models">Models</a> · <a href="/training-runs">Runs</a></nav>
+<h1>Temporary playground</h1>
+<p>Chat locally with a registered model. A playground reserves your GPU until its lease expires. Avoid simultaneous training or evaluation on the same GPU.</p>
+<p id="deployment-error" role="alert"></p>
+<form id="deployment-create">
+<label>Registered model <select id="deployment-model" required></select></label>
+<label>Precision <select id="deployment-precision"><option value="fp16">FP16 (RTX 20 and newer)</option><option value="bf16">BF16 (native BF16 GPU required)</option></select></label>
+<label>Lease (minutes) <input id="deployment-lease" type="number" value="30" min="1" max="1440" required></label>
+<button>Launch playground</button>
+</form>
+<h2>Deployments</h2><div id="deployment-list"></div>
+<section id="playground" hidden>
+<h2>Chat</h2><p id="deployment-status" role="status"></p>
+<button id="deployment-extend" type="button">Extend 30 minutes</button>
+<button id="deployment-keep" type="button">Keep running until stopped</button>
+<button id="deployment-stop" type="button">Stop now</button>
+<p>Messages stay in this browser tab and are sent to your local model. KitchenSoup does not save chat history. Responses are limited to 128 tokens.</p>
+<div id="chat-history" aria-live="polite"></div>
+<form id="chat-form"><label>Message <textarea id="chat-message" required maxlength="8000"></textarea></label><button id="chat-send">Send</button></form>
+<button id="chat-clear" type="button">Clear conversation</button>
+</section>
+<script defer src="/static/deployments.js"></script>
+{% endblock %}

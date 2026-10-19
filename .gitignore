@@ -20,3 +20,6 @@ docker-compose.override.yml
 
 # Private local training inputs, outputs and logs
 .local-training/
+
+# Private local serving model workspaces
+.local-deployments/

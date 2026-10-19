@@ -39,6 +39,9 @@ async function load() {
     detail.append(element("h2", model.name));
     for (const version of model.versions) {
       detail.append(element("h3", `Version ${version.version}`));
+      const playground = element('a', 'Launch temporary playground');
+      playground.href = `/deployments?model_version_id=${version.id}`;
+      detail.append(playground);
       const use = element("a", "Use as base model");
       use.href = `/training-plans?base_model_version_id=${version.id}`;
       detail.append(use);
