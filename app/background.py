@@ -46,6 +46,7 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
         settings.ssh_execution_enabled
         or settings.kubernetes_execution_enabled
         or settings.sagemaker_execution_enabled
+        or settings.runpod_execution_enabled
         or settings.local_training_enabled
         or settings.local_deployment_enabled
         or settings.local_transformations_enabled
@@ -59,6 +60,7 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
             settings.ssh_execution_enabled
             or settings.kubernetes_execution_enabled
             or settings.sagemaker_execution_enabled
+            or settings.runpod_execution_enabled
             or settings.local_training_enabled
             or settings.local_deployment_enabled
             or settings.local_transformations_enabled
@@ -110,6 +112,7 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
             or settings.ssh_execution_enabled
             or settings.kubernetes_execution_enabled
             or settings.sagemaker_execution_enabled
+            or settings.runpod_execution_enabled
         ):
             executor = (
                 LocalDockerTrainingExecutor(

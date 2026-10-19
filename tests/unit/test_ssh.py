@@ -38,6 +38,21 @@ def transport(tmp_path: Path) -> SshTransport:
     )
 
 
+def test_expired_allocation_deadline_blocks_even_empty_transfers_before_connect(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ssh = transport(tmp_path)
+    ssh.transfer_deadline = 0
+    connection = Mock(side_effect=AssertionError("No SSH after allocation expiry"))
+    monkeypatch.setattr(ssh, "connect", connection)
+    with pytest.raises(ExecutorError, match="timed out"):
+        ssh.upload(tmp_path, "/remote")
+    with pytest.raises(ExecutorError, match="timed out"):
+        ssh.download("/remote/empty", tmp_path / "empty", 0)
+    connection.assert_not_called()
+
+
 @pytest.mark.parametrize(
     "field,value",
     [

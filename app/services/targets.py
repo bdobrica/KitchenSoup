@@ -17,12 +17,17 @@ from app.deployments.ssh import SshDockerDeploymentExecutor
 from app.executors.base import ExecutorError, TrainingExecutor
 from app.executors.kubernetes import KubernetesTrainingExecutor
 from app.executors.materialize import RegisteredInputMaterializer
+from app.executors.runpod import RunpodTrainingExecutor
 from app.executors.sagemaker import SageMakerTrainingExecutor
 from app.executors.ssh_docker import SshDockerTrainingExecutor
 from app.ingestion.sources import SourceError
+from app.providers.credentials import LocalCredentialResolver
 from app.services.artifacts import ArtifactService
 from app.targets.kubernetes import KubernetesTransport
 from app.targets.kubernetes_schemas import KubernetesConfig
+from app.targets.runpod import RunpodClient
+from app.targets.runpod_lifecycle import RunpodLifecycle
+from app.targets.runpod_schemas import RunpodConfig, RunpodTargetTest
 from app.targets.sagemaker_schemas import SageMakerConfig, SageMakerTargetTest
 from app.targets.schemas import SshConfig, TargetCreate, TargetTest, TargetView
 from app.targets.ssh import SshTransport
@@ -45,11 +50,15 @@ class TargetService:
 
     @staticmethod
     def view(row: ExecutionTarget) -> TargetView:
-        config: type[SshConfig] | type[KubernetesConfig] | type[SageMakerConfig] = SshConfig
+        config: (
+            type[SshConfig] | type[KubernetesConfig] | type[SageMakerConfig] | type[RunpodConfig]
+        ) = SshConfig
         if row.kind == "kubernetes":
             config = KubernetesConfig
         elif row.kind == "sagemaker":
             config = SageMakerConfig
+        elif row.kind == "runpod_pod":
+            config = RunpodConfig
         return TargetView(
             id=row.id,
             created_at=row.created_at,
@@ -62,7 +71,12 @@ class TargetService:
     def get(self, identifier: UUID) -> TargetView:
         with self.factory() as session:
             row = session.get(ExecutionTarget, identifier)
-            if row is None or row.kind not in ("ssh_docker", "kubernetes", "sagemaker"):
+            if row is None or row.kind not in (
+                "ssh_docker",
+                "kubernetes",
+                "sagemaker",
+                "runpod_pod",
+            ):
                 raise SourceError(404, "Execution target not found")
             return self.view(row)
 
@@ -72,13 +86,19 @@ class TargetService:
                 self.view(row)
                 for row in session.scalars(
                     select(ExecutionTarget)
-                    .where(ExecutionTarget.kind.in_(("ssh_docker", "kubernetes", "sagemaker")))
+                    .where(
+                        ExecutionTarget.kind.in_(
+                            ("ssh_docker", "kubernetes", "sagemaker", "runpod_pod")
+                        )
+                    )
                     .order_by(ExecutionTarget.created_at, ExecutionTarget.id)
                 )
             ]
 
     def create(self, body: TargetCreate) -> TargetView:
-        if body.kind == "sagemaker":
+        if body.kind == "runpod_pod":
+            self.runpod_enabled()
+        elif body.kind == "sagemaker":
             self.sagemaker_enabled()
         elif body.kind == "kubernetes":
             self.kubernetes_enabled()
@@ -132,6 +152,27 @@ class TargetService:
 
     def training(self, identifier: UUID) -> TrainingExecutor:
         target = self.get(identifier)
+        if isinstance(target.configuration, RunpodConfig):
+            self.runpod_enabled()
+            resolver = LocalCredentialResolver(
+                {n.strip() for n in self.settings.runpod_env_names.split(",") if n.strip()},
+                Path(self.settings.runpod_secret_directory),
+            )
+            return RunpodTrainingExecutor(
+                Path(self.settings.runpod_staging_workspace) / str(identifier),
+                RegisteredInputMaterializer(self.artifacts),
+                RunpodLifecycle(
+                    self.factory,
+                    identifier,
+                    target.configuration,
+                    RunpodClient(target.credential_ref, resolver),
+                    self.settings.runpod_max_concurrent_pods,
+                    Path(self.settings.runpod_staging_workspace) / "host-keys",
+                ),
+                known_hosts=Path(self.settings.ssh_known_hosts),
+                secret_directory=Path(self.settings.ssh_secret_directory),
+                env_names={n.strip() for n in self.settings.ssh_env_names.split(",") if n.strip()},
+            )
         if isinstance(target.configuration, SageMakerConfig):
             self.sagemaker_enabled()
             return SageMakerTrainingExecutor(
@@ -171,6 +212,8 @@ class TargetService:
         return executor
 
     def deployment(self, identifier: UUID) -> DeploymentExecutor:
+        if self.get(identifier).kind == "runpod_pod":
+            raise SourceError(409, "Runpod serving is Milestone 26; this target supports training")
         if self.get(identifier).kind == "sagemaker":
             raise SourceError(409, "SageMaker serving is not implemented; use a training target")
         if self.get(identifier).kind == "kubernetes":
@@ -186,7 +229,21 @@ class TargetService:
             self.transport(identifier),
         )
 
-    def test(self, identifier: UUID) -> TargetTest | KubernetesTargetTest | SageMakerTargetTest:
+    def test(
+        self, identifier: UUID
+    ) -> TargetTest | KubernetesTargetTest | SageMakerTargetTest | RunpodTargetTest:
+        if self.get(identifier).kind == "runpod_pod":
+            executor = self.training(identifier)
+            assert isinstance(executor, RunpodTrainingExecutor)
+            lifecycle = executor.lifecycle
+            price = lifecycle.client.quote(lifecycle.config)
+            lifecycle.client.pods()
+            return RunpodTargetTest(
+                gpu=f"{lifecycle.config.gpu_id}; GPU capability is probed after allocation",
+                training_image_digest=executor.image_identity(),
+                hourly_price_usd=price,
+                maximum_compute_estimate_usd=price * lifecycle.config.max_runtime_minutes / 60,
+            )
         if self.get(identifier).kind == "sagemaker":
             executor = self.training(identifier)
             assert isinstance(executor, SageMakerTrainingExecutor)
@@ -279,3 +336,7 @@ class TargetService:
     def sagemaker_enabled(self) -> None:
         if not self.settings.sagemaker_execution_enabled:
             raise SourceError(503, "SageMaker execution is disabled by the operator")
+
+    def runpod_enabled(self) -> None:
+        if not self.settings.runpod_execution_enabled:
+            raise SourceError(503, "Runpod execution is disabled by the operator")

@@ -28,7 +28,7 @@
       }
       $('#run-detail').hidden = false;
       const run = await request(`/${id}`);
-      $('#run-status').textContent = `Status: ${run.status}${run.observation?.message ? '. ' + run.observation.message : ''}`;
+      $('#run-status').textContent = `Status: ${run.status}${run.observation?.message ? '. ' + run.observation.message : ''}${run.resource_warning ? '. ' + run.resource_warning : ''}${run.resource_cleanup ? ' · Resource cleanup: ' + run.resource_cleanup : ''}`;
       if (['FAILED', 'LOST'].includes(run.status) && !$('#run-diagnosis').textContent) {
         try {
           const diagnosis = await request(`/${id}/diagnostics`);

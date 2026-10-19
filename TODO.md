@@ -697,39 +697,41 @@ pending without AWS account access.
 
 Shared infrastructure in this milestone also supports Milestone 26. Implement
 25–26 before Milestone 24 release polish; existing milestone numbers are retained.
-See [Runpod execution plan](PLAN.md#49-runpod-gpu-execution).
+See [Runpod execution plan](PLAN.md#49-runpod-gpu-execution). Implementation and
+local and live provider validation are complete.
+See [validation evidence](docs/evidence/milestone-25.md).
 
-- [ ] Record the Runpod ownership, direct-execution, SSH trust and cleanup ADR.
-- [ ] Add a bounded Runpod REST API v2 client and read-only connection test.
-- [ ] Add immutable versioned target configuration, contracts and compatibility tests.
-- [ ] Resolve approved `env://` and `file://` API-key and separate SSH-key references.
-- [ ] Configure allowed GPU types, one GPU, minimum VRAM, cloud and optional data centers.
-- [ ] Discover availability/pricing and validate actual CUDA, VRAM and reviewed FP16/BF16 compatibility.
-- [ ] Build/configure a digest-pinned SSH-capable Soup image and bounded ephemeral disk.
-- [ ] Implement shared Pod creation, inspection and termination with bounded timeouts/retries.
-- [ ] Persist provisioning intent, ownership, external Pod identity and separate cleanup state.
-- [ ] Reconcile uncertain creation responses without relying on unique Pod names or blind allocation retries.
-- [ ] Enforce shared concurrent-Pod reservations, hourly GPU price and maximum run duration.
-- [ ] Implement `RunpodTrainingExecutor` through the existing training protocol.
-- [ ] Require full public-IP SSH/SFTP networking and explicit host-key verification.
-- [ ] Initialize private workspaces, stage immutable inputs and verify transferred hashes.
-- [ ] Execute Soup directly without Docker-in-Docker; collect bounded status and logs.
-- [ ] Verify output manifests/artifacts and import through existing ArtifactStore and registry lineage.
-- [ ] Integrate worker/reconciler recovery, cancellation and timeout handling.
-- [ ] Automatically terminate on completion/failure and retry pending cleanup after restart.
-- [ ] Add target selection, GPU compute estimates and pending-cleanup warnings to the UI.
-- [ ] Add mocked lifecycle, concurrent-reservation and failure-injection tests.
-- [ ] Add opt-in `make test-runpod-gpu` with the synthetic FP16 fixture and verified cleanup.
-- [ ] Document credentials, SSH trust/networking, image publication, limits and billing.
+- [x] Record the Runpod ownership, direct-execution, SSH trust and cleanup ADR.
+- [x] Add a bounded Runpod REST API v2 client and read-only connection test.
+- [x] Add immutable versioned target configuration, contracts and compatibility tests.
+- [x] Resolve approved `env://` and `file://` API-key and separate SSH-key references.
+- [x] Configure allowed GPU types, one GPU, minimum VRAM, cloud and optional data centers.
+- [x] Discover availability/pricing and validate actual CUDA, VRAM and reviewed FP16/BF16 compatibility.
+- [x] Build/configure a digest-pinned SSH-capable Soup image and bounded ephemeral disk.
+- [x] Implement shared Pod creation, inspection and termination with bounded timeouts/retries.
+- [x] Persist provisioning intent, ownership, external Pod identity and separate cleanup state.
+- [x] Reconcile uncertain creation responses without relying on unique Pod names or blind allocation retries.
+- [x] Enforce shared concurrent-Pod reservations, hourly GPU price and maximum run duration.
+- [x] Implement `RunpodTrainingExecutor` through the existing training protocol.
+- [x] Require full public-IP SSH/SFTP networking and explicit host-key verification.
+- [x] Initialize private workspaces, stage immutable inputs and verify transferred hashes.
+- [x] Execute Soup directly without Docker-in-Docker; collect bounded status and logs.
+- [x] Verify output manifests/artifacts and import through existing ArtifactStore and registry lineage.
+- [x] Integrate worker/reconciler recovery, cancellation and timeout handling.
+- [x] Automatically terminate on completion/failure and retry pending cleanup after restart.
+- [x] Add target selection, GPU compute estimates and pending-cleanup warnings to the UI.
+- [x] Add mocked lifecycle, concurrent-reservation and failure-injection tests.
+- [x] Add opt-in `make test-runpod-gpu` with a reviewed synthetic FP16/BF16 fixture and verified cleanup.
+- [x] Document credentials, SSH trust/networking, image publication, limits and billing.
 
 **Acceptance criteria**
 
-- [ ] A reviewed plan provisions a compatible Pod and trains with immutable inputs and a pinned image.
-- [ ] Verified artifacts enter the registry; status, logs and cancellation are available in the UI.
-- [ ] Success, failure, cancellation and timeout terminate the Pod; cleanup failures remain visible and retryable.
-- [ ] Worker restart, concurrent workers and uncertain API responses do not create duplicate billable Pods.
-- [ ] No remote access to local RustFS or runtime access to long-lived control-plane credentials is required.
-- [ ] Opt-in live FP16 validation confirms termination of all temporary provider resources.
+- [x] A reviewed plan provisions a compatible Pod and trains with immutable inputs and a pinned image.
+- [x] Verified artifacts enter the registry; status, logs and cancellation are available in the UI.
+- [x] Success, failure, cancellation and timeout terminate the Pod; cleanup failures remain visible and retryable.
+- [x] Worker restart, concurrent workers and uncertain API responses do not create duplicate billable Pods.
+- [x] No remote access to local RustFS or runtime access to long-lived control-plane credentials is required.
+- [x] Opt-in live GPU validation with reviewed precision confirms termination of all temporary provider resources.
 
 ---
 

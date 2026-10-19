@@ -239,6 +239,28 @@ class ExecutionTarget(Entity):
     )
 
 
+class RunpodResource(Entity):
+    """Durable allocation intent and cleanup, independent of application outcome."""
+
+    __tablename__ = "runpod_resources"
+    __table_args__ = (
+        UniqueConstraint("owner_id"),
+        CheckConstraint("kind IN ('training', 'deployment')", name="resource_kind"),
+        CheckConstraint("state IN ('INTENT', 'BOUND', 'RELEASED')", name="resource_state"),
+        CheckConstraint("cleanup IN ('NONE', 'PENDING', 'CONFIRMED')", name="cleanup_state"),
+    )
+    target_id: Mapped[UUID] = mapped_column(ForeignKey("execution_targets.id"), index=True)
+    owner_id: Mapped[UUID]
+    kind: Mapped[str]
+    state: Mapped[str]
+    cleanup: Mapped[str]
+    request: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    pod_ids: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    outcome: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    warning: Mapped[str | None]
+
+
 class LLMProvider(Entity):
     __tablename__ = "llm_providers"
     __table_args__ = (

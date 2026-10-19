@@ -1589,9 +1589,11 @@ Milestone 23 error UX and safety polish is implemented; see
 Milestone 21 SageMaker training is implemented; live AWS GPU acceptance awaits an
 approved training-instance quota. See [setup and cost controls](docs/sagemaker-training.md).
 Milestone 22 (SageMaker serving) remains unimplemented.
-The next non-AWS implementation milestones are 25 (Runpod training and shared
-infrastructure) and 26 (Runpod serving), followed by Milestone 24 documentation
-and release polish. Existing milestone numbers remain stable.
+Milestone 25 Runpod training and shared infrastructure is implemented and validated
+with live BF16 training and confirmed Pod cleanup. See [setup and limits](docs/runpod-training.md) and
+[validation evidence](docs/evidence/milestone-25.md). The next non-AWS implementation
+milestone is 26 (Runpod serving), followed by Milestone 24 documentation and release
+polish. Existing milestone numbers remain stable.
 Kubernetes vLLM playgrounds and private API access are documented in
 [docs/kubernetes-serving.md](docs/kubernetes-serving.md).
 Kubernetes Job training and prepared-cluster prerequisites are documented in
@@ -1674,14 +1676,16 @@ Kubernetes and SageMaker then prove that the executor boundaries generalize beyo
 
 ## 49. Runpod GPU execution
 
-Planned Milestones 25–26 add optional automatically provisioned Runpod Pods for
-Soup training and temporary vLLM playgrounds. Training and deployment remain
+Milestone 25 implements optional automatically provisioned Runpod Pods for Soup
+training and shared resource lifecycle infrastructure. Milestone 26 adds temporary
+vLLM playgrounds. Training and deployment remain
 separate application concepts, using `RunpodTrainingExecutor` and
 `RunpodDeploymentExecutor` through the existing executor protocols.
 
-Before implementation, record an ADR for automatic resource ownership, direct
-container execution, SSH host trust, public inference protection and bounded
-cloud leases. Preserve existing executor behavior and versioned contracts;
+[ADR 0024](docs/adr/0024-runpod-training.md) records automatic resource ownership,
+direct training execution, SSH host trust and cleanup. Before serving implementation,
+record its public inference protection and bounded cloud lease decision.
+Preserve existing executor behavior and versioned contracts;
 streaming and target-specific lease changes need compatible API/schema updates.
 
 ### 49.1 Shared infrastructure
@@ -1694,7 +1698,7 @@ covers:
 - allowed GPU types, minimum VRAM and one GPU per Pod initially;
 - Community or Secure Cloud and optional data-center constraints;
 - ephemeral disk size and separate digest-pinned training and serving images;
-- full SSH/SFTP networking and operator-provisioned host-key trust;
+- full SSH/SFTP networking and explicitly operator-approved host-key trust;
 - maximum hourly GPU price, training duration and deployment lease;
 - a shared concurrent-Pod limit across training and serving, with compatible
   per-workload GPU and storage overrides.
@@ -1702,8 +1706,10 @@ covers:
 Reuse trusted control-plane credential resolution; no long-lived API key or SSH
 private key enters the runtime, AppSpec, queue or browser. Build SSH-capable image
 variants with bounded bootstrap and non-root workloads; existing images do not
-implicitly provide an SSH daemon. Do not require Docker-in-Docker or a remote
-Docker daemon, and do not silently enroll unknown SSH host keys.
+implicitly provide an SSH daemon. Trust uses operator-known-hosts or explicitly
+selected per-allocation host keys provisioned before allocation, as defined in
+ADR 0024. Do not require Docker-in-Docker or a remote Docker daemon, and do not
+silently enroll unknown SSH host keys.
 
 Use the Runpod REST API v2 for Pod lifecycle and provider catalog metadata.
 Connection tests are read-only and do not allocate paid resources. Persist intent,
@@ -1796,7 +1802,9 @@ Live GPU checks are opt-in: `make test-runpod-gpu` trains the synthetic Soup
 fixture; `make test-runpod-vllm` exercises a small compatible model through the
 application playground proxy. Each uses explicit cost/runtime limits and confirms
 all temporary provider resources are terminated, including on test failure.
-FP16 is sufficient for live acceptance; BF16 validation remains optional.
+Live acceptance uses an explicitly reviewed precision compatible with the selected
+GPU. Both FP16 and BF16 cloud runs are not required; local FP16 image validation and
+a BF16 cloud run are sufficient when choosing available low-cost capacity.
 
 Serverless/load-balanced executors, persistent network-volume caches, warm Pods,
 automatic GPU selection and autoscaling remain future work.

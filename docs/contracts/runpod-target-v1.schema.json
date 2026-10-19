@@ -1,0 +1,120 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "allowed_gpu_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 16,
+      "minItems": 1,
+      "title": "Allowed Gpu Ids",
+      "type": "array"
+    },
+    "cloud": {
+      "default": "SECURE",
+      "enum": [
+        "COMMUNITY",
+        "SECURE"
+      ],
+      "title": "Cloud",
+      "type": "string"
+    },
+    "data_center_ids": {
+      "items": {
+        "pattern": "^[A-Z0-9-]{1,30}$",
+        "type": "string"
+      },
+      "maxItems": 16,
+      "title": "Data Center Ids",
+      "type": "array"
+    },
+    "disk_gb": {
+      "default": 30,
+      "maximum": 100,
+      "minimum": 20,
+      "title": "Disk Gb",
+      "type": "integer"
+    },
+    "gpu_count": {
+      "const": 1,
+      "default": 1,
+      "title": "Gpu Count",
+      "type": "integer"
+    },
+    "gpu_id": {
+      "maxLength": 120,
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9 ._-]+$",
+      "title": "Gpu Id",
+      "type": "string"
+    },
+    "max_concurrent_pods": {
+      "default": 1,
+      "maximum": 4,
+      "minimum": 1,
+      "title": "Max Concurrent Pods",
+      "type": "integer"
+    },
+    "max_hourly_price_usd": {
+      "exclusiveMinimum": 0,
+      "maximum": 10,
+      "title": "Max Hourly Price Usd",
+      "type": "number"
+    },
+    "max_runtime_minutes": {
+      "default": 15,
+      "maximum": 60,
+      "minimum": 1,
+      "title": "Max Runtime Minutes",
+      "type": "integer"
+    },
+    "min_vram_gb": {
+      "default": 8,
+      "maximum": 192,
+      "minimum": 1,
+      "title": "Min Vram Gb",
+      "type": "integer"
+    },
+    "schema": {
+      "const": "kitchensoup.runpod-target/v1",
+      "default": "kitchensoup.runpod-target/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "ssh_credential_ref": {
+      "maxLength": 512,
+      "title": "Ssh Credential Ref",
+      "type": "string"
+    },
+    "ssh_host_trust": {
+      "default": "known-hosts",
+      "enum": [
+        "known-hosts",
+        "provisioned-ephemeral"
+      ],
+      "title": "Ssh Host Trust",
+      "type": "string"
+    },
+    "training_image": {
+      "maxLength": 255,
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/:-]*@sha256:[0-9a-f]{64}$",
+      "title": "Training Image",
+      "type": "string"
+    },
+    "transfer_mode": {
+      "const": "ssh-sftp",
+      "default": "ssh-sftp",
+      "title": "Transfer Mode",
+      "type": "string"
+    }
+  },
+  "required": [
+    "ssh_credential_ref",
+    "gpu_id",
+    "allowed_gpu_ids",
+    "training_image",
+    "max_hourly_price_usd"
+  ],
+  "title": "RunpodConfig",
+  "type": "object"
+}

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Request, Response
 
 from app.ingestion.sources import SourceError
 from app.services.targets import KubernetesTargetTest, TargetService
+from app.targets.runpod_schemas import RunpodTargetTest
 from app.targets.sagemaker_schemas import SageMakerTargetTest
 from app.targets.schemas import TargetCreate, TargetTest, TargetView
 
@@ -38,9 +39,10 @@ def get_target(identifier: UUID, targets: Service) -> TargetView:
 
 
 @router.post(
-    "/{identifier}/test", response_model=TargetTest | KubernetesTargetTest | SageMakerTargetTest
+    "/{identifier}/test",
+    response_model=TargetTest | KubernetesTargetTest | SageMakerTargetTest | RunpodTargetTest,
 )
 def test_target(
     identifier: UUID, targets: Service
-) -> TargetTest | KubernetesTargetTest | SageMakerTargetTest:
+) -> TargetTest | KubernetesTargetTest | SageMakerTargetTest | RunpodTargetTest:
     return targets.test(identifier)

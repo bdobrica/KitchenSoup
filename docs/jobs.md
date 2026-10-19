@@ -26,6 +26,11 @@ A slow preparation can delay that worker's other commands; it does not block a
 web cancel request or the independent reconciler. Additional workers use the same
 PostgreSQL claims. This is not a GPU capacity scheduler.
 
+[Runpod targets](runpod-training.md) additionally reserve billable Pod capacity
+in PostgreSQL and reconcile cleanup even after the training run becomes terminal.
+Their allocation deadlines include preparation; other executors retain their
+existing lifecycle and cleanup policies.
+
 The ordinary Compose background services have working dispatch loops but remain
 without local training authority or a Docker socket. Do not enable training there
 without an explicitly designed host/workspace configuration. The supported local

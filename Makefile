@@ -4,6 +4,7 @@ VENV := .venv
 VENV_PYTHON := $(VENV)/bin/python
 COMPOSE ?= docker compose
 PRECISION ?= bf16
+DOCKER_BUILD_NETWORK ?= default
 export MESSAGE
 
 .PHONY: help setup fmt lint test test-unit verify dev
@@ -179,6 +180,16 @@ test-transform-gpu: build-transform build-soup build-vllm ## Offline FP16 merge 
 	$(VENV_PYTHON) scripts/test_transform_gpu.py
 
 .PHONY: test-ssh-gpu
+.PHONY: build-runpod test-runpod-gpu
+test-runpod-image: ## Local SSH/SFTP/direct runner CPU check (build-runpod first; no cloud cost)
+	$(VENV_PYTHON) scripts/test_runpod_image.py
+
+build-runpod: ## Build the SSH-capable direct trainer (publish and pin before cloud use)
+	docker build --network $(DOCKER_BUILD_NETWORK) --platform linux/amd64 --provenance=false --build-arg TRAINER_ID=$$(docker image inspect kitchensoup-soup-trainer:local --format '{{.Id}}') -f images/soup-trainer/Dockerfile.runpod -t kitchensoup-runpod-trainer:local .
+
+test-runpod-gpu: ## Opt-in paid FP16 Runpod test (set RUNPOD_TEST_ARGS; see docs/runpod-training.md)
+	$(VENV_PYTHON) scripts/test_runpod_gpu.py $(RUNPOD_TEST_ARGS)
+
 test-ssh-gpu: ## Optional remote FP16 training/serving smoke (set SSH_TEST_ARGS; see docs/ssh-execution.md)
 	$(VENV_PYTHON) scripts/test_ssh_gpu.py $(SSH_TEST_ARGS)
 

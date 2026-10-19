@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from app.providers.schemas import ProviderConfig
 from app.targets.kubernetes_schemas import KubernetesConfig
+from app.targets.runpod_schemas import RunpodConfig
 from app.targets.sagemaker_schemas import SageMakerConfig
 
 
@@ -54,9 +55,9 @@ class SshConfig(BaseModel):
 class TargetCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str = Field(min_length=1, max_length=200, pattern=r"\S")
-    kind: Literal["ssh_docker", "kubernetes", "sagemaker"] = "ssh_docker"
+    kind: Literal["ssh_docker", "kubernetes", "sagemaker", "runpod_pod"] = "ssh_docker"
     credential_ref: str = Field(max_length=512)
-    configuration: SshConfig | KubernetesConfig | SageMakerConfig
+    configuration: SshConfig | KubernetesConfig | SageMakerConfig | RunpodConfig
 
     @model_validator(mode="after")
     def matching_kind(self) -> "TargetCreate":
@@ -64,6 +65,7 @@ class TargetCreate(BaseModel):
             "ssh_docker": SshConfig,
             "kubernetes": KubernetesConfig,
             "sagemaker": SageMakerConfig,
+            "runpod_pod": RunpodConfig,
         }
         if not isinstance(self.configuration, expected[self.kind]):
             raise ValueError("Target kind must match its versioned configuration")

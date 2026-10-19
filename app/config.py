@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     deployment_image: str = "kitchensoup-vllm:local"
     kubernetes_execution_enabled: bool = False
     sagemaker_execution_enabled: bool = False
+    runpod_execution_enabled: bool = False
+    runpod_env_names: str = ""
+    runpod_secret_directory: str = "/run/secrets"
+    runpod_staging_workspace: str = ".runpod-staging"
+    runpod_max_concurrent_pods: int = Field(default=1, ge=1, le=4)
     aws_approved_profiles: str = ""
     sagemaker_staging_workspace: str = ".sagemaker-staging"
     kubernetes_secret_directory: str = "/run/secrets"

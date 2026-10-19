@@ -1,11 +1,13 @@
 """Short worker commands and reconciliation, serialized by PostgreSQL claims."""
 
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
 
-from app.db.models import TrainingRun
+from app.db.models import RunpodResource, TrainingRun
 from app.executors.base import ExecutorError, JobStatus
+from app.executors.runpod import RunpodTrainingExecutor
 from app.ingestion.sources import SourceError
 from app.jobs.locking import claim
 from app.jobs.states import TERMINAL, JobState
@@ -20,6 +22,8 @@ class JobProcessor:
         self.service = service
 
     def tick(self, role: str) -> None:
+        if role == "reconciler":
+            self.reconcile_runpod()
         states = (
             (JobState.QUEUED, JobState.PREPARING, JobState.CANCEL_REQUESTED)
             if role == "worker"
@@ -43,6 +47,38 @@ class JobProcessor:
             )
         for identifier in identifiers:
             self.process(identifier, role)
+
+    def reconcile_runpod(self) -> None:
+        """Resource cleanup survives terminal run state and lost worker wakeups."""
+        with self.service.factory() as session:
+            owners = list(
+                session.scalars(
+                    select(RunpodResource.owner_id).where(
+                        RunpodResource.kind == "training", RunpodResource.state != "RELEASED"
+                    )
+                )
+            )
+        for owner in owners:
+            with claim(self.service.factory, owner) as acquired:
+                if not acquired:
+                    continue
+                try:
+                    executor = self.service.executor_for(owner)
+                    if not isinstance(executor, RunpodTrainingExecutor):
+                        continue
+                    row = executor.lifecycle.resource(owner)
+                    assert row is not None
+                    if row.cleanup == "PENDING" or datetime.now(UTC) >= row.expires_at:
+                        if row.outcome is None:
+                            executor.lifecycle.pending(
+                                owner,
+                                JobStatus(
+                                    state="FAILED", message="Runpod runtime deadline exceeded"
+                                ),
+                            )
+                        executor.lifecycle.cleanup(owner)
+                except (ExecutorError, StorageError, SourceError):
+                    continue
 
     def process(self, identifier: UUID, role: str) -> None:
         with claim(self.service.factory, identifier) as acquired:

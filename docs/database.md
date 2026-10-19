@@ -95,6 +95,7 @@ updates `updated_at` on mutable rows, including updates issued outside the ORM.
 | `conversation_imports` | Raw source, importer/schema versions, optional canonical artifact |
 | `conversations` | Import-scoped source conversation identity and browsing metadata |
 | `execution_targets` | Target kind, non-secret configuration, credential reference |
+| `runpod_resources` | Immutable allocation intent/owner, bound Pod IDs, deadline, outcome and independently retried cleanup |
 | `llm_providers` | Base URL, configured model names, API-key reference |
 | `evaluation_suites` | Named evaluation grouping |
 | `evaluation_prompts` | Ordered prompts, position unique within a suite |

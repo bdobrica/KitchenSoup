@@ -13,6 +13,7 @@ from app.ingestion.versions import DatasetManifest, TrainingExample
 from app.main import create_app
 from app.registry.schemas import Catalog
 from app.targets.kubernetes_schemas import KubernetesConfig
+from app.targets.runpod_schemas import RunpodConfig
 from app.targets.sagemaker_schemas import SageMakerConfig
 from app.targets.schemas import SshConfig
 from app.training.schemas import AppSpec, Recipe, ResolvedPlan
@@ -49,6 +50,7 @@ for filename, model in (
     ("error-response-v1", ErrorResponse),
     ("ssh-target-v1", SshConfig),
     ("sagemaker-target-v1", SageMakerConfig),
+    ("runpod-target-v1", RunpodConfig),
     ("kubernetes-target-v1", KubernetesConfig),
     ("deployment-v1", DeploymentSpec),
     ("transformation-v1", TransformSpec),

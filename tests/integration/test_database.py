@@ -35,6 +35,7 @@ from app.db.models import (
     ModelVersion,
     ModelVersionParent,
     RawSourceDeletion,
+    RunpodResource,
     TrainingPlan,
     TrainingRun,
 )
@@ -252,7 +253,35 @@ def seed_graph(session: Session) -> tuple[TrainingRun, DatasetVersion, JobEvent]
 
 def test_all_core_entities_persist_and_can_be_queried(factory: sessionmaker[Session]) -> None:
     with unit_of_work(factory) as session:
-        seed_graph(session)
+        run, _, _ = seed_graph(session)
+        target = ExecutionTarget(
+            name="Runpod fixture",
+            kind="runpod_pod",
+            credential_ref="env://FIXTURE",
+            configuration={"schema": "kitchensoup.runpod-target/v1"},
+        )
+        session.add(target)
+        session.flush()
+        deployment = Deployment(
+            model_version_id=run.base_model_version_id,
+            artifact_id=session.scalar(select(Artifact.id).where(Artifact.object_key == "output")),
+            execution_target_id=target.id,
+            expires_at=datetime.now(UTC) + timedelta(minutes=10),
+        )
+        session.add(deployment)
+        session.flush()
+        session.add(
+            RunpodResource(
+                target_id=target.id,
+                owner_id=deployment.id,
+                kind="deployment",
+                state="INTENT",
+                cleanup="NONE",
+                request={},
+                pod_ids=[],
+                expires_at=deployment.expires_at,
+            )
+        )
         deleted = Artifact(
             bucket="fixtures",
             object_key="deleted-original",

@@ -15,6 +15,7 @@ from app.db.models import (
     ExecutionTarget,
     JobEvent,
     ModelVersion,
+    RunpodResource,
     TrainingRun,
 )
 from app.executors.base import JobStatus, LogChunk, TrainingExecutor
@@ -51,6 +52,8 @@ class RunView(BaseModel):
     model_version_id: UUID | None = None
     model_id: UUID | None = None
     external_references: dict[str, str] = Field(default_factory=dict)
+    resource_warning: str | None = None
+    resource_cleanup: str | None = None
 
 
 class RunEvent(BaseModel):
@@ -87,7 +90,12 @@ class TrainingRunService:
         with self.factory() as session:
             row = self.row(session, identifier, lock=False)
             target = session.get(ExecutionTarget, row.execution_target_id)
-            if target is not None and target.kind in ("ssh_docker", "kubernetes", "sagemaker"):
+            if target is not None and target.kind in (
+                "ssh_docker",
+                "kubernetes",
+                "sagemaker",
+                "runpod_pod",
+            ):
                 if self.targets is None:
                     raise SourceError(503, "Execution targets are not configured")
                 return self.targets.training(target.id)
@@ -134,6 +142,11 @@ class TrainingRunService:
                 "cloudwatch_log_group": "/aws/sagemaker/TrainingJobs",
                 "cloudwatch_stream_prefix": (row.external_id or "") + "/",
             }
+        resource = (
+            session.scalar(select(RunpodResource).where(RunpodResource.owner_id == row.id))
+            if session is not None and target is not None and target.kind == "runpod_pod"
+            else None
+        )
         return RunView(
             id=row.id,
             created_at=row.created_at,
@@ -148,6 +161,8 @@ class TrainingRunService:
             model_version_id=version.id if version else None,
             model_id=version.model_id if version else None,
             external_references=references,
+            resource_warning=resource.warning if resource else None,
+            resource_cleanup=resource.cleanup if resource else None,
         )
 
     def row(self, session: Session, identifier: UUID, *, lock: bool = True) -> TrainingRun:
@@ -203,7 +218,12 @@ class TrainingRunService:
                     raise SourceError(409, "The local execution target has an incompatible kind")
             else:
                 target = session.get(ExecutionTarget, body.execution_target_id)
-                if target is None or target.kind not in ("ssh_docker", "kubernetes", "sagemaker"):
+                if target is None or target.kind not in (
+                    "ssh_docker",
+                    "kubernetes",
+                    "sagemaker",
+                    "runpod_pod",
+                ):
                     raise SourceError(404, "Execution target not found")
             row = TrainingRun(
                 id=identifier,

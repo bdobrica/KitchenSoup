@@ -32,6 +32,8 @@ class SshTransport:
         env_names: set[str],
     ) -> None:
         self.config, self.reference = config, credential_ref
+        self.transfer_timeout = 1800
+        self.transfer_deadline: float | None = None
         self.known_hosts, self.secret_directory, self.env_names = (
             known_hosts,
             secret_directory,
@@ -182,6 +184,8 @@ class SshTransport:
                 raise ExecutorError("Remote workspace contains a link or non-directory")
 
     def upload(self, local: Path, remote: str) -> None:
+        if self.transfer_deadline is not None and time.monotonic() >= self.transfer_deadline:
+            raise ExecutorError("SFTP input transfer timed out")
         uid, _ = self.identity()
         try:
             with self.sftp() as sftp:
@@ -194,7 +198,14 @@ class SshTransport:
                 self.directory(sftp, str(PurePosixPath(remote).parent), create=True)
                 # Never merge into or replay a previous attempt directory.
                 sftp.mkdir(remote, mode=0o700)
-                deadline, total, count = time.monotonic() + 1800, 0, 0
+                deadline, total, count = time.monotonic() + self.transfer_timeout, 0, 0
+                if self.transfer_deadline is not None:
+                    deadline = min(deadline, self.transfer_deadline)
+
+                def progress(transferred: int, expected: int) -> None:
+                    if time.monotonic() > deadline:
+                        raise ExecutorError("SFTP input transfer timed out")
+
                 for path in sorted(local.rglob("*")):
                     dest = remote + "/" + path.relative_to(local).as_posix()
                     if path.is_symlink():
@@ -206,7 +217,7 @@ class SshTransport:
                         count += 1
                         if total > 9 * 1024**3 or count > 8192 or time.monotonic() > deadline:
                             raise ExecutorError("SSH input transfer exceeded its limit")
-                        sftp.put(str(path), dest, confirm=True)
+                        sftp.put(str(path), dest, callback=progress, confirm=True)
                         sftp.chmod(dest, 0o600)
                     else:
                         raise ExecutorError("Input staging contains a non-regular file")
@@ -234,6 +245,8 @@ class SshTransport:
 
     def download(self, remote: str, local: Path, size: int) -> None:
         """Stream only manifest-inventoried bytes; never recursively trust remote trees."""
+        if self.transfer_deadline is not None and time.monotonic() >= self.transfer_deadline:
+            raise ExecutorError("SFTP output transfer timed out")
         try:
             with self.sftp() as sftp:
                 self.directory(sftp, str(PurePosixPath(remote).parent))
@@ -241,7 +254,9 @@ class SshTransport:
                 if info.st_mode is None or not stat.S_ISREG(info.st_mode) or info.st_size != size:
                     raise ExecutorError("Remote output type or size differs from the manifest")
                 local.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-                deadline, remaining = time.monotonic() + 1800, size
+                deadline, remaining = time.monotonic() + self.transfer_timeout, size
+                if self.transfer_deadline is not None:
+                    deadline = min(deadline, self.transfer_deadline)
                 with sftp.open(remote, "rb") as source, local.open("wb") as target:
                     while remaining:
                         chunk = source.read(min(1024**2, remaining))

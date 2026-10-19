@@ -53,6 +53,27 @@
 </details><p>One instance per run; retries create a new paid run. Runtime limits do not cap total AWS spending. Stop unwanted jobs and clean up their staging objects after completion.</p>
 <button>Create SageMaker training target</button>
 </form>
+<h2>Runpod training target</h2>
+<p>Automatically allocates a paid GPU Pod and terminates it after training. Enable Runpod execution, approve API/SSH references and provision SSH host trust first. Operator setup: docs/runpod-training.md.</p>
+<form id="runpod-target-form">
+<label>Name <input name="name" required maxlength="200"></label>
+<label>API credential reference <input name="credential_ref" value="env://RUNPOD_API_KEY" required></label>
+<label>SSH key reference <input name="ssh_credential_ref" required placeholder="file:///run/secrets/id_ed25519"></label>
+<label>SSH host trust <select name="ssh_host_trust"><option value="known-hosts">Operator known-hosts file</option><option value="provisioned-ephemeral">Provision an ephemeral host key before allocation</option></select></label>
+<label>Pinned SSH-capable trainer image <input name="training_image" required placeholder="registry/image@sha256:…"></label>
+<label>GPU type <input name="gpu_id" required placeholder="NVIDIA Tesla T4"></label>
+<label>Cloud <select name="cloud"><option>SECURE</option><option>COMMUNITY</option></select></label>
+<label>Minimum VRAM GB <input name="min_vram_gb" type="number" min="1" max="192" value="8" required></label>
+<label>Maximum GPU USD/hour <input name="max_hourly_price_usd" type="number" min="0.01" max="10" step="0.01" value="0.50" required></label>
+<label>Maximum allocation minutes (includes preparation) <input name="max_runtime_minutes" type="number" min="1" max="60" value="15" required></label>
+<details><summary>Advanced</summary>
+<label>Data center IDs (comma separated, optional) <input name="data_center_ids"></label>
+<label>Ephemeral disk GB <input name="disk_gb" type="number" min="20" max="100" value="30" required></label>
+<label>Maximum concurrent Pods <input name="max_concurrent_pods" type="number" min="1" max="4" value="1" required></label>
+</details>
+<p>One GPU per Pod. GPU estimates exclude storage and other charges. Idle Pods and pending cleanup can remain billable.</p>
+<button>Create Runpod training target</button>
+</form>
 <h2>Configured targets</h2><div id="target-list"></div>
 <script defer src="/static/targets.js"></script>
 {% endblock %}

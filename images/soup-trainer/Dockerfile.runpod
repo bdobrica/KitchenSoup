@@ -1,0 +1,11 @@
+ARG TRAINER_IMAGE=kitchensoup-soup-trainer:local
+FROM ${TRAINER_IMAGE}
+ARG TRAINER_ID
+LABEL org.kitchensoup.trainer.digest=${TRAINER_ID}
+USER root
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources && apt-get update && apt-get install -y --no-install-recommends openssh-server && rm -rf /var/lib/apt/lists/* /etc/ssh/ssh_host_* && mkdir -p /run/sshd /home/runner/jobs && chown runner:runner /home/runner/jobs && chmod 700 /home/runner/jobs && passwd -d runner
+COPY images/soup-trainer/runpod_bootstrap.py /runner/runpod_bootstrap.py
+COPY images/soup-trainer/runpod_process.py /runner/runpod_process.py
+RUN ln -s /home/runner/active/input /input && ln -s /home/runner/active/output /output
+EXPOSE 22
+ENTRYPOINT ["python", "/runner/runpod_bootstrap.py"]

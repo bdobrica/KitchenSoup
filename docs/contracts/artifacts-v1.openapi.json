@@ -2711,6 +2711,28 @@
             "title": "Plan Sha256",
             "type": "string"
           },
+          "resource_cleanup": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Cleanup"
+          },
+          "resource_warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Warning"
+          },
           "status": {
             "$ref": "#/components/schemas/JobState"
           }
@@ -2725,6 +2747,170 @@
           "status"
         ],
         "title": "RunView",
+        "type": "object"
+      },
+      "RunpodConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_gpu_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 16,
+            "minItems": 1,
+            "title": "Allowed Gpu Ids",
+            "type": "array"
+          },
+          "cloud": {
+            "default": "SECURE",
+            "enum": [
+              "COMMUNITY",
+              "SECURE"
+            ],
+            "title": "Cloud",
+            "type": "string"
+          },
+          "data_center_ids": {
+            "items": {
+              "pattern": "^[A-Z0-9-]{1,30}$",
+              "type": "string"
+            },
+            "maxItems": 16,
+            "title": "Data Center Ids",
+            "type": "array"
+          },
+          "disk_gb": {
+            "default": 30,
+            "maximum": 100.0,
+            "minimum": 20.0,
+            "title": "Disk Gb",
+            "type": "integer"
+          },
+          "gpu_count": {
+            "const": 1,
+            "default": 1,
+            "title": "Gpu Count",
+            "type": "integer"
+          },
+          "gpu_id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9 ._-]+$",
+            "title": "Gpu Id",
+            "type": "string"
+          },
+          "max_concurrent_pods": {
+            "default": 1,
+            "maximum": 4.0,
+            "minimum": 1.0,
+            "title": "Max Concurrent Pods",
+            "type": "integer"
+          },
+          "max_hourly_price_usd": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 10.0,
+            "title": "Max Hourly Price Usd",
+            "type": "number"
+          },
+          "max_runtime_minutes": {
+            "default": 15,
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Max Runtime Minutes",
+            "type": "integer"
+          },
+          "min_vram_gb": {
+            "default": 8,
+            "maximum": 192.0,
+            "minimum": 1.0,
+            "title": "Min Vram Gb",
+            "type": "integer"
+          },
+          "schema": {
+            "const": "kitchensoup.runpod-target/v1",
+            "default": "kitchensoup.runpod-target/v1",
+            "title": "Schema",
+            "type": "string"
+          },
+          "ssh_credential_ref": {
+            "maxLength": 512,
+            "title": "Ssh Credential Ref",
+            "type": "string"
+          },
+          "ssh_host_trust": {
+            "default": "known-hosts",
+            "enum": [
+              "known-hosts",
+              "provisioned-ephemeral"
+            ],
+            "title": "Ssh Host Trust",
+            "type": "string"
+          },
+          "training_image": {
+            "maxLength": 255,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/:-]*@sha256:[0-9a-f]{64}$",
+            "title": "Training Image",
+            "type": "string"
+          },
+          "transfer_mode": {
+            "const": "ssh-sftp",
+            "default": "ssh-sftp",
+            "title": "Transfer Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ssh_credential_ref",
+          "gpu_id",
+          "allowed_gpu_ids",
+          "training_image",
+          "max_hourly_price_usd"
+        ],
+        "title": "RunpodConfig",
+        "type": "object"
+      },
+      "RunpodTargetTest": {
+        "properties": {
+          "gpu": {
+            "title": "Gpu",
+            "type": "string"
+          },
+          "hourly_price_usd": {
+            "title": "Hourly Price Usd",
+            "type": "number"
+          },
+          "maximum_compute_estimate_usd": {
+            "title": "Maximum Compute Estimate Usd",
+            "type": "number"
+          },
+          "message": {
+            "default": "Runpod API and GPU catalog verified; no Pod allocated",
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "training_image_digest": {
+            "title": "Training Image Digest",
+            "type": "string"
+          },
+          "warning": {
+            "default": "GPU estimate excludes storage and other charges; idle Pods remain billable",
+            "title": "Warning",
+            "type": "string"
+          }
+        },
+        "required": [
+          "gpu",
+          "training_image_digest",
+          "hourly_price_usd",
+          "maximum_compute_estimate_usd"
+        ],
+        "title": "RunpodTargetTest",
         "type": "object"
       },
       "SageMakerConfig": {
@@ -3095,6 +3281,9 @@
               },
               {
                 "$ref": "#/components/schemas/SageMakerConfig"
+              },
+              {
+                "$ref": "#/components/schemas/RunpodConfig"
               }
             ],
             "title": "Configuration"
@@ -3109,7 +3298,8 @@
             "enum": [
               "ssh_docker",
               "kubernetes",
-              "sagemaker"
+              "sagemaker",
+              "runpod_pod"
             ],
             "title": "Kind",
             "type": "string"
@@ -3187,6 +3377,9 @@
               },
               {
                 "$ref": "#/components/schemas/SageMakerConfig"
+              },
+              {
+                "$ref": "#/components/schemas/RunpodConfig"
               }
             ],
             "title": "Configuration"
@@ -3211,7 +3404,8 @@
             "enum": [
               "ssh_docker",
               "kubernetes",
-              "sagemaker"
+              "sagemaker",
+              "runpod_pod"
             ],
             "title": "Kind",
             "type": "string"
@@ -5976,6 +6170,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/SageMakerTargetTest"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RunpodTargetTest"
                     }
                   ],
                   "title": "Response Test Target Api V1 Execution Targets  Identifier  Test Post"

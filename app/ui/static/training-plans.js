@@ -104,6 +104,20 @@
       for (const target of await request('/execution-targets')) {
         const option = node('option', target.name); option.value = target.id; $('#plan-target').append(option);
       }
+      $('#plan-target').addEventListener('change', async () => {
+        const targets = await request('/execution-targets');
+        const target = targets.find(item => item.id === $('#plan-target').value);
+        let estimate = $('#runpod-estimate');
+        if (!estimate) { estimate = node('p', ''); estimate.id = 'runpod-estimate'; $('#plan-target').after(estimate); }
+        estimate.textContent = '';
+        if (target?.kind === 'runpod_pod') {
+          estimate.textContent = 'Checking Runpod GPU availability and compute estimate…';
+          try {
+            const quote = await request(`/execution-targets/${target.id}/test`, 'POST');
+            estimate.textContent = `Estimated GPU compute: $${quote.hourly_price_usd.toFixed(2)}/hour; up to $${quote.maximum_compute_estimate_usd.toFixed(2)} for the configured deadline. ${quote.warning}.`;
+          } catch (error) { estimate.textContent = error.message; }
+        }
+      });
       for (const suite of await request('/evaluation-suites')) {
         const option = node('option', suite.name); option.value = suite.id; $('#plan-evaluation-suite').append(option);
       }
