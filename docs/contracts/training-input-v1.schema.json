@@ -497,6 +497,22 @@
           "default": null,
           "title": "Max Sequence Length"
         },
+        "precision": {
+          "anyOf": [
+            {
+              "enum": [
+                "bf16",
+                "fp16"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Precision"
+        },
         "seed": {
           "anyOf": [
             {
@@ -579,8 +595,11 @@
           "type": "string"
         },
         "precision": {
-          "const": "bf16",
           "default": "bf16",
+          "enum": [
+            "bf16",
+            "fp16"
+          ],
           "title": "Precision",
           "type": "string"
         },

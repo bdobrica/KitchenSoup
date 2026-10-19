@@ -11,8 +11,12 @@ from app.training.schemas import AppSpec, Recipe, TrainingParameters
 
 
 def canonical_bytes(value: BaseModel) -> bytes:
+    payload = value.model_dump(mode="json", by_alias=True)
+    # Keep pre-precision-override snapshots byte-compatible for hashing.
+    if "appspec" in payload and payload["appspec"]["overrides"].get("precision") is None:
+        payload["appspec"]["overrides"].pop("precision", None)
     return json.dumps(
-        value.model_dump(mode="json", by_alias=True),
+        payload,
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,

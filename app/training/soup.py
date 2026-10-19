@@ -17,7 +17,7 @@ class RunnerError(ValueError):
 
 
 SOUP_VERSION = "0.74.0"
-TRANSLATOR_VERSION = "kitchensoup.soup-translator/v1"
+TRANSLATOR_VERSION = "kitchensoup.soup-translator/v2"
 
 
 class RunnerFile(PlanModel):
@@ -98,6 +98,16 @@ class RunnerManifest(PlanModel):
     files: list[RunnerFile]
     adapters: list[RunnerFile]
     logs_truncated: bool
+
+
+def validate_precision(precision: str, native_bf16: bool) -> None:
+    """Soup 0.74 selects BF16 on capable CUDA devices and FP16 otherwise."""
+    actual = "bf16" if native_bf16 else "fp16"
+    if precision != actual:
+        raise RunnerError(
+            f"Reviewed precision {precision} does not match Soup's CUDA precision {actual}; "
+            f"review and save a new plan with precision {actual}"
+        )
 
 
 def translate(run: RunnerInput) -> str:

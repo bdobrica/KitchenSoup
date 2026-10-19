@@ -7,7 +7,7 @@ from pathlib import Path
 
 from app.ingestion.versions import TrainingExample
 from app.training.runner import execute
-from app.training.soup import SOUP_VERSION, RunnerError, RunnerInput
+from app.training.soup import SOUP_VERSION, RunnerError, RunnerInput, validate_precision
 from app.training.tokenization import tokenize_example
 
 
@@ -35,10 +35,10 @@ def prepare(root: Path, output: Path, run: RunnerInput, validate_only: bool) -> 
     if importlib.metadata.version("soup-cli") != SOUP_VERSION:
         raise RunnerError("Installed Soup version does not match the translator")
     if not validate_only:
-        if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported(
-            including_emulation=False
-        ):
-            raise RunnerError("The reviewed BF16 recipe requires a native BF16 CUDA device")
+        if not torch.cuda.is_available():
+            raise RunnerError("Training requires a CUDA device")
+        native_bf16 = torch.cuda.is_bf16_supported(including_emulation=False)
+        validate_precision(run.plan.resolved.training.precision, native_bf16)
     config = AutoConfig.from_pretrained(
         root / "model", local_files_only=True, trust_remote_code=False
     )

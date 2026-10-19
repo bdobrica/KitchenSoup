@@ -46,7 +46,7 @@
     const resolved = value.resolved, summary = $('#plan-summary');
     summary.append(node('p', `Intent: ${value.appspec.intent.replaceAll('_', ' ')}`),
       node('p', `Model: ${resolved.base_model_name}. Dataset: ${resolved.dataset_name}, version ${resolved.dataset_version}, ${resolved.example_count} examples.`),
-      node('p', `Recipe: ${resolved.recipe.name} (v${resolved.recipe.version}). Output: LoRA adapter.`));
+      node('p', `Recipe: ${resolved.recipe.name} (v${resolved.recipe.version}). Output: LoRA adapter. Precision: ${resolved.training.precision.toUpperCase()}.`));
     const link = node('a', 'Review the exact dataset examples'); link.href = `/datasets/${resolved.dataset_id}/versions/${resolved.dataset_version_id}`; summary.append(link);
     for (const warning of resolved.warnings) summary.append(node('p', warning));
     if (value.id) {
@@ -77,6 +77,7 @@
     event.preventDefault(); invalidate();
     const chosen = recipe(), overrides = {};
     for (const name of Object.keys(fields)) if (form.elements[name].value !== '') overrides[name] = Number(form.elements[name].value);
+    if (form.elements.precision.value) overrides.precision = form.elements.precision.value;
     if (!chosen) { status.textContent = 'Choose a recipe.'; return; }
     const spec = {schema: 'kitchensoup.appspec/v1', intent: $('#plan-intent').value,
       base_model_version_id: $('#plan-model').value, dataset_version_id: $('#plan-dataset').value,

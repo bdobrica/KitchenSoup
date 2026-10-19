@@ -2,9 +2,10 @@
 
 The local executor submits a saved [training plan](training-plans.md), materializes
 its registered inputs and runs the pinned [Soup image](soup-training.md). It supports
-status, private stdout/stderr, cancellation and stopped-container cleanup. Current
-recipes require a CUDA GPU with native BF16; the development GTX 1660 Ti is not
-compatible. SageMaker execution is a later adapter.
+status, private stdout/stderr, cancellation and stopped-container cleanup.
+Training requires a CUDA GPU: select FP16 in advanced plan parameters on older
+cards such as RTX 20 series or GTX 1660 Ti; BF16 remains the default on native-BF16
+hardware. SageMaker execution is a later adapter.
 
 ## Start the host application
 
@@ -18,7 +19,7 @@ make migrate
 make storage-init
 make catalog-sync
 make build-soup
-make gpu-check
+make gpu-check PRECISION=fp16 # use bf16 for native-BF16 hardware
 make training-infra         # adds loopback PostgreSQL port 5432; retains volumes
 # If the Compose web service is running, free its port first:
 docker compose stop web
@@ -111,8 +112,8 @@ before cleaning up host files. Do not run competing applications against this ta
 make verify
 make test-integration
 make test-local-training    # real Docker lifecycle + Soup CPU validation
-make gpu-check              # CUDA runtime and native BF16; explicit failure if absent
-make test-gpu               # actual tiny BF16 run through the production executor
+make gpu-check              # CUDA runtime and selected precision (BF16 by default)
+make test-gpu               # actual tiny run; use PRECISION=fp16 on older GPUs
 ```
 
 The smoke builds a tiny random Qwen2 and synthetic conversations locally; it

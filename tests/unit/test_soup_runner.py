@@ -283,3 +283,53 @@ def test_tokenizer_template_is_retained_but_python_and_remote_code_fail(
     run.model_files.append(file_record(model, code))
     with pytest.raises(RunnerError, match="file type"):
         verify_bundle(root, run)
+
+
+@pytest.mark.parametrize(
+    "precision,native_bf16,accepted",
+    [("fp16", False, True), ("bf16", True, True), ("bf16", False, False), ("fp16", True, False)],
+)
+def test_precision_preflight_matches_pinned_soup(
+    precision: str, native_bf16: bool, accepted: bool
+) -> None:
+    from app.training.soup import validate_precision
+
+    if accepted:
+        validate_precision(precision, native_bf16)
+    else:
+        with pytest.raises(RunnerError, match="review and save a new plan"):
+            validate_precision(precision, native_bf16)
+
+
+def test_old_bf16_bundle_hashes_remain_readable(bundle: tuple[Path, RunnerInput]) -> None:
+    _, run = bundle
+    legacy = run.model_dump(mode="json", by_alias=True)
+    legacy["plan"]["appspec"]["overrides"].pop("precision")
+    content = {key: legacy["plan"][key] for key in ("appspec", "resolved")}
+    legacy["plan"]["sha256"] = hashlib.sha256(
+        json.dumps(content, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    restored = RunnerInput.model_validate(legacy)
+    assert restored.plan.resolved.training.precision == "bf16"
+    assert restored.plan.sha256 == run.plan.sha256
+
+
+def test_fp16_bundle_preserves_reviewed_precision_and_detects_tampering(
+    bundle: tuple[Path, RunnerInput],
+) -> None:
+    _, run = bundle
+    data = run.model_dump(mode="json", by_alias=True)
+    data["plan"]["appspec"]["overrides"]["precision"] = "fp16"
+    data["plan"]["resolved"]["training"]["precision"] = "fp16"
+    content = PlanContent(
+        appspec=AppSpec.model_validate(data["plan"]["appspec"]),
+        resolved=ResolvedPlan.model_validate(data["plan"]["resolved"]),
+    )
+    data["plan"]["sha256"] = digest(content)
+    restored = RunnerInput.model_validate(data)
+    assert restored.plan.resolved.training.precision == "fp16"
+    assert restored.plan.sha256 != run.plan.sha256
+    assert json.loads(translate(restored))["training"]["auto_mixed_precision"] is False
+    data["plan"]["resolved"]["training"]["precision"] = "bf16"
+    with pytest.raises(ValidationError, match="hash mismatch"):
+        RunnerInput.model_validate(data)

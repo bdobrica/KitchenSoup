@@ -63,9 +63,12 @@ at `tokenized/`, consumed using Soup's `pre_tokenized` mode. The runner's hash c
 replace Soup's optional preprocessing-cache metadata; its missing-metadata advisory
 is expected. Numeric validity of weights is ultimately checked when Soup loads them.
 
-Soup 0.74 chooses precision according to hardware. Current recipe v1 requires
-BF16, so training rejects devices without native CUDA BF16 support before invoking
-Soup. It also checks the requested sequence length against model context capacity.
+Soup 0.74 chooses BF16 on native-BF16 CUDA hardware and FP16 otherwise, with
+`auto_mixed_precision` disabled. BF16 remains the recipe default; an explicit
+`overrides.precision: "fp16"` supports older CUDA GPUs such as RTX 20 series.
+Preflight requires CUDA and rejects any mismatch with the reviewed precision;
+FP16 cannot currently be forced on native-BF16 hardware. See
+[ADR 0012](adr/0012-explicit-fp16-training.md). It also checks the requested sequence length against model context capacity.
 These checks do not guarantee enough VRAM for the selected workload.
 
 The adapter was checked against the pinned release's
@@ -125,21 +128,21 @@ runtime timestamps are not guaranteed to be identical across devices.
 ```sh
 make verify
 make test-soup       # real CLI dry run + separate CPU training probe; no network/GPU
-make test-soup-gpu   # optional actual training; skips if native BF16 is unavailable
+make test-soup-gpu PRECISION=fp16 # optional actual training on older CUDA GPUs
 ```
 
 The CPU training probe directly invokes Soup with the generated config in a separate
 synthetic workspace. Soup uses FP32 on CPU; this tests its actual training API and
-adapter output, not the BF16 recipe execution contract. The runner never relaxes
-its BF16 preflight, and CPU validation manifests remain `validated`.
+adapter output, not the CUDA training execution contract. The runner retains its
+CUDA/precision preflight, and CPU validation manifests remain `validated`.
 
 The smoke fixture contains only synthetic conversations and a tiny random Qwen2
 model generated locally inside the image. It checks token masks, CLI status,
 manifest identity and refusal to overwrite prior output. It downloads no weights.
 The optional GPU test is not a quality benchmark or a production-size VRAM check.
 It fails explicitly if Docker cannot expose a CUDA device, and reports a skip when
-the CUDA check runs but native BF16 is unavailable. The development GTX 1660 Ti
-does not satisfy the current recipe precision requirement.
+the CUDA check runs but the selected precision is unavailable. Use
+`PRECISION=bf16` (the default) on native-BF16 hardware.
 
 To update dependencies, edit `images/soup-trainer/requirements.in`, run
 `.venv/bin/python scripts/lock_soup_trainer.py`, review the generated lock, rebuild

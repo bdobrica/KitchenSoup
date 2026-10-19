@@ -1,4 +1,4 @@
-"""Real Docker lifecycle smoke; --gpu exercises the production BF16 launch unchanged."""
+"""Real Docker lifecycle smoke; --gpu exercises the production GPU launch unchanged."""
 
 import argparse
 import json
@@ -19,6 +19,7 @@ from app.training.soup import RunnerInput
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument("--gpu", action="store_true")
+parser.add_argument("--precision", choices=("bf16", "fp16"), default="bf16")
 args = parser.parse_args()
 
 
@@ -82,6 +83,7 @@ with tempfile.TemporaryDirectory(prefix="kitchensoup-executor-smoke-") as direct
                 image,
                 "/fixture.py",
                 "/bundle",
+                args.precision,
             ]
         )
         if result.returncode:
@@ -146,7 +148,7 @@ with tempfile.TemporaryDirectory(prefix="kitchensoup-executor-smoke-") as direct
             "Local executor smoke passed: immutable bundle, pinned image, "
             "status, logs, cancel and cleanup."
             + (
-                " Actual BF16 training passed."
+                f" Actual {args.precision.upper()} training passed."
                 if args.gpu
                 else " CPU validation only; GPU training not claimed."
             )

@@ -22,6 +22,13 @@
     <summary>Advanced training parameters</summary>
     <label>Versioned recipe <select id="plan-recipe"></select></label>
     <p>Defaults are shown as placeholders. Leave fields blank to use them. Initial recipes produce a LoRA adapter; hardware and engine compatibility still need validation.</p>
+    <label>Training precision
+      <select name="precision">
+        <option value="">Recipe default (BF16)</option>
+        <option value="bf16">BF16 — native BF16 CUDA GPU</option>
+        <option value="fp16">FP16 — older CUDA GPUs, including RTX 20 series</option>
+      </select>
+    </label>
     <div id="plan-overrides"></div>
     <h3>Resolved defaults</h3><pre id="plan-defaults"></pre>
   </details>

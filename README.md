@@ -11,7 +11,7 @@ Configure [LLM providers](docs/providers.md) with secret references and test the
 connections. Choose an intent and save a [reviewed training plan](docs/training-plans.md).
 An offline [Soup runner](docs/soup-training.md) is available for prepared bundles.
 The [local executor](docs/local-training.md) adds submission, status, logs and cancellation.
-Actual BF16 GPU validation remains pending on compatible hardware.
+Local FP16 GPU training is [validated on an RTX 2070 SUPER](docs/evidence/fp16-training.md).
 See [dataset versions](docs/dataset-versions.md).
 
 ## Quick start

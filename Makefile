@@ -3,6 +3,7 @@ PYTHON ?= python3.13
 VENV := .venv
 VENV_PYTHON := $(VENV)/bin/python
 COMPOSE ?= docker compose
+PRECISION ?= bf16
 export MESSAGE
 
 .PHONY: help setup fmt lint test test-unit verify dev
@@ -118,18 +119,18 @@ build-soup: ## Build the pinned Soup trainer image (large CUDA dependencies)
 test-soup: build-soup ## Validate the offline trainer bundle and real Soup CLI without a GPU
 	$(VENV_PYTHON) scripts/test_soup_trainer.py
 
-test-soup-gpu: build-soup ## Optional native-BF16 GPU training smoke (synthetic tiny model)
-	$(VENV_PYTHON) scripts/test_soup_trainer.py --gpu
+test-soup-gpu: build-soup ## Optional GPU training smoke (PRECISION=bf16 or fp16) (synthetic tiny model)
+	$(VENV_PYTHON) scripts/test_soup_trainer.py --gpu --precision $(PRECISION)
 
 .PHONY: gpu-check test-gpu test-local-training training-infra dev-training
-gpu-check: ## Check Docker GPU access and native BF16 (build-soup first)
-	$(VENV_PYTHON) scripts/gpu_check.py
+gpu-check: ## Check Docker GPU access and selected precision (build-soup first)
+	$(VENV_PYTHON) scripts/gpu_check.py --precision $(PRECISION)
 
 test-local-training: build-soup ## Exercise real Docker lifecycle with offline CPU validation
 	$(VENV_PYTHON) scripts/test_local_training.py
 
-test-gpu: build-soup gpu-check ## Tiny end-to-end local Docker BF16 training smoke
-	$(VENV_PYTHON) scripts/test_local_training.py --gpu
+test-gpu: build-soup gpu-check ## Tiny end-to-end local Docker training smoke (PRECISION=bf16 or fp16)
+	$(VENV_PYTHON) scripts/test_local_training.py --gpu --precision $(PRECISION)
 
 training-infra: local-env ## Expose local PostgreSQL for the opt-in host training application
 	$(COMPOSE) -f docker-compose.yml -f docker-compose.training.yml up --detach --wait postgres rustfs

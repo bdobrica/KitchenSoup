@@ -33,7 +33,7 @@ class TrainingParameters(PlanModel):
     lora_dropout: Dropout
     seed: Seed
     optimizer: Literal["adamw"] = "adamw"
-    precision: Literal["bf16"] = "bf16"
+    precision: Literal["bf16", "fp16"] = "bf16"
     scheduler: Literal["linear"] = "linear"
     warmup_ratio: Annotated[float, Field(strict=True, ge=0, le=0)] = 0.0
     weight_decay: Annotated[float, Field(strict=True, ge=0, le=0)] = 0.0
@@ -42,6 +42,7 @@ class TrainingParameters(PlanModel):
 
 
 class TrainingOverrides(PlanModel):
+    precision: Literal["bf16", "fp16"] | None = None
     epochs: Epochs | None = None
     learning_rate: Rate | None = None
     max_sequence_length: SequenceLength | None = None

@@ -42,12 +42,12 @@ host mode provides local execution. No new dependency or database migration.
   cleanup, and rendering HTML-like log content as text. No JavaScript page errors.
 - Reviewed the final diff for unrelated edits, generated drift and sensitive payloads.
 
-## Hardware checks and limits
+## Original hardware checks and limits (2026-09-06)
 
 `make gpu-check` failed explicitly because local Docker could not expose CUDA.
 The previously identified development GTX 1660 Ti also lacks native BF16 required
 by recipe v1. `make test-gpu` is implemented but actual BF16 execution through this
-executor was **not run**. That acceptance check remains open in TODO.md for suitable
+executor was **not run**. That acceptance check remained open at the time for suitable
 hardware. No SageMaker job, paid provider call, remote model-weight download or
 GPU quality/VRAM benchmark was performed.
 
@@ -61,3 +61,15 @@ Temporary test containers and application processes were removed/stopped. Local
 Compose services were stopped afterward, retaining existing volumes and `.env`.
 The built trainer image remains available. Synthetic API/browser fixtures contained
 no user runtime payloads or credentials.
+
+## FP16 GPU follow-up — 2026-10-19
+
+Milestone 12 is complete under the updated acceptance criterion requiring an FP16
+fine-tune; BF16 validation is optional per
+[ADR 0013](../adr/0013-fp16-milestone-validation.md). Actual
+`make test-gpu PRECISION=fp16` passed through the local executor on an RTX 2070 SUPER
+with compute capability 7.5. The smoke verified the successful runner manifest,
+adapter hashes, status/logs, cancellation and cleanup. See the
+[FP16 validation record](fp16-training.md) for the image identity, fixture warm-up
+adjustment, checks and limits. The earlier BF16-only hardware restriction is
+superseded by [ADR 0012](../adr/0012-explicit-fp16-training.md).

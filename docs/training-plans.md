@@ -25,7 +25,14 @@ specified as AdamW, BF16, linear schedule, zero warmup/weight decay, no quantiza
 and all linear LoRA targets; output is an adapter. These are initial defaults,
 not measured quality or GPU memory guarantees. A seed alone does not guarantee
 bit-identical GPU results. Advanced controls can override the bounded numeric
-parameters; engine commands, arbitrary configuration and secrets are not accepted.
+parameters and training precision; engine commands, arbitrary configuration and
+secrets are not accepted.
+
+Choose **Advanced training parameters → Training precision → FP16** for CUDA
+GPUs without native BF16, including RTX 20 series (compute capability 7.5).
+BF16 remains the recipe default. The pinned Soup backend chooses precision from
+hardware; preflight rejects a reviewed precision that does not match that choice.
+FP16 cannot currently be forced on native-BF16 hardware.
 
 Conversation recipes apply the pinned model's chat template in future preparation;
 only the final assistant target contributes loss, with prior turns providing
@@ -65,8 +72,8 @@ Replace the synthetic UUIDs with registered versions. Omitted recipe uses the
 intent's explicitly pinned default; the resolved result always retains the whole
 recipe and version. To pin explicitly, add
 `"recipe": {"id": "conversation-sft-default", "version": 1}`. Overrides look like
-`"overrides": {"epochs": 2, "learning_rate": 0.0001}`; omitted/null numeric fields
-use recipe defaults. The UI pins the selected recipe in its request.
+`"overrides": {"epochs": 2, "learning_rate": 0.0001, "precision": "fp16"}`;
+omitted/null fields use recipe defaults. The UI pins the selected recipe in its request.
 
 | Method and path under `/api/v1` | Result |
 | --- | --- |
@@ -85,9 +92,12 @@ not idempotent; check the list before retrying after an uncertain response.
 There is no update/delete API or submission action.
 
 The plan hash is SHA-256 over the UTF-8 JSON object containing `appspec` and
-`resolved`, serialized with schema aliases, all model defaults/null fields,
+`resolved`, serialized with schema aliases, all model defaults/null fields except
+a null/omitted precision override,
 sorted keys, compact separators, unescaped Unicode and finite numbers. It excludes
-row ID/timestamps and the hash itself. Recipe hashing uses the same serialization
+row ID/timestamps and the hash itself. Omitting a null precision override preserves
+previously saved BF16 hashes. See [ADR 0012](adr/0012-explicit-fp16-training.md).
+Recipe hashing uses the same serialization
 on the full normalized recipe. Saved reads validate payload versions and their
 hash; they do not resolve current defaults. Hashes identify retained configuration,
 not execution authorization or artifact availability.

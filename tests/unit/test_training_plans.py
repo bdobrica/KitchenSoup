@@ -111,3 +111,17 @@ def test_generated_training_schemas(
         json.loads(Path(f"docs/contracts/{name}-v1.schema.json").read_text())
         == model.model_json_schema()
     )
+
+
+@pytest.mark.parametrize("precision", ["bf16", "fp16"])
+def test_precision_override_is_explicit_and_preserves_recipe_defaults(precision: str) -> None:
+    recipe, parameters = resolve_recipe(spec(overrides={"precision": precision}))
+    assert parameters.precision == precision
+    assert recipe.defaults.precision == "bf16"
+    assert resolve_recipe(spec())[1].precision == "bf16"
+
+
+@pytest.mark.parametrize("precision", ["auto", "fp32", "float16", True])
+def test_unknown_precision_is_rejected(precision: object) -> None:
+    with pytest.raises(ValidationError):
+        spec(overrides={"precision": precision})

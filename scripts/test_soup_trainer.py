@@ -1,11 +1,11 @@
 """Exercise the pinned image offline with a generated tiny model and synthetic examples."""
 
+import argparse
 import atexit
 import json
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 from uuid import uuid4
@@ -15,7 +15,11 @@ IMAGE = "kitchensoup-soup-trainer:local"
 image_id = subprocess.check_output(
     ["docker", "image", "inspect", IMAGE, "--format", "{{.Id}}"], text=True
 ).strip()
-gpu = "--gpu" in sys.argv
+parser = argparse.ArgumentParser()
+parser.add_argument("--gpu", action="store_true")
+parser.add_argument("--precision", choices=("bf16", "fp16"), default="bf16")
+args = parser.parse_args()
+gpu = args.gpu
 container_name = "kitchensoup-trainer-test-" + uuid4().hex
 
 
@@ -68,11 +72,12 @@ if gpu:
             image_id,
             "-c",
             "import torch,sys; sys.exit(0 if torch.cuda.is_available() and "
-            "torch.cuda.is_bf16_supported(including_emulation=False) else 77)",
+            f"(('bf16' if torch.cuda.is_bf16_supported(including_emulation=False) else 'fp16') "
+            f"== {args.precision!r}) else 77)",
         ]
     )
     if result.returncode == 77:
-        print("SKIPPED GPU training: current recipes require a native BF16 CUDA GPU.")
+        print(f"SKIPPED GPU training: CUDA unavailable or precision {args.precision} unsupported.")
         raise SystemExit(0)
     if result.returncode:
         raise SystemExit(
@@ -98,6 +103,7 @@ with tempfile.TemporaryDirectory(prefix="kitchensoup-trainer-") as directory:
             image_id,
             "/fixture.py",
             "/bundle",
+            args.precision,
         ],
         check=True,
     )
@@ -181,7 +187,7 @@ with tempfile.TemporaryDirectory(prefix="kitchensoup-trainer-") as directory:
         assert (probe / "adapter/adapter_model.safetensors").stat().st_size > 0
         print(
             "CPU CLI-only training probe passed; "
-            "BF16 runner execution still requires compatible GPU"
+            "Runner execution still requires a compatible CUDA GPU"
         )
 
     # An immutable attempt cannot be overwritten, including a second launch after success.

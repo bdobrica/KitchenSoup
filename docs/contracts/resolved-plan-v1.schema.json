@@ -218,8 +218,11 @@
           "type": "string"
         },
         "precision": {
-          "const": "bf16",
           "default": "bf16",
+          "enum": [
+            "bf16",
+            "fp16"
+          ],
           "title": "Precision",
           "type": "string"
         },

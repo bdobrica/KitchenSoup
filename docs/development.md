@@ -186,5 +186,5 @@ references, optional read-only secret-file mounts and gateway configuration.
 ## Local GPU training
 
 Use the opt-in host workflow in [local training](local-training.md). `make gpu-check`
-checks Docker CUDA/native BF16; `make test-local-training` verifies the Docker lifecycle
+checks Docker CUDA and selected precision (`PRECISION=fp16` for older GPUs); `make test-local-training` verifies the Docker lifecycle
 without a GPU and `make test-gpu` runs the tiny actual training smoke.

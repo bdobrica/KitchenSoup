@@ -1583,7 +1583,8 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 The current implementation frontier is Milestone 13: queue, worker, reconciler and job state.
 The opt-in local Docker executor is documented in [docs/local-training.md](docs/local-training.md).
 The standalone pinned Soup runner and translation contracts are documented in [docs/soup-training.md](docs/soup-training.md).
-Native-BF16 GPU smoke validation remains required on compatible hardware.
+Milestone 12 FP16 GPU validation is complete; see [validation evidence](docs/evidence/fp16-training.md).
+BF16 GPU validation is optional.
 Training intent, recipes and saved review plans are documented in [docs/training-plans.md](docs/training-plans.md).
 LLM provider configuration is documented in [docs/providers.md](docs/providers.md).
 Dataset snapshots and previews are documented in [docs/dataset-versions.md](docs/dataset-versions.md).

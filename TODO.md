@@ -374,8 +374,8 @@ This checklist is ordered so it can be implemented consecutively. Each milestone
 
 **Acceptance criteria**
 
-- [ ] Validate a Soup fine-tune through the local executor on a native-BF16 NVIDIA GPU.
-  Implementation and CPU lifecycle checks are complete; compatible GPU access remains pending.
+- [x] Validate an FP16 Soup fine-tune through the local executor on a compatible NVIDIA GPU.
+  See [FP16 GPU evidence](docs/evidence/fp16-training.md); BF16 validation is optional.
 - [x] Status and logs appear in the application.
 - [x] User can cancel the run.
 

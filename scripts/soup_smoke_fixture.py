@@ -98,7 +98,9 @@ spec = AppSpec.model_validate(
         "base_model_version_id": identifier,
         "dataset_version_id": identifier,
         "overrides": {
-            "epochs": 1,
+            "precision": sys.argv[2] if len(sys.argv) > 2 else "bf16",
+            # Allow FP16 GradScaler warm-up to recover before Soup checks final metrics.
+            "epochs": 8,
             "max_sequence_length": 128,
             "gradient_accumulation_steps": 1,
             "lora_rank": 2,
