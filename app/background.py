@@ -44,6 +44,7 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
     settings = settings if settings is not None else Settings()
     if (
         settings.ssh_execution_enabled
+        or settings.kubernetes_execution_enabled
         or settings.local_training_enabled
         or settings.local_deployment_enabled
         or settings.local_transformations_enabled
@@ -55,6 +56,7 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
         S3ArtifactStore(settings)
         if (
             settings.ssh_execution_enabled
+            or settings.kubernetes_execution_enabled
             or settings.local_training_enabled
             or settings.local_deployment_enabled
             or settings.local_transformations_enabled
@@ -97,7 +99,11 @@ def main(settings: Settings | None = None, role: str | None = None) -> None:
                 else None,
                 targets,
             )
-        if settings.local_training_enabled or settings.ssh_execution_enabled:
+        if (
+            settings.local_training_enabled
+            or settings.ssh_execution_enabled
+            or settings.kubernetes_execution_enabled
+        ):
             executor = (
                 LocalDockerTrainingExecutor(
                     Path(settings.training_workspace),

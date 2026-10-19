@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 <p><a href="/">Home</a> · <a href="/training-plans">Training plans</a> · <a href="/deployments">Playgrounds</a></p>
-<h1>SSH execution targets</h1>
+<h1>Execution targets</h1>
+<h2>Docker-over-SSH target</h2>
 <p>Configure a trusted GPU host with Docker and NVIDIA Container Toolkit. Inputs are copied over SSH; the host does not need access to KitchenSoup storage. Target configuration is immutable: create a new target to change hosts or settings.</p>
 <p>Enable SSH execution and approve the host key and credential locations in the host application settings first. Enter a credential reference only.</p>
 <p id="target-status" role="status"></p>
@@ -16,6 +17,24 @@
 <label>Serving image <input name="deployment_image" value="kitchensoup-vllm:local" required></label>
 <button>Create target</button>
 </form>
-<h2>Configured SSH hosts</h2><div id="target-list"></div>
+<h2>Kubernetes training target</h2>
+<p>Use a prepared GPU namespace with persistent storage and enforced NetworkPolicies. Enable Kubernetes execution and approve the kubeconfig reference in application settings first. This target runs training jobs; use local or SSH targets for playgrounds.</p>
+<form id="kubernetes-target-form">
+<label>Name <input name="name" required maxlength="200"></label>
+<label>Kubeconfig reference <input name="credential_ref" placeholder="file:///run/secrets/kubeconfig" required></label>
+<label>Namespace <input name="namespace" value="kitchensoup" required></label>
+<label>Trainer image pinned by digest <input name="training_image" placeholder="registry.example/trainer@sha256:…" required></label>
+<details><summary>Advanced</summary>
+<label>Context (optional) <input name="context"></label>
+<label>NVIDIA runtime class (blank for cluster default) <input name="runtime_class" value="nvidia"></label>
+<label>Service account <input name="service_account" value="default" required></label>
+<label>GPU count <input name="gpu_count" type="number" value="1" min="1" max="8" required></label>
+<label>Storage class (blank for cluster default) <input name="storage_class"></label>
+<label>Workspace GiB <input name="workspace_gib" type="number" value="32" min="1" max="1024" required></label>
+<label>GPU node selector (JSON) <textarea name="node_selector">{"nvidia.com/gpu.present":"true"}</textarea></label>
+<label>Tolerations (JSON) <textarea name="tolerations">[]</textarea></label>
+</details><button>Create Kubernetes target</button>
+</form>
+<h2>Configured targets</h2><div id="target-list"></div>
 <script defer src="/static/targets.js"></script>
 {% endblock %}

@@ -1,0 +1,171 @@
+{
+  "$defs": {
+    "Toleration": {
+      "additionalProperties": false,
+      "properties": {
+        "effect": {
+          "enum": [
+            "NoSchedule",
+            "PreferNoSchedule",
+            "NoExecute"
+          ],
+          "title": "Effect",
+          "type": "string"
+        },
+        "key": {
+          "default": "",
+          "maxLength": 253,
+          "title": "Key",
+          "type": "string"
+        },
+        "operator": {
+          "default": "Equal",
+          "enum": [
+            "Equal",
+            "Exists"
+          ],
+          "title": "Operator",
+          "type": "string"
+        },
+        "tolerationSeconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tolerationseconds"
+        },
+        "value": {
+          "default": "",
+          "maxLength": 63,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "effect"
+      ],
+      "title": "Toleration",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "cleanup_policy": {
+      "const": "explicit",
+      "default": "explicit",
+      "title": "Cleanup Policy",
+      "type": "string"
+    },
+    "context": {
+      "anyOf": [
+        {
+          "maxLength": 253,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Context"
+    },
+    "gpu_count": {
+      "default": 1,
+      "maximum": 8,
+      "minimum": 1,
+      "title": "Gpu Count",
+      "type": "integer"
+    },
+    "namespace": {
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$",
+      "title": "Namespace",
+      "type": "string"
+    },
+    "node_selector": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "maxProperties": 32,
+      "title": "Node Selector",
+      "type": "object"
+    },
+    "preparation_timeout": {
+      "default": 300,
+      "maximum": 3600,
+      "minimum": 10,
+      "title": "Preparation Timeout",
+      "type": "integer"
+    },
+    "runtime_class": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,252}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "nvidia",
+      "title": "Runtime Class"
+    },
+    "schema": {
+      "const": "kitchensoup.kubernetes-target/v1",
+      "default": "kitchensoup.kubernetes-target/v1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "service_account": {
+      "default": "default",
+      "pattern": "^[a-z0-9][a-z0-9.-]{0,252}$",
+      "title": "Service Account",
+      "type": "string"
+    },
+    "storage_class": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,252}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Storage Class"
+    },
+    "tolerations": {
+      "items": {
+        "$ref": "#/$defs/Toleration"
+      },
+      "maxItems": 32,
+      "title": "Tolerations",
+      "type": "array"
+    },
+    "training_image": {
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._/:-]*@sha256:[0-9a-f]{64}$",
+      "title": "Training Image",
+      "type": "string"
+    },
+    "workspace_gib": {
+      "default": 32,
+      "maximum": 1024,
+      "minimum": 1,
+      "title": "Workspace Gib",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "namespace",
+    "training_image"
+  ],
+  "title": "KubernetesConfig",
+  "type": "object"
+}

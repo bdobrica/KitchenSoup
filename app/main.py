@@ -143,7 +143,9 @@ def create_app(
                 app.state.target_service = TargetService(app.state.artifact_service, settings)
             app.state.training_run_service = training_run_service
             if training_run_service is None and (
-                settings.local_training_enabled or settings.ssh_execution_enabled
+                settings.local_training_enabled
+                or settings.ssh_execution_enabled
+                or settings.kubernetes_execution_enabled
             ):
                 if app.state.artifact_service is None or app.state.training_plan_service is None:
                     raise ValueError("Training requires artifact storage and plan metadata")

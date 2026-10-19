@@ -549,27 +549,29 @@ See [Milestone 18 evidence](docs/evidence/milestone-18.md).
 
 ## Milestone 19 — Kubernetes training
 
-- [ ] Add Kubernetes client dependency.
-- [ ] Add Kubernetes execution-target configuration.
-- [ ] Support kubeconfig/credential reference.
-- [ ] Add namespace configuration.
-- [ ] Implement `KubernetesTrainingExecutor`.
-- [ ] Generate normal Kubernetes Job.
-- [ ] Configure `nvidia.com/gpu`.
-- [ ] Support optional node selector.
-- [ ] Support optional tolerations.
-- [ ] Add input artifact materialization.
-- [ ] Add output artifact collection.
-- [ ] Implement status mapping.
-- [ ] Implement logs.
-- [ ] Implement cancellation by deleting/stopping Job.
-- [ ] Add cleanup policy.
-- [ ] Document NVIDIA GPU Operator as infrastructure prerequisite.
-- [ ] Add Kubernetes manifests/examples.
+- [x] Add Kubernetes client dependency.
+- [x] Add Kubernetes execution-target configuration.
+- [x] Support kubeconfig/credential reference.
+- [x] Add namespace configuration.
+- [x] Implement `KubernetesTrainingExecutor`.
+- [x] Generate normal Kubernetes Job.
+- [x] Configure `nvidia.com/gpu`.
+- [x] Support optional node selector.
+- [x] Support optional tolerations.
+- [x] Add input artifact materialization.
+- [x] Add output artifact collection.
+- [x] Implement status mapping.
+- [x] Implement logs.
+- [x] Implement cancellation by deleting/stopping Job.
+- [x] Add cleanup policy.
+- [x] Document NVIDIA GPU Operator or equivalent prepared NVIDIA stack as infrastructure prerequisite.
+- [x] Add Kubernetes manifests/examples.
 
 **Acceptance criteria**
 
-- [ ] KitchenSoup can submit and track a Soup training Job on a prepared GPU Kubernetes cluster.
+- [x] KitchenSoup can submit and track a Soup training Job on a prepared GPU Kubernetes cluster.
+
+See [Milestone 19 evidence](docs/evidence/milestone-19.md).
 
 ---
 

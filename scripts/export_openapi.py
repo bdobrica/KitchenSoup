@@ -11,6 +11,7 @@ from app.ingestion.documents import DocumentIngestionManifest, SoupResult
 from app.ingestion.versions import DatasetManifest, TrainingExample
 from app.main import create_app
 from app.registry.schemas import Catalog
+from app.targets.kubernetes_schemas import KubernetesConfig
 from app.targets.schemas import SshConfig
 from app.training.schemas import AppSpec, Recipe, ResolvedPlan
 from app.training.soup import RunnerInput, RunnerManifest
@@ -44,6 +45,7 @@ Path("docs/contracts/training-example-v1.schema.json").write_text(
 
 for filename, model in (
     ("ssh-target-v1", SshConfig),
+    ("kubernetes-target-v1", KubernetesConfig),
     ("deployment-v1", DeploymentSpec),
     ("transformation-v1", TransformSpec),
     ("inference-input-v1", InferenceInput),

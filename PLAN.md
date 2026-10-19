@@ -1584,7 +1584,9 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
-The current implementation frontier is Milestone 19: Kubernetes training.
+The current implementation frontier is Milestone 20: Kubernetes vLLM deployment.
+Kubernetes Job training and prepared-cluster prerequisites are documented in
+[docs/kubernetes-training.md](docs/kubernetes-training.md).
 Docker-over-SSH training, private serving and target setup are documented in
 [docs/ssh-execution.md](docs/ssh-execution.md).
 Lazy local merge and AWQ representations are documented in

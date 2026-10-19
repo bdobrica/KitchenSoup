@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kitchensoup
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+---
+# The GPU runtime receives no mounted API token or Kubernetes privileges.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: trainer
+  namespace: kitchensoup
+automountServiceAccountToken: false
+---
+# Bind this Role to a separately provisioned control-plane identity. Do not bind
+# it to the trainer ServiceAccount. Never commit the identity's kubeconfig/token.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kitchensoup-training-controller
+  namespace: kitchensoup
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods", "persistentvolumeclaims"]
+    verbs: ["create", "get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["get", "create"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["create", "get", "delete"]

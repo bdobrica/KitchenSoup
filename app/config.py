@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     local_deployment_enabled: bool = False
     deployment_workspace: str = ".local-deployments"
     deployment_image: str = "kitchensoup-vllm:local"
+    kubernetes_execution_enabled: bool = False
+    kubernetes_secret_directory: str = "/run/secrets"
+    kubernetes_env_names: str = ""
+    kubernetes_staging_workspace: str = ".kubernetes-staging"
     ssh_execution_enabled: bool = False
     ssh_known_hosts: str = "/run/secrets/ssh_known_hosts"
     ssh_secret_directory: str = "/run/secrets"

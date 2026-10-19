@@ -166,3 +166,7 @@ test-transform-gpu: build-transform build-soup build-vllm ## Offline FP16 merge 
 .PHONY: test-ssh-gpu
 test-ssh-gpu: ## Optional remote FP16 training/serving smoke (set SSH_TEST_ARGS; see docs/ssh-execution.md)
 	$(VENV_PYTHON) scripts/test_ssh_gpu.py $(SSH_TEST_ARGS)
+
+.PHONY: test-kubernetes-gpu
+test-kubernetes-gpu: ## Optional FP16 Kubernetes Job smoke (set KUBERNETES_TEST_ARGS; see docs/kubernetes-training.md)
+	$(VENV_PYTHON) scripts/test_kubernetes_gpu.py $(KUBERNETES_TEST_ARGS)

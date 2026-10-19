@@ -4,7 +4,7 @@ KitchenSoup is a lightweight, self-hosted application for guided
 language-model fine-tuning. The planned workflow covers preparing datasets,
 training through Soup, comparing results, and serving temporary vLLM playgrounds.
 
-**Status:** guided plans, local/SSH GPU training, model representations and temporary playgrounds.
+**Status:** guided plans, local/SSH/Kubernetes GPU training, model representations and temporary playgrounds.
 Import ChatGPT conversations or process documents with Soup, choose inputs,
 and inspect versioned examples with source hashes, licenses and warnings.
 Configure [LLM providers](docs/providers.md) with secret references and test their
@@ -77,6 +77,7 @@ lineages.
 - [Datasets, raw sources, and archive limits](docs/datasets.md)
 - [Model catalog, registration, and archive requirements](docs/models.md)
 - [Docker-over-SSH targets, training and playgrounds](docs/ssh-execution.md)
+- [Kubernetes GPU training and target setup](docs/kubernetes-training.md)
 - [Lazy merge and AWQ representations](docs/representations.md)
 - [Temporary local model playgrounds and leases](docs/deployments.md)
 - [Artifact storage and upload API](docs/storage.md)

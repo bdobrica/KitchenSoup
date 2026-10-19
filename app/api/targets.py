@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Request, Response
 
 from app.ingestion.sources import SourceError
-from app.services.targets import TargetService
+from app.services.targets import KubernetesTargetTest, TargetService
 from app.targets.schemas import TargetCreate, TargetTest, TargetView
 
 router = APIRouter(prefix="/api/v1/execution-targets", tags=["Execution targets"])
@@ -36,6 +36,6 @@ def get_target(identifier: UUID, targets: Service) -> TargetView:
     return targets.get(identifier)
 
 
-@router.post("/{identifier}/test", response_model=TargetTest)
-def test_target(identifier: UUID, targets: Service) -> TargetTest:
+@router.post("/{identifier}/test", response_model=TargetTest | KubernetesTargetTest)
+def test_target(identifier: UUID, targets: Service) -> TargetTest | KubernetesTargetTest:
     return targets.test(identifier)

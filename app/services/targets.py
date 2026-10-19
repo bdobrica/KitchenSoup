@@ -1,9 +1,10 @@
-"""Immutable SSH configuration and executor construction from registered targets."""
+"""Immutable execution-target configuration and executor construction."""
 
 import json
 from pathlib import Path
 from uuid import UUID, uuid4
 
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
@@ -11,13 +12,23 @@ from app.config import Settings
 from app.db.models import ExecutionTarget
 from app.deployments.materialize import DeploymentMaterializer
 from app.deployments.ssh import SshDockerDeploymentExecutor
-from app.executors.base import ExecutorError
+from app.executors.base import ExecutorError, TrainingExecutor
+from app.executors.kubernetes import KubernetesTrainingExecutor
 from app.executors.materialize import RegisteredInputMaterializer
 from app.executors.ssh_docker import SshDockerTrainingExecutor
 from app.ingestion.sources import SourceError
 from app.services.artifacts import ArtifactService
+from app.targets.kubernetes import KubernetesTransport
+from app.targets.kubernetes_schemas import KubernetesConfig
 from app.targets.schemas import SshConfig, TargetCreate, TargetTest, TargetView
 from app.targets.ssh import SshTransport
+
+
+class KubernetesTargetTest(BaseModel):
+    status: str = "ok"
+    message: str = "Kubernetes namespace and GPU capacity verified"
+    gpu: str
+    training_image_digest: str
 
 
 class TargetService:
@@ -34,15 +45,18 @@ class TargetService:
             id=row.id,
             created_at=row.created_at,
             name=row.name,
+            kind=row.kind,
             credential_ref=row.credential_ref or "",
-            configuration=SshConfig.model_validate(row.configuration),
+            configuration=(
+                KubernetesConfig if row.kind == "kubernetes" else SshConfig
+            ).model_validate(row.configuration),
         )
 
     def get(self, identifier: UUID) -> TargetView:
         with self.factory() as session:
             row = session.get(ExecutionTarget, identifier)
-            if row is None or row.kind != "ssh_docker":
-                raise SourceError(404, "SSH execution target not found")
+            if row is None or row.kind not in ("ssh_docker", "kubernetes"):
+                raise SourceError(404, "Execution target not found")
             return self.view(row)
 
     def list(self) -> list[TargetView]:
@@ -51,13 +65,16 @@ class TargetService:
                 self.view(row)
                 for row in session.scalars(
                     select(ExecutionTarget)
-                    .where(ExecutionTarget.kind == "ssh_docker")
+                    .where(ExecutionTarget.kind.in_(("ssh_docker", "kubernetes")))
                     .order_by(ExecutionTarget.created_at, ExecutionTarget.id)
                 )
             ]
 
     def create(self, body: TargetCreate) -> TargetView:
-        self.enabled()
+        if body.kind == "kubernetes":
+            self.kubernetes_enabled()
+        else:
+            self.enabled()
         identifier = uuid4()
         try:
             with self.factory() as session:
@@ -78,6 +95,8 @@ class TargetService:
     def transport(self, identifier: UUID) -> SshTransport:
         self.enabled()
         row = self.get(identifier)
+        if not isinstance(row.configuration, SshConfig):
+            raise SourceError(409, "This target does not support Docker-over-SSH serving")
         return SshTransport(
             row.configuration,
             row.credential_ref,
@@ -86,7 +105,40 @@ class TargetService:
             env_names={n.strip() for n in self.settings.ssh_env_names.split(",") if n.strip()},
         )
 
-    def training(self, identifier: UUID) -> SshDockerTrainingExecutor:
+    def kubernetes_enabled(self) -> None:
+        if not self.settings.kubernetes_execution_enabled:
+            raise SourceError(503, "Kubernetes execution is disabled by the operator")
+
+    def kubernetes_transport(self, identifier: UUID) -> KubernetesTransport:
+        self.kubernetes_enabled()
+        row = self.get(identifier)
+        if not isinstance(row.configuration, KubernetesConfig):
+            raise SourceError(409, "Kubernetes target required")
+        return KubernetesTransport(
+            row.configuration,
+            row.credential_ref,
+            Path(self.settings.kubernetes_secret_directory),
+            {n.strip() for n in self.settings.kubernetes_env_names.split(",") if n.strip()},
+        )
+
+    def training(self, identifier: UUID) -> TrainingExecutor:
+        if self.get(identifier).kind == "kubernetes":
+            self.kubernetes_enabled()
+            kubernetes_executor = KubernetesTrainingExecutor(
+                Path(self.settings.kubernetes_staging_workspace) / str(identifier),
+                RegisteredInputMaterializer(self.artifacts),
+                self.kubernetes_transport(identifier),
+            )
+            (
+                kubernetes_executor.memory_gib,
+                kubernetes_executor.cpus,
+                kubernetes_executor.timeout,
+            ) = (
+                self.settings.training_memory_gib,
+                self.settings.training_cpus,
+                self.settings.training_timeout,
+            )
+            return kubernetes_executor
         executor = SshDockerTrainingExecutor(
             Path(self.settings.ssh_staging_workspace) / str(identifier) / "training",
             RegisteredInputMaterializer(self.artifacts),
@@ -106,7 +158,26 @@ class TargetService:
             self.transport(identifier),
         )
 
-    def test(self, identifier: UUID) -> TargetTest:
+    def test(self, identifier: UUID) -> TargetTest | KubernetesTargetTest:
+        if self.get(identifier).kind == "kubernetes":
+            kube = self.kubernetes_transport(identifier)
+            # Namespace-scoped Pod view works with the documented least-privilege Role.
+            kube.call(kube.core.list_namespaced_pod, limit=1)
+            # Node listing is optional infrastructure visibility; permission failures
+            # remain explicit rather than claiming a GPU probe ran.
+            try:
+                nodes = kube.core.list_node(_request_timeout=(10, 30)).items
+                count = sum(int(n.status.allocatable.get("nvidia.com/gpu", "0")) for n in nodes)
+            except Exception:
+                raise ExecutorError(
+                    "GPU capacity probe needs node-list access; execution uses namespace RBAC"
+                ) from None
+            if count < kube.config.gpu_count:
+                raise ExecutorError("Cluster does not advertise sufficient NVIDIA GPUs")
+            return KubernetesTargetTest(
+                gpu=f"{count} NVIDIA GPU(s) advertised",
+                training_image_digest=kube.config.training_image.rsplit("@", 1)[1],
+            )
         transport = self.transport(identifier)
         uid, gid = transport.identity()
         if transport.docker(["version", "--format", "{{.Server.Version}}"]).returncode:

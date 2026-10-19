@@ -86,9 +86,9 @@ class TrainingRunService:
         with self.factory() as session:
             row = self.row(session, identifier, lock=False)
             target = session.get(ExecutionTarget, row.execution_target_id)
-            if target is not None and target.kind == "ssh_docker":
+            if target is not None and target.kind in ("ssh_docker", "kubernetes"):
                 if self.targets is None:
-                    raise SourceError(503, "SSH execution is not configured")
+                    raise SourceError(503, "Execution targets are not configured")
                 return self.targets.training(target.id)
             if target is None or target.kind != "local_docker":
                 raise SourceError(503, "The retained training target is not supported")
@@ -145,7 +145,7 @@ class TrainingRunService:
         executor = self.local_executor
         if body.execution_target_id is not None:
             if self.targets is None:
-                raise SourceError(503, "SSH execution is not configured")
+                raise SourceError(503, "Execution targets are not configured")
             executor = self.targets.training(body.execution_target_id)
         if executor is None:
             raise SourceError(503, "Choose an enabled execution target")
@@ -185,8 +185,8 @@ class TrainingRunService:
                     raise SourceError(409, "The local execution target has an incompatible kind")
             else:
                 target = session.get(ExecutionTarget, body.execution_target_id)
-                if target is None or target.kind != "ssh_docker":
-                    raise SourceError(404, "SSH execution target not found")
+                if target is None or target.kind not in ("ssh_docker", "kubernetes"):
+                    raise SourceError(404, "Execution target not found")
             row = TrainingRun(
                 id=identifier,
                 base_model_version_id=saved.appspec.base_model_version_id,

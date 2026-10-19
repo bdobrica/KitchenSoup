@@ -1,13 +1,14 @@
-"""Operator-configured SSH targets; no infrastructure fields enter AppSpec."""
+"""Operator-configured execution targets; no infrastructure fields enter AppSpec."""
 
 from datetime import datetime
 from pathlib import PurePosixPath
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.providers.schemas import ProviderConfig
+from app.targets.kubernetes_schemas import KubernetesConfig
 
 
 class SshConfig(BaseModel):
@@ -52,9 +53,15 @@ class SshConfig(BaseModel):
 class TargetCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str = Field(min_length=1, max_length=200, pattern=r"\S")
-    kind: Literal["ssh_docker"] = "ssh_docker"
+    kind: Literal["ssh_docker", "kubernetes"] = "ssh_docker"
     credential_ref: str = Field(max_length=512)
-    configuration: SshConfig
+    configuration: SshConfig | KubernetesConfig
+
+    @model_validator(mode="after")
+    def matching_kind(self) -> "TargetCreate":
+        if (self.kind == "ssh_docker") != isinstance(self.configuration, SshConfig):
+            raise ValueError("Target kind must match its versioned configuration")
+        return self
 
     @field_validator("credential_ref")
     @classmethod

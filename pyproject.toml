@@ -16,9 +16,11 @@ dependencies = [
     "fastapi>=0.115.6,<1",
     "httpx>=0.28,<1",
     "jinja2>=3.1.6,<4",
+    "kubernetes>=36,<37",
     "paramiko>=4,<5",
     "pydantic>=2.9,<3",
     "pydantic-settings>=2.7,<3",
+    "pyyaml>=6,<7",
     "psycopg[binary]>=3.2,<4",
     "redis>=5.2,<7",
     "sqlalchemy>=2.0.38,<2.1",
@@ -30,6 +32,7 @@ dev = [
     "boto3-stubs[s3]>=1.36,<2",
     "mypy>=1.15,<2",
     "types-paramiko>=4,<5",
+    "types-PyYAML>=6,<7",
     "pytest>=8.3,<10",
     "ruff>=0.11,<1",
 ]
@@ -53,3 +56,7 @@ plugins = ["pydantic.mypy"]
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
 addopts = "-ra"
+
+[[tool.mypy.overrides]]
+module = ["kubernetes.*"]
+ignore_missing_imports = true
