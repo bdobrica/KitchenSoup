@@ -1,0 +1,154 @@
+name: Publish release images
+
+on:
+  push:
+    tags: ["v[0-9]*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - id: version
+        name: Validate release version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python scripts/release_images.py version "$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+  verify:
+    needs: validate
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: [validate, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VERSION: ${{ needs.validate.outputs.version }}
+      IMAGE: quay.io/bdobrica/kitchensoup
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - uses: docker/setup-buildx-action@v4
+      - name: Log in to Quay
+        uses: docker/login-action@v4
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+      - name: Refuse to replace published image tags
+        run: |
+          for tag in "$VERSION" "soup-ingest-$VERSION"; do
+            if docker buildx imagetools inspect "$IMAGE:$tag" > /dev/null 2> /tmp/registry-error; then
+              echo "::error::Image tag $tag already exists; publish a new version."
+              exit 1
+            elif ! grep -Eq 'not found|manifest unknown|MANIFEST_UNKNOWN' /tmp/registry-error; then
+              cat /tmp/registry-error >&2
+              exit 1
+            fi
+          done
+      - name: Build and publish application
+        id: app
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: quay.io/bdobrica/kitchensoup:${{ env.VERSION }}
+          build-args: |
+            VERSION=${{ env.VERSION }}
+            REVISION=${{ github.sha }}
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,mode=max,scope=app
+      - name: Build and publish Soup ingestion
+        id: ingestion
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: images/soup-ingest/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: quay.io/bdobrica/kitchensoup:soup-ingest-${{ env.VERSION }}
+          labels: |
+            org.opencontainers.image.version=${{ env.VERSION }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=https://github.com/bdobrica/KitchenSoup
+          cache-from: type=gha,scope=ingestion
+          cache-to: type=gha,mode=max,scope=ingestion
+      - name: Generate pinned release Compose file
+        env:
+          APP_DIGEST: ${{ steps.app.outputs.digest }}
+          INGESTION_DIGEST: ${{ steps.ingestion.outputs.digest }}
+        run: |
+          docker pull "$IMAGE@$INGESTION_DIGEST"
+          INGESTION_ID=$(docker image inspect "$IMAGE@$INGESTION_DIGEST" --format '{{.Id}}')
+          mkdir -p release
+          python scripts/release_images.py compose "$VERSION" \
+            "$APP_DIGEST" "$INGESTION_DIGEST" "$INGESTION_ID" release/compose.yaml
+          KITCHENSOUP_POSTGRES_PASSWORD=validation-only \
+          RUSTFS_ACCESS_KEY=validation-only RUSTFS_SECRET_KEY=validation-only \
+            docker compose -f release/compose.yaml config --quiet
+          printf 'Application: `%s@%s`\n\nSoup ingestion: `%s@%s`\n' \
+            "$IMAGE" "$APP_DIGEST" "$IMAGE" "$INGESTION_DIGEST" > release/images.md
+      - name: Smoke-test the published installation
+        run: |
+          umask 077
+          python -c 'import secrets; print("\n".join(k+"="+secrets.token_hex(24) for k in ["KITCHENSOUP_POSTGRES_PASSWORD","RUSTFS_ACCESS_KEY","RUSTFS_SECRET_KEY"]))' > "$RUNNER_TEMP/release.env"
+          docker compose --env-file "$RUNNER_TEMP/release.env" \
+            -f release/compose.yaml -p release-smoke up -d --wait --wait-timeout 180
+          curl --fail --silent --show-error http://127.0.0.1:8000/healthz
+      - name: Clean up smoke-test resources
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/release.env" ]; then
+            docker compose --env-file "$RUNNER_TEMP/release.env" \
+              -f release/compose.yaml -p release-smoke down --volumes
+            rm -f "$RUNNER_TEMP/release.env"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-installation
+          path: release/
+          if-no-files-found: error
+
+  release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-installation
+          path: release
+      - name: Publish release installation files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" release/compose.yaml release/images.md
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --generate-notes \
+              release/compose.yaml release/images.md
+          fi

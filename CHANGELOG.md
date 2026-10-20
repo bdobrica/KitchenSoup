@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+Tag-triggered image publication reuses CI, verifies release versions and publishes
+digest-pinned Compose installation assets through GitHub Releases.
+
 Published non-root control-plane and isolated Soup-ingestion images, with a
 standalone digest-pinned Compose installation and automatic one-shot database
 migrations. The quick start no longer requires a checkout, Python or Make.

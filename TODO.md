@@ -801,11 +801,3 @@ The first MVP release is ready when the following end-to-end scenario works:
 - [ ] Repeat training on an SSH-accessible remote GPU machine.
 
 Kubernetes and SageMaker may follow immediately after this release if the local/SSH executor abstractions are proven.
-
----
-
-## Container release automation
-
-- [ ] Publish versioned application and Soup-ingestion images on new release tags.
-- [ ] Configure a scoped Quay robot credential through GitHub Actions secrets.
-- [ ] Validate package/tag version agreement and standalone Compose image pins in CI.

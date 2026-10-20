@@ -1836,5 +1836,7 @@ Provider references: [REST API v2](https://docs.runpod.io/api-reference-v2/overv
 
 The standalone `deploy/compose.yaml` installs published control-plane and isolated
 CPU ingestion images without a source checkout. GPU engine images remain separate
-opt-in executor dependencies. A follow-up release workflow will publish versioned
-images on Git tags using a scoped registry credential and validate Compose pins.
+opt-in executor dependencies. The tag-triggered release workflow verifies stable
+release versions, reuses the repository CI gate, publishes versioned images, and
+smoke-tests a generated pinned Compose release asset. Publication uses scoped Quay
+Actions secrets.
