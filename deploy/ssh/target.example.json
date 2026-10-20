@@ -1,0 +1,14 @@
+{
+  "name": "SSH GPU host",
+  "kind": "ssh_docker",
+  "credential_ref": "file:///run/secrets/gpu-host-key",
+  "configuration": {
+    "schema": "kitchensoup.ssh-target/v1",
+    "host": "gpu.example.internal",
+    "port": 22,
+    "username": "operator",
+    "workspace": "/home/operator/.kitchensoup",
+    "training_image": "kitchensoup-soup-trainer:local",
+    "deployment_image": "kitchensoup-vllm:local"
+  }
+}

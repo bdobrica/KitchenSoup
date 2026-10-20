@@ -1,0 +1,32 @@
+# Adjust for your identity provider; keep secrets in operator environment.
+server:
+  listen_address: 127.0.0.1:4180
+  external_url: https://kitchensoup.example.internal
+upstream:
+  url: http://127.0.0.1:8000
+  preserve_host: true
+  response_header_timeout: 90s
+  flush_interval: 100ms
+  max_request_body_bytes: 0
+development:
+  allow_unauthenticated: false
+oidc:
+  issuer: https://id.example.internal/oauth2/default
+  audience: api://kitchensoup
+  device_client_id: replace-device-client-id
+  device_scopes: [openid, profile, email, kitchensoup.access]
+  browser_client_id: replace-browser-client-id
+  browser_client_secret: ${OIDCGATE_BROWSER_CLIENT_SECRET}
+  scopes: [openid, profile, email, groups, kitchensoup.access]
+  service_id: kitchensoup
+  allowed_signing_algorithms: [RS256]
+session:
+  cookie_name: __Host-oidcgate
+  lifetime: 8h
+  keys: ["${OIDCGATE_SESSION_KEY_CURRENT}"]
+authorization:
+  group_claim: groups
+  default:
+    required_scopes: [kitchensoup.access]
+    allowed_groups: [kitchensoup-operators]
+    group_match: any

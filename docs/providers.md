@@ -126,3 +126,14 @@ rotation, error redaction, bounded responses and structured-output failures.
 with a mocked provider. These tests require no real keys or provider calls.
 See [ADR 0008](adr/0008-llm-provider-boundary.md) and
 [Milestone 9 evidence](evidence/milestone-9.md) for scope and validation.
+
+## Configuration examples
+
+[OpenAI](../deploy/providers/openai.example.json) and
+[LiteLLM](../deploy/providers/litellm.example.json) are secret-free POST bodies for
+`/api/v1/llm-providers`. Replace model placeholders with explicit account-enabled
+model names or gateway aliases. OpenAI uses `env://OPENAI_API_KEY`; LiteLLM uses
+`env://LITELLM_API_KEY`. Supply the actual keys only through the server secret
+workflow above. For a containerized gateway use its reachable service address,
+not the web container's loopback. Creating these records sends no requests;
+connection/structured-output tests are separate, potentially billable actions.

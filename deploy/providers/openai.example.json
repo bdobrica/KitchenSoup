@@ -1,0 +1,8 @@
+{
+  "name": "Openai",
+  "base_url": "https://api.openai.com/v1",
+  "api_key_ref": "env://OPENAI_API_KEY",
+  "model_names": [
+    "replace-with-enabled-model"
+  ]
+}

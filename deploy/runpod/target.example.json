@@ -1,0 +1,23 @@
+{
+  "name": "Bounded Runpod GPU",
+  "kind": "runpod_pod",
+  "credential_ref": "env://RUNPOD_API_KEY",
+  "configuration": {
+    "schema": "kitchensoup.runpod-target/v1",
+    "ssh_credential_ref": "file:///run/secrets/runpod-key",
+    "gpu_id": "NVIDIA RTX A4000",
+    "allowed_gpu_ids": [
+      "NVIDIA RTX A4000"
+    ],
+    "gpu_count": 1,
+    "min_vram_gb": 16,
+    "cloud": "SECURE",
+    "disk_gb": 30,
+    "training_image": "registry.example/kitchensoup-trainer@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "deployment_image": "registry.example/kitchensoup-vllm@sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "max_hourly_price_usd": 0.5,
+    "max_runtime_minutes": 15,
+    "max_deployment_lease_minutes": 15,
+    "max_concurrent_pods": 1
+  }
+}

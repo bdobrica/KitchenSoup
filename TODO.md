@@ -671,37 +671,35 @@ All disposable AWS resources were confirmed removed. See
 - [x] Non-technical users receive actionable errors instead of raw stack traces for common failures.
 
 See [Milestone 23 evidence](docs/evidence/milestone-23.md) and
-[errors and retention](docs/safety-and-retention.md). Milestones 21–22 remain
-pending without AWS account access.
+[errors and retention](docs/safety-and-retention.md).
 
 ---
 
 ## Milestone 24 — Documentation and release polish
 
-- [ ] Finalize README installation instructions.
-- [ ] Document all Makefile targets.
-- [ ] Add architecture documentation.
-- [ ] Add executor configuration examples.
-- [ ] Add OpenAI provider example.
-- [ ] Add LiteLLM provider example.
-- [ ] Add OIDCGate deployment example.
-- [ ] Add local NVIDIA prerequisites.
-- [ ] Add SSH GPU-host prerequisites.
-- [ ] Add Kubernetes prerequisites.
-- [ ] Add SageMaker prerequisites.
-- [ ] Add model-license behavior documentation.
-- [ ] Add security assumptions.
-- [ ] Add contributor guide.
-- [ ] Add changelog/release process.
-- [ ] Validate Apache-2.0 headers/notices as appropriate.
-- [ ] Tag first MVP release.
+- [x] Finalize README installation instructions.
+- [x] Document all Makefile targets.
+- [x] Add architecture documentation.
+- [x] Add executor configuration examples.
+- [x] Add OpenAI provider example.
+- [x] Add LiteLLM provider example.
+- [x] Add OIDCGate deployment example.
+- [x] Add local NVIDIA prerequisites.
+- [x] Add SSH GPU-host prerequisites.
+- [x] Add Kubernetes prerequisites.
+- [x] Add SageMaker prerequisites.
+- [x] Add model-license behavior documentation.
+- [x] Add security assumptions.
+- [x] Add contributor guide.
+- [x] Add changelog/release process.
+- [x] Validate Apache-2.0 headers/notices as appropriate.
+- [x] Tag first MVP release.
 
 ---
 
 ## Milestone 25 — Runpod ephemeral GPU training
 
-Shared infrastructure in this milestone also supports Milestone 26. Implement
-25–26 before Milestone 24 release polish; existing milestone numbers are retained.
+Shared infrastructure in this milestone also supports Milestone 26.
 See [Runpod execution plan](PLAN.md#49-runpod-gpu-execution). Implementation and
 local and live provider validation are complete.
 See [validation evidence](docs/evidence/milestone-25.md).

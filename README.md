@@ -1,98 +1,55 @@
 # KitchenSoup
 
-KitchenSoup is a lightweight, self-hosted application for guided
-language-model fine-tuning. The planned workflow covers preparing datasets,
-training through Soup, comparing results, and serving temporary vLLM playgrounds.
+KitchenSoup is a self-hosted control plane for guided language-model fine-tuning.
+Import conversations/documents, review immutable datasets and Soup training plans,
+register verified model artifacts with lineage, compare results, and serve
+temporary vLLM playgrounds.
 
-**Status:** guided plans, local/SSH/Kubernetes GPU training, model representations and temporary playgrounds.
-Import ChatGPT conversations or process documents with Soup, choose inputs,
-and inspect versioned examples with source hashes, licenses and warnings.
-Configure [LLM providers](docs/providers.md) with secret references and test their
-connections. Choose an intent and save a [reviewed training plan](docs/training-plans.md).
-An offline [Soup runner](docs/soup-training.md) is available for prepared bundles.
-The [local executor](docs/local-training.md) adds queued submission, live progress, logs and cancellation, with independent
-[worker and reconciler processes](docs/jobs.md). Successful new runs register a model
-and adapter with [source licenses and separate lineage graphs](docs/models.md#trained-models-and-lineage).
-Local FP16 GPU training is [validated on an RTX 2070 SUPER](docs/evidence/fp16-training.md).
-Optional AWS adapters support [SageMaker training](docs/sagemaker-training.md)
-and [leased vLLM playgrounds](docs/sagemaker-serving.md).
-See [dataset versions](docs/dataset-versions.md).
-
-Local [paired evaluation](docs/evaluations.md) compares base and LoRA responses,
-retains human preferences and exports hashed reports.
+**Status:** first MVP, version 0.1.0. Training and serving support local Docker,
+Docker-over-SSH, Kubernetes, SageMaker and Runpod through explicit opt-ins.
+[Validation evidence](docs/evidence/) records the hardware and provider checks
+actually performed. This is a trusted single-user application without internal
+authentication. GPU execution is disabled in ordinary Compose.
 
 ## Quick start
 
-Install Python **3.13** (including `venv`/`ensurepip`) and GNU Make. On Windows,
-use WSL. Install Docker Engine and Docker Compose v2.20+ for the local stack.
-No Node.js toolchain or GPU is required.
+Install Python **3.13** with venv, GNU Make, Docker Engine and Compose **v2.20+**.
+Use Linux or WSL2. No Node.js or GPU is needed for data preparation.
 
 ```sh
 make setup
-make test
+make verify
 make migrate
 make up
 ```
 
-Open <http://127.0.0.1:8000> and choose **Datasets** to create a dataset and upload sources.
-Stop the stack with `make down`; data volumes are retained. `make restart` recreates the stack with its existing data.
-If your Python 3.13 executable has a different name, use
-`make setup PYTHON=python3` and `make up PYTHON=python3`.
+Open <http://127.0.0.1:8000>. Missing local credentials are generated into ignored
+`.env`; keep it private and retain it with the data volumes. `make down` retains
+data; `make clean CONFIRM=1` deletes it. `make help` lists commands.
+See [installation and first workflow](docs/installation.md) for configuration,
+upgrades and startup details. For RTX 20/T4 GPUs select **FP16**.
 
-`make up` generates missing local credentials in ignored `.env`. Existing
-values are preserved. Edit that file to change the display name or host ports;
-environment variables take precedence. RustFS exposes its console at
-<http://127.0.0.1:9001>, using the generated RustFS credentials in `.env`.
+## Concepts and guides
 
-For the service-free web shell, use `make dev` and stop it with Ctrl+C. Run it
-separately from the Compose web service to avoid a port conflict.
+KitchenSoup owns orchestration and registry state; Soup and vLLM remain separate
+engines. PostgreSQL owns durable metadata, Valkey carries transient wakeups, and
+ArtifactStore encapsulates object storage. Model lineage and artifact derivations
+are separate. Read [security assumptions](docs/security.md) before network exposure.
 
-## Development
+- [Architecture](docs/architecture.md), [accepted decisions](docs/adr/), [contracts](docs/contracts/)
+- [Executor prerequisites and examples](docs/executors.md), [GPU host workflow](docs/local-training.md)
+- [Datasets](docs/datasets.md), [conversations](docs/conversations.md), [documents](docs/documents.md), [dataset versions](docs/dataset-versions.md)
+- [Models and lineage](docs/models.md), [license behavior](docs/model-licenses.md)
+- [LLM providers](docs/providers.md), [reviewed plans](docs/training-plans.md), [job lifecycle](docs/jobs.md)
+- [Evaluation](docs/evaluations.md), [merge/AWQ](docs/representations.md), [playgrounds](docs/deployments.md)
+- [Storage](docs/storage.md), [safety and retention](docs/safety-and-retention.md), [OIDCGate perimeter](docs/oidcgate.md)
+- [Development](docs/development.md), [all Make targets](docs/commands.md), [contributing](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md), [release process](docs/releases.md), [design](PLAN.md), [milestones](TODO.md)
 
-- `make help` lists available commands.
-- `make ps` shows service health; `make logs` follows logs.
-- `make shell` opens the web container; `make db-shell` opens psql.
-- `make check-dependencies` checks live service connections.
-- `make migrate` applies migrations; `make migration MESSAGE="..."` generates one.
-- `make migration-check` detects schema drift.
-- `make test-integration` tests persistence and storage using disposable PostgreSQL/RustFS containers.
-- `make clean CONFIRM=1` deletes the stack and its data volumes.
-- `make fmt` formats Python and organizes imports.
-- `make lint` checks formatting, lint rules, and strict types.
-- `make test` runs service-free tests; `make test-unit` runs unit tests.
-- `make verify` runs the same lint and test gate used by CI.
-
-The home page uses Jinja templates, with version-pinned HTMX and Alpine.js
-scripts loaded from jsDelivr. Browser enhancements require internet access;
-the server-rendered page and health link work without JavaScript.
-
-## Key concepts and documentation
-
-KitchenSoup owns orchestration and registry state. Soup and vLLM remain separate
-engines behind container/CLI boundaries. Durable metadata belongs in
-PostgreSQL; Valkey holds transient state, and object storage sits behind an
-S3-compatible adapter. Model versions and artifact representations have separate
-lineages.
-
-- [Development, local infrastructure, and HTTP contract](docs/development.md)
-- [ChatGPT import, canonical format, and selection](docs/conversations.md)
-- [Datasets, raw sources, and archive limits](docs/datasets.md)
-- [Model catalog, registration, and archive requirements](docs/models.md)
-- [Docker-over-SSH targets, training and playgrounds](docs/ssh-execution.md)
-- [Kubernetes GPU training and target setup](docs/kubernetes-training.md)
-- [Kubernetes vLLM playgrounds](docs/kubernetes-serving.md)
-- [Runpod ephemeral GPU training and cleanup](docs/runpod-training.md)
-- [Runpod playgrounds](docs/runpod-serving.md)
-- [Lazy merge and AWQ representations](docs/representations.md)
-- [Temporary local model playgrounds and leases](docs/deployments.md)
-- [Artifact storage and upload API](docs/storage.md)
-- [Error explanations, safety and object retention](docs/safety-and-retention.md)
-- [Database schema and migration workflow](docs/database.md)
-- [Project design and implementation intent](PLAN.md)
-- [Remaining milestones](TODO.md)
-- [Repository contribution instructions](AGENTS.md)
+The browser loads pinned HTMX/Alpine scripts from jsDelivr; enhancements require
+internet access. Dependencies are not fully transitively locked.
 
 ## License
 
-[Apache License 2.0](LICENSE). Third-party models, datasets, libraries, and
-containers retain their own licenses.
+[Apache-2.0](LICENSE). Models, datasets and runtime dependencies retain their own
+terms; see [third-party notices](THIRD_PARTY_NOTICES.md).

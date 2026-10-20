@@ -13,8 +13,8 @@ HTML; Pydantic Settings loads validated operator configuration. HTTPX supplies
 bounded public Hugging Face metadata requests and in-process HTTP tests.
 Development uses pytest, Ruff for linting/formatting, and mypy for strict types. Hatchling builds the Python package, including
 its templates and static assets. Psycopg supplies the authenticated PostgreSQL
-startup query; redis-py supplies the Valkey PING probe. These small clients will
-also support database and queue operations. SQLAlchemy owns ORM mappings
+startup query; redis-py supplies the Valkey PING probe. These clients support
+database and queue operations. SQLAlchemy owns ORM mappings
 and transactions; Alembic manages PostgreSQL schema changes. RustFS readiness uses
 Python’s standard HTTP client. Boto3 provides S3 signing and managed multipart
 transfers behind the ArtifactStore port; boto3-stubs supplies development types.
@@ -51,7 +51,7 @@ future additions should preserve its status code and `status` field. This is a
 local operational endpoint, not a new cross-component resource API.
 
 The application is single-user and unauthenticated under the existing
-[security assumptions](../PLAN.md#45-security).
+[security assumptions](security.md).
 
 ## Browser assets
 
@@ -77,7 +77,7 @@ Browser JavaScript execution is not covered by the unit suite.
 
 Run `make setup`, `make migrate`, then `make up`. Docker Compose v2.20+ is required for `--wait`.
 `make up` generates missing credentials, builds the application image, and waits
-up to 180 seconds after build/pull for all six services to become healthy.
+up to 180 seconds after build/pull for service health and one-shot initialization.
 The image installs the package, including templates/static assets, runs as a
 non-root user, and is shared by web, worker, and reconciler. Code changes are
 applied with `make up` or `make restart`; there is no source bind mount.
@@ -104,7 +104,8 @@ database. See [model registration](models.md); `make catalog-sync` repeats this 
 Dataset creation and original source uploads are available at `/datasets`; see
 [raw-source ingestion](datasets.md) for file types, archive limits, and removal.
 See [artifact storage](storage.md) for configuration and upload contracts. Queue
-dispatch, reconciliation, Docker socket mounts, and training executors remain future work.
+dispatch and reconciliation run independently; GPU executors require explicit
+[operator opt-in](executors.md). Ordinary Compose mounts no Docker socket.
 
 `make local-env` creates `.env` from the example when absent and fills missing
 or blank `KITCHENSOUP_POSTGRES_PASSWORD`, `RUSTFS_ACCESS_KEY`, and
@@ -113,8 +114,9 @@ never prints them. Keep `.env` with the volumes: changing the PostgreSQL passwor
 in `.env` does not change a database already initialized with another password.
 New `.env` files are created with mode 0600 where the filesystem supports it.
 RustFS credentials are passed to RustFS, web, and bucket provisioning. Worker
-and reconciler do not receive S3 credentials. Provider/executor secret references
-remain later work.
+and reconciler receive the storage configuration needed by their lifecycle loops;
+provider API keys are passed only to web. Executor credentials require explicit
+operator opt-in and matching settings in all host processes.
 
 PostgreSQL and Valkey have no published ports. All published web/RustFS ports
 bind to `127.0.0.1`. To resolve conflicts, change `KITCHENSOUP_PORT`,

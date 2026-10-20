@@ -1,0 +1,8 @@
+{
+  "name": "Litellm",
+  "base_url": "https://llm.example.internal/v1",
+  "api_key_ref": "env://LITELLM_API_KEY",
+  "model_names": [
+    "configured-gateway-alias"
+  ]
+}

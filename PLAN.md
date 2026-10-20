@@ -1592,6 +1592,11 @@ The interfaces should exist where replacement is plausible, but abstractions mus
 
 ## 47. Recommended implementation order
 
+The planned MVP implementation is complete. Installation and operating guidance
+start at [the installation guide](docs/installation.md); future release work follows
+[the release process](docs/releases.md). The original milestone numbers below
+remain stable; validation evidence belongs in `docs/evidence/`.
+
 Milestone 23 error UX and safety polish is implemented; see
 [errors and object retention](docs/safety-and-retention.md).
 Milestone 21 SageMaker training is implemented and validated with live FP16
@@ -1605,8 +1610,7 @@ with live BF16 training and confirmed Pod cleanup. See [setup and limits](docs/r
 [validation evidence](docs/evidence/milestone-25.md). Milestone 26 Runpod serving is
 implemented and validated with local FP16 and live BF16 authenticated JSON/streaming
 inference, including confirmed Pod cleanup. See [setup](docs/runpod-serving.md) and
-[validation evidence](docs/evidence/milestone-26.md). The next non-AWS milestone is
-24 (documentation and release polish). Existing milestone numbers remain stable.
+[validation evidence](docs/evidence/milestone-26.md).
 Kubernetes vLLM playgrounds and private API access are documented in
 [docs/kubernetes-serving.md](docs/kubernetes-serving.md).
 Kubernetes Job training and prepared-cluster prerequisites are documented in
