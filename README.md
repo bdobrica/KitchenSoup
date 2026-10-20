@@ -29,6 +29,23 @@ data; `make clean CONFIRM=1` deletes it. `make help` lists commands.
 See [installation and first workflow](docs/installation.md) for configuration,
 upgrades and startup details. For RTX 20/T4 GPUs select **FP16**.
 
+## UI preview
+
+Screenshots use synthetic sample data; model guidance comes from the bundled catalog.
+
+**Choose a model** — browse curated models, license information and hardware guidance.
+
+![Curated Qwen model catalog with license, VRAM and engine compatibility guidance](docs/screenshots/models.png)
+
+**Prepare your data** — create datasets and organize source material.
+
+![Dataset creation form and two example datasets for support conversations and product documentation](docs/screenshots/datasets.png)
+
+**Review before training** — inspect the model, frozen dataset version and precision,
+then select an evaluation suite and compute target.
+
+![Saved FP16 training plan for a sample support dataset, with evaluation and compute target selectors](docs/screenshots/training-plan.png)
+
 ## Concepts and guides
 
 KitchenSoup owns orchestration and registry state; Soup and vLLM remain separate
