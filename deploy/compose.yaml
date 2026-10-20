@@ -1,0 +1,197 @@
+# Standalone installation: no checkout or local build required.
+name: kitchensoup
+
+x-app: &app
+  image: quay.io/bdobrica/kitchensoup:0.1.0@sha256:8a3e8b6fe37f4da2066871b0bf2df13cfd645a99d99deac375c620de92b79739
+  init: true
+  restart: unless-stopped
+  environment: &app-env
+    KITCHENSOUP_APP_NAME: ${KITCHENSOUP_APP_NAME:-KitchenSoup}
+    KITCHENSOUP_CHECK_DEPENDENCIES: "true"
+    KITCHENSOUP_POSTGRES_PASSWORD: ${KITCHENSOUP_POSTGRES_PASSWORD:?Set this variable in .env; see docs/installation.md}
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+    postgres:
+      condition: service_healthy
+    valkey:
+      condition: service_healthy
+    rustfs:
+      condition: service_healthy
+
+x-storage-env: &storage-env
+  KITCHENSOUP_STORAGE_ENABLED: "true"
+  KITCHENSOUP_S3_ENDPOINT: http://rustfs:9000
+  KITCHENSOUP_S3_PUBLIC_ENDPOINT: ${KITCHENSOUP_S3_PUBLIC_ENDPOINT:-http://127.0.0.1:9000}
+  KITCHENSOUP_S3_BUCKET: kitchensoup
+  KITCHENSOUP_S3_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?Set this variable in .env; see docs/installation.md}
+  KITCHENSOUP_S3_SECRET_KEY: ${RUSTFS_SECRET_KEY:?Set this variable in .env; see docs/installation.md}
+  KITCHENSOUP_S3_ALLOWED_ORIGINS: http://127.0.0.1:${KITCHENSOUP_PORT:-8000},http://localhost:${KITCHENSOUP_PORT:-8000}
+
+x-background-health: &background-health
+  test: ["CMD", "python", "-c", "import os,pathlib,time; p=pathlib.Path('/tmp/kitchensoup-'+os.environ['KITCHENSOUP_BACKGROUND_ROLE']+'-heartbeat'); assert p.exists() and time.time()-p.stat().st_mtime < 20"]
+  interval: 10s
+  timeout: 5s
+  retries: 3
+  start_period: 15s
+
+services:
+  postgres:
+    image: postgres:18.6-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kitchensoup
+      POSTGRES_USER: kitchensoup
+      POSTGRES_PASSWORD: ${KITCHENSOUP_POSTGRES_PASSWORD:?Set this variable in .env; see docs/installation.md}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kitchensoup -d kitchensoup"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:9.1.1-alpine3.24
+    restart: unless-stopped
+    command: ["valkey-server", "--appendonly", "yes"]
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0-beta.12
+    restart: unless-stopped
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?Set this variable in .env; see docs/installation.md}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:?Set this variable in .env; see docs/installation.md}
+    ports:
+      - "127.0.0.1:${RUSTFS_API_PORT:-9000}:9000"
+      - "127.0.0.1:${RUSTFS_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - rustfs-data:/data
+      - rustfs-logs:/logs
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+
+  web:
+    <<: *app
+    environment:
+      <<: [*app-env, *storage-env]
+      KITCHENSOUP_SOUP_INGESTION_URL: http://soup-ingest:8090
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LITELLM_API_KEY: ${LITELLM_API_KEY:-}
+      KITCHENSOUP_PROVIDER_ENV_NAMES: ${KITCHENSOUP_PROVIDER_ENV_NAMES:-OPENAI_API_KEY,LITELLM_API_KEY}
+      KITCHENSOUP_PROVIDER_SECRET_DIRECTORY: /run/secrets
+    networks: [default, ingestion]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      rustfs:
+        condition: service_healthy
+      soup-ingest:
+        condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
+      catalog-init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${KITCHENSOUP_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  soup-ingest:
+    image: quay.io/bdobrica/kitchensoup:soup-ingest-0.1.0@sha256:261d638f333fb523365ed88b3dd87e80714119f0c2391d5d3807b68b6285c0dd
+    init: true
+    restart: unless-stopped
+    environment:
+      SOUP_IMAGE_ID: sha256:57cad380cb88e6ba40b3068683486d4d8443323d08c37f4f930f8981dc8c44c4
+    networks: [ingestion]
+    read_only: true
+    tmpfs:
+      - /tmp:size=268435456,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1536m
+    cpus: 1.0
+    pids_limit: 64
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  migrate:
+    image: quay.io/bdobrica/kitchensoup:0.1.0@sha256:8a3e8b6fe37f4da2066871b0bf2df13cfd645a99d99deac375c620de92b79739
+    environment: *app-env
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  catalog-init:
+    image: quay.io/bdobrica/kitchensoup:0.1.0@sha256:8a3e8b6fe37f4da2066871b0bf2df13cfd645a99d99deac375c620de92b79739
+    environment: *app-env
+    command: ["python", "-m", "app.registry.catalog"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  storage-init:
+    image: quay.io/bdobrica/kitchensoup:0.1.0@sha256:8a3e8b6fe37f4da2066871b0bf2df13cfd645a99d99deac375c620de92b79739
+    environment: *storage-env
+    command: ["python", "-m", "app.storage.provision"]
+    depends_on:
+      rustfs:
+        condition: service_healthy
+    restart: "no"
+
+  worker:
+    <<: *app
+    environment:
+      <<: *app-env
+      KITCHENSOUP_BACKGROUND_ROLE: worker
+    command: ["python", "-m", "app.background", "worker"]
+    healthcheck: *background-health
+
+  reconciler:
+    <<: *app
+    environment:
+      <<: *app-env
+      KITCHENSOUP_BACKGROUND_ROLE: reconciler
+    command: ["python", "-m", "app.background", "reconciler"]
+    healthcheck: *background-health
+
+volumes:
+  postgres-data:
+  valkey-data:
+  rustfs-data:
+  rustfs-logs:
+
+networks:
+  ingestion:
+    internal: true

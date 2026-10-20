@@ -30,5 +30,11 @@ For each release:
 Package review can use `python -m pip wheel --no-deps --no-build-isolation . -w dist`
 inside the prepared virtualenv (requires the build backend). Inspect the wheel's
 METADATA, license and packaged templates/static/catalog resources. Build outputs
-are ignored. Releases currently have no automated package/image publication,
+are ignored. Published runtime images and the standalone [Compose file](../deploy/compose.yaml)
+are currently built and pushed manually. Publish the application version tag and
+separate Soup-ingestion tag, record registry digests and the ingestion configuration
+identity, then validate a fresh no-checkout installation before distributing Compose.
+Tag-triggered GitHub Actions publication is planned as a follow-up; registry robot
+credentials belong in repository Actions secrets, never source files.
+Releases currently have no automated package/image publication,
 signed provenance, full dependency SBOM or reproducible-build guarantee.

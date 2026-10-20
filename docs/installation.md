@@ -1,5 +1,51 @@
 # Installation and first workflow
 
+## Published images (recommended)
+
+Download [the standalone Compose file](../deploy/compose.yaml) as `compose.yaml`
+in an empty directory and follow the [README quick start](../README.md#quick-start).
+Only Docker Engine and Compose v2.20+ are required on Linux/WSL2. The initial
+images support **linux/amd64**. Pulls require no registry login for this public
+repository. The default application has no authentication and binds to loopback.
+
+KitchenSoup `quay.io/bdobrica/kitchensoup:0.1.0` is the non-root Python control
+plane shared by web, worker, reconciler and initialization services. It includes
+packaged UI/catalog resources and Alembic migrations, without training frameworks
+or build tools. Soup ingestion uses the separately published
+`quay.io/bdobrica/kitchensoup:soup-ingest-0.1.0` image, with a digest pin and its
+matching image configuration identity in Compose. Its isolated network, read-only
+filesystem and resource limits match the development stack.
+
+Generate `.env` **once**, before first startup. Do not rerun the generation command
+for retained volumes: it replaces their credentials. Keep `.env` private, outside
+source control. Custom ports use `KITCHENSOUP_PORT`, `RUSTFS_API_PORT` and
+`RUSTFS_CONSOLE_PORT`; if changing the object API port, also set
+`KITCHENSOUP_S3_PUBLIC_ENDPOINT` to its browser-reachable URL.
+
+`docker compose up -d --wait` starts PostgreSQL, applies migrations through an
+explicit one-shot service, provisions storage/CORS and syncs the bundled model
+catalog before starting web. Worker and reconciler also wait for migrations.
+Inspect failures with `docker compose ps -a` and `docker compose logs migrate`.
+No source bind mounts, local builds, Docker socket, host keys or GPU access are
+needed. GPU executors require deliberate additional configuration; see
+[executor setup](executors.md). The basic installation prepares data and plans.
+
+Stop with `docker compose down`; restart with `docker compose up -d --wait`.
+Named volumes retain the database and object data. `docker compose down --volumes`
+**deletes that data**. Do not stop reconciliation until remote resources are cleaned
+up. Back up volumes and private configuration before upgrading. Download and review
+the next release's Compose file, run `docker compose pull`, then
+`docker compose up -d --wait`; migrations run as an explicit service again.
+No automatic rollback of schema changes is provided. Use image digests from the
+Compose file for immutable installation; version tags are convenient references.
+Do not move an existing release tag to distribute a fix.
+
+[Container validation evidence](evidence/container-distribution.md) records the
+published image identities and fresh-install/restart checks.
+
+## Development from a checkout
+
+
 Use a trusted Linux host or WSL2, Python 3.13 with venv/ensurepip, GNU Make,
 Docker Engine and Compose v2.20+. Allow disk space and internet access for Python
 packages and pinned container dependencies. Initial builds can be large. No Node.js

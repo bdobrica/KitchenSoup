@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-No changes yet.
+Published non-root control-plane and isolated Soup-ingestion images, with a
+standalone digest-pinned Compose installation and automatic one-shot database
+migrations. The quick start no longer requires a checkout, Python or Make.
 
 ## 0.1.0 — 2026-10-20
 

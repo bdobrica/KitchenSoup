@@ -13,21 +13,23 @@ authentication. GPU execution is disabled in ordinary Compose.
 
 ## Quick start
 
-Install Python **3.13** with venv, GNU Make, Docker Engine and Compose **v2.20+**.
-Use Linux or WSL2. No Node.js or GPU is needed for data preparation.
+Install Docker Engine and Compose **v2.20+** on Linux or WSL2. No Git checkout,
+Python, Make, Node.js or GPU is needed for the published-image installation.
 
 ```sh
-make setup
-make verify
-make migrate
-make up
+mkdir kitchensoup && cd kitchensoup
+curl -fsSLo compose.yaml https://raw.githubusercontent.com/bdobrica/KitchenSoup/main/deploy/compose.yaml
+# Generate private local credentials once; keep .env with your data.
+(umask 077; set -C; docker run --rm quay.io/bdobrica/kitchensoup:0.1.0 python -c \
+ 'import secrets; print("\n".join(k+"="+secrets.token_hex(24) for k in ["KITCHENSOUP_POSTGRES_PASSWORD","RUSTFS_ACCESS_KEY","RUSTFS_SECRET_KEY"]))' > .env)
+docker compose up -d --wait
 ```
 
-Open <http://127.0.0.1:8000>. Missing local credentials are generated into ignored
-`.env`; keep it private and retain it with the data volumes. `make down` retains
-data; `make clean CONFIRM=1` deletes it. `make help` lists commands.
-See [installation and first workflow](docs/installation.md) for configuration,
-upgrades and startup details. For RTX 20/T4 GPUs select **FP16**.
+Open <http://127.0.0.1:8000>. [Installation](docs/installation.md) covers image
+pins, upgrades, backups and executor setup. `docker compose down` retains data.
+The app image contains no ML engines; document ingestion uses a separate CPU image.
+For development from source see [the developer guide](docs/development.md).
+For RTX 20/T4 GPUs select **FP16**.
 
 ## UI preview
 

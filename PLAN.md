@@ -1829,3 +1829,12 @@ automatic GPU selection and autoscaling remain future work.
 Provider references: [REST API v2](https://docs.runpod.io/api-reference-v2/overview),
 [full SSH and SFTP](https://docs.runpod.io/pods/configuration/use-ssh),
 [HTTP proxy and port exposure](https://docs.runpod.io/pods/configuration/expose-ports).
+
+---
+
+## Container distribution
+
+The standalone `deploy/compose.yaml` installs published control-plane and isolated
+CPU ingestion images without a source checkout. GPU engine images remain separate
+opt-in executor dependencies. A follow-up release workflow will publish versioned
+images on Git tags using a scoped registry credential and validate Compose pins.
